@@ -449,5 +449,38 @@ namespace JsonR.Tests
         {
             Assert.Throws<JsonException>(() => _ = EitherReader.Read(Strictify(json)));
         }
+
+#pragma warning disable CA1008 // Enums should have zero value (by-design)
+        public enum LoRaBandwidth
+#pragma warning restore CA1008 // Enums should have zero value
+        {
+            BW125 = 125,
+            BW250 = 250,
+            BW500 = 500,
+        }
+
+        [Theory]
+        [InlineData(LoRaBandwidth.BW125, "125")]
+        [InlineData(LoRaBandwidth.BW250, "250")]
+        [InlineData(LoRaBandwidth.BW500, "500")]
+        public void AsEnum_With_Valid_Input(LoRaBandwidth expected, string json)
+        {
+            var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
+            var result = reader.Read(Strictify(json));
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("225")]
+        [InlineData("350")]
+        [InlineData("600")]
+        public void AsEnum_With_Invalid_Input(string json)
+        {
+            var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
+
+            var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(json)));
+            Assert.Equal($"Invalid member for {typeof(LoRaBandwidth)}: {json}", ex.Message);
+        }
     }
 }

@@ -70,6 +70,20 @@ namespace JsonR
                 return result;
             });
 
+        private static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
+#if NET5_0_OR_GREATER
+            Enum.IsDefined(value);
+#else
+            Enum.IsDefined(typeof(T), value);
+#endif
+
+        public static IJsonReader<TEnum> AsEnum<TSource, TEnum>(this IJsonReader<TSource> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
+            from n in reader
+            select selector(n) into value
+            select IsEnumDefined(value)
+                 ? value
+                 : throw new JsonException($"Invalid member for {typeof(TEnum)}: {value}");
+
         public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
             from v in reader select (object)v;
 
