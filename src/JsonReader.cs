@@ -84,6 +84,16 @@ namespace JsonR
                  ? value
                  : throw new JsonException($"Invalid member for {typeof(TEnum)}: {value}");
 
+        public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, Func<T, bool> predicate) =>
+            reader.Validate("Invalid value in JSON: {0}", predicate);
+
+        public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, string messageFormat, Func<T, bool> predicate) =>
+            from v in reader
+            select predicate(v) ? v
+#pragma warning disable CA1305 // Specify IFormatProvider (not used for error messages)
+                 : throw new JsonException(string.Format(messageFormat, v));
+#pragma warning restore CA1305 // Specify IFormatProvider
+
         public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
             from v in reader select (object)v;
 

@@ -508,5 +508,31 @@ namespace JsonR.Tests
             var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(json)));
             Assert.Equal($"Invalid member for {typeof(LoRaBandwidth)}: {json}", ex.Message);
         }
+
+        [Theory]
+        [InlineData("'foobar'")]
+        [InlineData("'FOOBAR'")]
+        [InlineData("'FooBar'")]
+        public void Validate_With_Valid_Input(string json)
+        {
+            json = Strictify(json);
+            var reader = JsonReader.String().Validate(s => "foobar".Equals(s, StringComparison.OrdinalIgnoreCase));
+            var expected = JsonSerializer.Deserialize<string>(json);
+            var result = reader.Read(json);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("123")]
+        [InlineData("468")]
+        [InlineData("789")]
+        public void Validate_With_Invalid_Input(string input)
+        {
+            var reader = JsonReader.Int32().Validate(n => n >= 1_000);
+
+            var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(input)));
+            Assert.Equal($"Invalid value in JSON: {input}", ex.Message);
+        }
     }
 }
