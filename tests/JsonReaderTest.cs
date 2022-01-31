@@ -166,6 +166,32 @@ namespace JsonR.Tests
         [InlineData("null")]
         [InlineData("false")]
         [InlineData("true")]
+        [InlineData("'foobar'")]
+        [InlineData("[]")]
+        [InlineData("{}")]
+        public void Single_With_Invalid_Input(string json)
+        {
+            Assert.Throws<JsonException>(() => _ = JsonReader.Single().Read(Strictify(json)));
+        }
+
+        [Fact]
+        public void Single_Moves_Reader()
+        {
+            TestMovesReaderPastReadValue(JsonReader.Single(), "4.2");
+        }
+
+        [Theory]
+        [InlineData(4.2, "4.2")]
+        public void Single_With_Valid_Input(float expected, string json)
+        {
+            var result = JsonReader.Single().Read(Strictify(json));
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("false")]
+        [InlineData("true")]
         [InlineData("-4.2")]
         [InlineData("'foobar'")]
         [InlineData("[]")]
