@@ -416,7 +416,7 @@ namespace JsonR.Tests
                               ValueTuple.Create);
 
         [Theory]
-        [InlineData(0 , "foobar", "{ str: 'foobar' }")]
+        [InlineData(0, "foobar", "{ str: 'foobar' }")]
         [InlineData(42, "foobar", "{ num: 42, str: 'foobar' }")]
         [InlineData(42, "foobar", "{ str: 'foobar', num: 42 }")]
         [InlineData(42, "foobar", "{ str: 'FOOBAR', num: -42, str: 'foobar', num: 42 }")]
@@ -507,6 +507,44 @@ namespace JsonR.Tests
 
             var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(json)));
             Assert.Equal($"Invalid member for {typeof(LoRaBandwidth)}: {json}", ex.Message);
+        }
+
+        [Fact]
+        public void Tuple3_Moves_Reader()
+        {
+            var reader = JsonReader.Tuple(JsonReader.UInt64(), JsonReader.String(), JsonReader.UInt64());
+            TestMovesReaderPastReadValue(reader, "[123, 'foobar', 456]");
+        }
+
+        [Fact]
+        public void Tuple3_With_Valid_Input()
+        {
+            var reader = JsonReader.Tuple(JsonReader.UInt64(), JsonReader.String(), JsonReader.UInt64());
+            var result = reader.Read(Strictify("[123, 'foobar', 456]"));
+            Assert.Equal((123UL, "foobar", 456UL), result);
+        }
+
+        [Theory]
+        [InlineData("null")]
+        [InlineData("false")]
+        [InlineData("true")]
+        [InlineData("'foobar'")]
+        [InlineData("[]")]
+        [InlineData("{}")]
+        [InlineData("[123]")]
+        [InlineData("[123, 456]")]
+        [InlineData("[123, 'foo', 'bar']")]
+        [InlineData("['foobar', 123, 456]")]
+        [InlineData("[123, 'foobar', 456, 789]")]
+        [InlineData("[123, null, 456]")]
+        [InlineData("[123, false, 456]")]
+        [InlineData("[123, true, 456]")]
+        [InlineData("[123, [], 456]")]
+        [InlineData("[123, {}, 456]")]
+        public void Tuple3_With_Invalid_Input(string json)
+        {
+            var reader = JsonReader.Tuple(JsonReader.UInt64(), JsonReader.String(), JsonReader.UInt64());
+            Assert.Throws<JsonException>(() => _ = reader.Read(Strictify(json)));
         }
 
         [Theory]
