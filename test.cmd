@@ -1,8 +1,11 @@
 @echo off
 pushd "%~dp0"
-    call build ^
+dotnet tool restore ^
+ && call build ^
  && call :test Debug ^
- && call :test Release
+ && call :test Release ^
+ && dotnet reportgenerator -reports:.\tests\TestResults\*\coverage.cobertura.xml -targetdir:tmp -reporttypes:TextSummary ^
+ && type tmp\Summary.txt
 popd && exit /b %ERRORLEVEL%
 
 :test
