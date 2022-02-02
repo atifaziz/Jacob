@@ -19,35 +19,39 @@ using System.Text.Json;
 
 partial class JsonReader
 {<#
-foreach (var e in new[]
 {
-    new { Native = "byte"  , Api = "Byte"   },
-    new { Native = "ushort", Api = "UInt16" },
-    new { Native = "uint"  , Api = "UInt32" },
-    new { Native = "ulong" , Api = "UInt64" },
-    new { Native = "double", Api = "Double" },
-    new { Native = "float" , Api = "Single" },
-    new { Native = "int"   , Api = "Int32" },
-})
-{ #>
+    foreach (var e in new[]
+    {
+        new { Native = "byte"  , Api = "Byte"   },
+        new { Native = "ushort", Api = "UInt16" },
+        new { Native = "uint"  , Api = "UInt32" },
+        new { Native = "ulong" , Api = "UInt64" },
+        new { Native = "double", Api = "Double" },
+        new { Native = "float" , Api = "Single" },
+        new { Native = "int"   , Api = "Int32" },
+    })
+    { #>
 
     public static IJsonReader<<#= e.Native #>, JsonReadResult<<#= e.Native #>>> <#= e.Api #>() =>
         Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
                                          ? Value(value)
                                          : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
 <#
+    }
 }
 
-const int maxArity = 16;
+{
+    const int maxArity = 16;
 
-var all = Enumerable.Range(1, maxArity)
-                    .Select(n => n.ToString(CultureInfo.InvariantCulture))
-                    .ToArray();
+    var all = Enumerable.Range(1, maxArity)
+                        .Select(n => n.ToString(CultureInfo.InvariantCulture))
+                        .ToArray();
 
-for (var c = 2; c < maxArity; c++) {
-    var ns = all.Take(c);
-    var ts = string.Join(", ", from n in ns select "T" + n);
-    var vs = string.Join(", ", from n in ns select "v" + n);
+    for (var c = 2; c < maxArity; c++)
+    {
+        var ns = all.Take(c);
+        var ts = string.Join(", ", from n in ns select "T" + n);
+        var vs = string.Join(", ", from n in ns select "v" + n);
 #>
 
     /// <remarks>
@@ -62,5 +66,51 @@ for (var c = 2; c < maxArity; c++) {
                 <#= string.Join(", ", Enumerable.Repeat("NonProperty.Instance", maxArity - c)) #>,
                 (<#= vs #>, <#= string.Join(", ", Enumerable.Repeat("_", maxArity - c)) #>) =>
             projector(<#= vs #>));
-<# } #>
+<#  }
+}
+
+{
+    const int maxArity = 3;
+
+    var all = Enumerable.Range(1, maxArity)
+                        .Select(n => n.ToString(CultureInfo.InvariantCulture))
+                        .ToArray();
+
+    for (var c = 2; c <= maxArity; c++)
+    {
+        var ns = all.Take(c);
+        var ts = string.Join(", ", from n in ns select "T" + n);
+        var vs = string.Join(", ", from n in ns select "v" + n);
+#>
+
+    public static IJsonReader<(<#= ts #>), JsonReadResult<(<#= ts #>)>>
+        Tuple<<#= ts #>>(
+            <#= string.Join(@",
+            ", from n in ns select "IJsonReader<T" + n + ", JsonReadResult<T" + n + ">> item" + n + "Reader") #>) =>
+        Create((ref Utf8JsonReader rdr) =>
+        {
+            if (rdr.TokenType != JsonTokenType.StartArray)
+                return Error("Invalid JSON value where a JSON array was expected.");
+
+            _ = rdr.Read(); // "["
+<#
+        foreach (var n in ns)
+        { #>
+
+            var (item<#= n #>, error<#= n #>) = item<#= n #>Reader.TryRead(ref rdr);
+            if (error<#= n #> is not null)
+                return Error(error<#= n #>);
+<#
+        } #>
+
+            if (rdr.TokenType != JsonTokenType.EndArray)
+                return Error("Invalid JSON value; JSON array has too many values.");
+
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "]"
+
+            return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
+        });
+<#  }
+} #>
 }

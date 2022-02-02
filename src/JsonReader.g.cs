@@ -230,4 +230,65 @@ partial class JsonReader
                 NonProperty.Instance,
                 (v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, _) =>
             projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15));
+
+    public static IJsonReader<(T1, T2), JsonReadResult<(T1, T2)>>
+        Tuple<T1, T2>(
+            IJsonReader<T1, JsonReadResult<T1>> item1Reader,
+            IJsonReader<T2, JsonReadResult<T2>> item2Reader) =>
+        Create((ref Utf8JsonReader rdr) =>
+        {
+            if (rdr.TokenType != JsonTokenType.StartArray)
+                return Error("Invalid JSON value where a JSON array was expected.");
+
+            _ = rdr.Read(); // "["
+
+            var (item1, error1) = item1Reader.TryRead(ref rdr);
+            if (error1 is not null)
+                return Error(error1);
+
+            var (item2, error2) = item2Reader.TryRead(ref rdr);
+            if (error2 is not null)
+                return Error(error2);
+
+            if (rdr.TokenType != JsonTokenType.EndArray)
+                return Error("Invalid JSON value; JSON array has too many values.");
+
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "]"
+
+            return Value((item1, item2));
+        });
+
+    public static IJsonReader<(T1, T2, T3), JsonReadResult<(T1, T2, T3)>>
+        Tuple<T1, T2, T3>(
+            IJsonReader<T1, JsonReadResult<T1>> item1Reader,
+            IJsonReader<T2, JsonReadResult<T2>> item2Reader,
+            IJsonReader<T3, JsonReadResult<T3>> item3Reader) =>
+        Create((ref Utf8JsonReader rdr) =>
+        {
+            if (rdr.TokenType != JsonTokenType.StartArray)
+                return Error("Invalid JSON value where a JSON array was expected.");
+
+            _ = rdr.Read(); // "["
+
+            var (item1, error1) = item1Reader.TryRead(ref rdr);
+            if (error1 is not null)
+                return Error(error1);
+
+            var (item2, error2) = item2Reader.TryRead(ref rdr);
+            if (error2 is not null)
+                return Error(error2);
+
+            var (item3, error3) = item3Reader.TryRead(ref rdr);
+            if (error3 is not null)
+                return Error(error3);
+
+            if (rdr.TokenType != JsonTokenType.EndArray)
+                return Error("Invalid JSON value; JSON array has too many values.");
+
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "]"
+
+            return Value((item1, item2, item3));
+        });
 }

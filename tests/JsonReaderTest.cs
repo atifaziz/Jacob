@@ -572,6 +572,42 @@ public class JsonReaderTest
     }
 
     [Fact]
+    public void Tuple2_Moves_Reader()
+    {
+        var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
+        TestMovesReaderPastReadValue(reader, "[123, 'foobar']");
+    }
+
+    [Fact]
+    public void Tuple2_With_Valid_Input()
+    {
+        var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
+        var result = reader.Read(Strictify("[123, 'foobar']"));
+        Assert.Equal((123, "foobar"), result);
+    }
+
+    [Theory]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "null")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "false")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "true")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "'foobar'")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "[]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "{}")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "['foobar', 123]")]
+    [InlineData("Invalid JSON value; JSON array has too many values.", "[123, 'foobar', 456]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123, null]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123, false]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123, true]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123, []]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "[123, {}]")]
+    public void Tuple2_With_Invalid_Input(string expectedError, string json)
+    {
+        var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
+        TestInvalidInput(reader, json, expectedError);
+    }
+
+    [Fact]
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
