@@ -7,13 +7,16 @@ namespace JsonR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Unit = System.ValueTuple;
 
 public interface IJsonReader<out T>
 {
-    T Read(ref Utf8JsonReader reader);
+    T LastReadValue { get; }
+    string? LastReadError { get; }
+    bool TryRead(ref Utf8JsonReader reader);
 }
 
 public interface IJsonProperty<out T>
@@ -24,6 +27,8 @@ public interface IJsonProperty<out T>
     T DefaultValue { get; }
 }
 
+#pragma warning disable CA1720 // Identifier contains type name (by design)
+
 public static partial class JsonReader
 {
     public static T Read<T>(this IJsonReader<T> reader, string json) =>
@@ -32,43 +37,31 @@ public static partial class JsonReader
     public static T Read<T>(this IJsonReader<T> reader, ReadOnlySpan<byte> utf8JsonTextBytes)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
-        var utf8Reader = new Utf8JsonReader(utf8JsonTextBytes);
-        _ = utf8Reader.Read();
-        return reader.Read(ref utf8Reader);
+        var rdr = new Utf8JsonReader(utf8JsonTextBytes);
+        _ = rdr.Read();
+        return reader.Read(ref rdr);
     }
 
-#pragma warning disable CA1720 // Identifier contains type name (represents JSON string)
     public static IJsonReader<string> String() =>
-#pragma warning restore CA1720 // Identifier contains type name
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.String ? reader.GetString() : throw new JsonException();
-            _ = reader.Read();
-            return result!;
-        });
+        Create((ref Utf8JsonReader rdr) =>
+            rdr.TokenType == JsonTokenType.String
+            ? Value(rdr.GetString()!)
+            : Error("Invalid JSON value where a JSON string was expected."));
 
     public static IJsonReader<bool> Boolean() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-#pragma warning disable IDE0072 // Add missing cases (false positive)
-            var result = reader.TokenType switch
-#pragma warning restore IDE0072 // Add missing cases
+        Create((ref Utf8JsonReader rdr) =>
+            rdr.TokenType switch
             {
-                JsonTokenType.True => true,
-                JsonTokenType.False => false,
-                _ => throw new JsonException()
-            };
-            _ = reader.Read();
-            return result;
-        });
+                JsonTokenType.True => Value(true),
+                JsonTokenType.False => Value(false),
+                _ => Error("Invalid JSON value where a JSON Boolean was expected.")
+            });
 
     public static IJsonReader<T> Null<T>(T @null) =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Null ? @null : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) =>
+            rdr.TokenType == JsonTokenType.Null
+            ? Value(@null)
+            : Error("Invalid JSON value where a JSON null was expected."));
 
     private static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
 #if NET5_0_OR_GREATER
@@ -78,38 +71,44 @@ public static partial class JsonReader
 #endif
 
     public static IJsonReader<TEnum> AsEnum<TSource, TEnum>(this IJsonReader<TSource> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
-        from n in reader
-        select selector(n) into value
-        select IsEnumDefined(value)
-             ? value
-             : throw new JsonException($"Invalid member for {typeof(TEnum)}: {value}");
+        reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, Func<T, bool> predicate) =>
-        reader.Validate("Invalid value in JSON: {0}", predicate);
+        reader.Validate(errorMessage: null, predicate);
 
-    public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, string messageFormat, Func<T, bool> predicate) =>
-        from v in reader
-        select predicate(v) ? v
-#pragma warning disable CA1305 // Specify IFormatProvider (not used for error messages)
-             : throw new JsonException(string.Format(messageFormat, v));
-#pragma warning restore CA1305 // Specify IFormatProvider
+    public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, string? errorMessage, Func<T, bool> predicate) =>
+        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        {
+            (_, { }) error => error,
+            var (value, _) => predicate(value)
+                            ? Value(value)
+                            : Error(errorMessage ?? "Invalid JSON value.")
+        });
 
     public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
         from v in reader select (object)v;
 
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2) =>
-        Create((ref Utf8JsonReader reader) =>
+        Either(reader1, reader2, null);
+
+    public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2,
+                                           string? errorMessage) =>
+        CreatePure((ref Utf8JsonReader rdr) =>
         {
-            try
+            var irdr = rdr;
+            switch (reader1.OptRead(ref irdr))
             {
-                var tempReader = reader;
-                var result = reader1.Read(ref tempReader);
-                reader = tempReader;
-                return result;
-            }
-            catch (Exception ex) when (ex is JsonException or NotSupportedException or FormatException or OverflowException)
-            {
-                return reader2.Read(ref reader);
+                case (_, { }):
+                    switch (reader2.OptRead(ref rdr))
+                    {
+                        case (_, { }):
+                            return Error(errorMessage ?? "Invalid JSON value.");
+                        case var some:
+                            return some;
+                    }
+                case var some:
+                    rdr = irdr;
+                    return some;
             }
         });
 
@@ -145,8 +144,6 @@ public static partial class JsonReader
         public bool HasDefaultValue => true;
         public Unit DefaultValue => default;
     }
-
-#pragma warning disable CA1720 // Identifier contains type name (represent JSON object)
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
@@ -200,22 +197,24 @@ public static partial class JsonReader
 
             while (reader.TokenType != JsonTokenType.EndObject)
             {
-                if (ReadPropertyValue(property1, ref reader, ref value1)) continue;
-                if (ReadPropertyValue(property2, ref reader, ref value2)) continue;
-                if (ReadPropertyValue(property3, ref reader, ref value3)) continue;
-                if (ReadPropertyValue(property4, ref reader, ref value4)) continue;
-                if (ReadPropertyValue(property5, ref reader, ref value5)) continue;
-                if (ReadPropertyValue(property6, ref reader, ref value6)) continue;
-                if (ReadPropertyValue(property7, ref reader, ref value7)) continue;
-                if (ReadPropertyValue(property8, ref reader, ref value8)) continue;
-                if (ReadPropertyValue(property9, ref reader, ref value9)) continue;
-                if (ReadPropertyValue(property10, ref reader, ref value10)) continue;
-                if (ReadPropertyValue(property11, ref reader, ref value11)) continue;
-                if (ReadPropertyValue(property12, ref reader, ref value12)) continue;
-                if (ReadPropertyValue(property13, ref reader, ref value13)) continue;
-                if (ReadPropertyValue(property14, ref reader, ref value14)) continue;
-                if (ReadPropertyValue(property15, ref reader, ref value15)) continue;
-                if (ReadPropertyValue(property16, ref reader, ref value16)) continue;
+                string? error = null;
+
+                if (ReadPropertyValue(property1, ref reader, ref value1, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property2, ref reader, ref value2, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property3, ref reader, ref value3, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property4, ref reader, ref value4, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property5, ref reader, ref value5, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property6, ref reader, ref value6, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property7, ref reader, ref value7, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property8, ref reader, ref value8, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property9, ref reader, ref value9, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property10, ref reader, ref value10, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property11, ref reader, ref value11, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property12, ref reader, ref value12, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property13, ref reader, ref value13, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property14, ref reader, ref value14, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property15, ref reader, ref value15, ref error)) continue; if (error is not null) return Error(error);
+                if (ReadPropertyValue(property16, ref reader, ref value16, ref error)) continue; if (error is not null) return Error(error);
 
                 _ = reader.Read();
                 reader.Skip();
@@ -223,19 +222,28 @@ public static partial class JsonReader
 
                 static bool ReadPropertyValue<TValue>(IJsonProperty<TValue> property,
                     ref Utf8JsonReader reader,
-                    ref (bool, TValue) value)
+                    ref (bool, TValue) value,
+                    ref string? error)
                 {
                     if (value is (true, _) || !property.IsMatch(reader))
                         return false;
 
                     _ = reader.Read();
 
-                    value = (true, property.Reader.Read(ref reader));
-                    return true;
+                    switch (property.Reader.OptRead(ref reader))
+                    {
+                        case (_, { } err):
+                            error = err;
+                            return false;
+                        case var (val, _):
+                            value = (true, val);
+                            return true;
+                    }
                 }
             }
 
-            _ = reader.Read(); // "}"
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "}"
 
             static void DefaultUnassigned<T>(IJsonProperty<T> property, ref (bool, T) v)
             {
@@ -271,62 +279,144 @@ public static partial class JsonReader
                                  (true, var v10), (true, var v11), (true, var v12),
                                  (true, var v13), (true, var v14), (true, var v15),
                                  (true, var v16))
-                 ? projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16)
-                 : throw new JsonException();
+                 ? Value(projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16))
+                 : Error("Invalid JSON object.");
         });
 
     public static IJsonReader<(T1, T2, T3)>
         Tuple<T1, T2, T3>(IJsonReader<T1> item1Reader,
                           IJsonReader<T2> item2Reader,
                           IJsonReader<T3> item3Reader) =>
-        Create((ref Utf8JsonReader reader) =>
+        Create((ref Utf8JsonReader rdr) =>
         {
-            if (reader.TokenType != JsonTokenType.StartArray)
-                throw new JsonException();
+            if (rdr.TokenType != JsonTokenType.StartArray)
+                return Error("Invalid JSON value where a JSON array was expected.");
 
-            _ = reader.Read(); // "["
+            _ = rdr.Read(); // "["
 
-            var result = (item1Reader.Read(ref reader), item2Reader.Read(ref reader), item3Reader.Read(ref reader));
+            switch (item1Reader.OptRead(ref rdr) switch
+                    {
+                        (_, { } error) => Error(error),
+                        var (item1, _) => item2Reader.OptRead(ref rdr) switch
+                        {
+                            (_, { } error) => Error(error),
+                            var (item2, _) => item3Reader.OptRead(ref rdr) switch
+                            {
+                                (_, { } error) => Error(error),
+                                var (item3, _) => Value((item1, item2, item3))
+                            }
+                        }
+                    })
+            {
+                case (_, { }) error:
+                {
+                    return error;
+                }
+                case var result:
+                {
+                    if (rdr.TokenType != JsonTokenType.EndArray)
+                        return Error("Invalid JSON; expected JSON array to end.");
 
-            if (reader.TokenType != JsonTokenType.EndArray)
-                throw new JsonException();
+                    // Implementation of "Create" will effectively do the following:
+                    // _ = rdr.Read(); // "]"
 
-            _ = reader.Read(); // "]"
-
-            return result;
+                    return result;
+                }
+            }
         });
 
-#pragma warning restore CA1720 // Identifier contains type name
-
     public static IJsonReader<T[]> Array<T>(IJsonReader<T> itemReader) =>
-        Create((ref Utf8JsonReader reader) =>
+        Create((ref Utf8JsonReader rdr) =>
         {
-            if (reader.TokenType != JsonTokenType.StartArray)
-                throw new JsonException();
+            if (rdr.TokenType != JsonTokenType.StartArray)
+                return Error("Invalid JSON value where a JSON array was expected.");
 
-            _ = reader.Read(); // "["
+            _ = rdr.Read(); // "["
 
             var list = new List<T>();
-            while (reader.TokenType != JsonTokenType.EndArray)
-                list.Add(itemReader.Read(ref reader));
+            while (rdr.TokenType != JsonTokenType.EndArray)
+            {
+                switch (itemReader.OptRead(ref rdr))
+                {
+                    case (_, { } error):
+                        return Error(error);
+                    case var (item, _):
+                        list.Add(item);
+                        break;
+                }
+            }
 
-            _ = reader.Read(); // "]"
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "]"
 
-            return list.ToArray();
+            return Value(list.ToArray());
         });
 
     public static IJsonReader<TResult> Select<T, TResult>(this IJsonReader<T> reader, Func<T, TResult> selector) =>
-        Create((ref Utf8JsonReader rdr) => selector(reader.Read(ref rdr)));
+        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        {
+            (_, { } error) => Error(error),
+            var (value, _) => Value(selector(value)),
+        });
 
-    internal delegate T ReadHandler<out T>(ref Utf8JsonReader reader);
-
-    private static IJsonReader<T> Create<T>(ReadHandler<T> func) => new DelegatingJsonReader<T>(func);
-
-    private sealed class DelegatingJsonReader<T> : IJsonReader<T>
+    public static T Read<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader)
     {
-        private readonly ReadHandler<T> delegatee;
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
 
-        public DelegatingJsonReader(ReadHandler<T> delegatee) => this.delegatee = delegatee;
-        public T Read(ref Utf8JsonReader reader) => this.delegatee(ref reader);
+        return reader.OptRead(ref utf8Reader) switch
+        {
+            (_, { } message) => throw new JsonException(message),
+            var (value, _) => value,
+        };
+    }
+
+    private static ReadResult<T> OptRead<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader) =>
+        reader.TryRead(ref utf8Reader) ? Value(reader.LastReadValue) : Error(reader.LastReadError!);
+
+    private static IJsonReader<T> Create<T>(JsonReaderHandler<T> handler) =>
+        new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
+
+    private static IJsonReader<T> CreatePure<T>(JsonReaderHandler<T> handler) =>
+        new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static ReadResult<T> Value<T>(T value) => new(value, null);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static ReadErrorResult Error(string message) => new(message);
+
+    private record struct ReadErrorResult(string Message);
+
+    private record struct ReadResult<T>(T Value, string? Error)
+    {
+        public static implicit operator ReadResult<T>(ReadErrorResult error) => new(default!, error.Message);
+    }
+
+    private delegate ReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader);
+
+    sealed class DelegatingJsonReader<T> : IJsonReader<T>
+    {
+        readonly JsonReaderHandler<T> handler;
+        readonly bool shouldReadOnSuccess;
+
+        public DelegatingJsonReader(JsonReaderHandler<T> handler, bool shouldReadOnSuccess)
+        {
+            this.handler = handler;
+            this.shouldReadOnSuccess = shouldReadOnSuccess;
+            LastReadValue = default!;
+        }
+
+        public T LastReadValue { get; private set; }
+        public string? LastReadError { get; private set; }
+
+        public bool TryRead(ref Utf8JsonReader reader)
+        {
+            (LastReadValue, LastReadError) = this.handler(ref reader);
+            if (LastReadError is not null)
+                return false;
+            if (this.shouldReadOnSuccess)
+                reader.Read();
+            return true;
+        }
     }
 }

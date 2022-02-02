@@ -15,60 +15,39 @@ using System.Text.Json;
 partial class JsonReader
 {
     public static IJsonReader<byte> Byte() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetByte(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
 
     public static IJsonReader<ushort> UInt16() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetUInt16(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
 
     public static IJsonReader<uint> UInt32() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetUInt32(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
 
     public static IJsonReader<ulong> UInt64() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetUInt64(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
 
     public static IJsonReader<double> Double() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetDouble(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
 
     public static IJsonReader<float> Single() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetSingle(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
 
     public static IJsonReader<int> Int32() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause

@@ -32,12 +32,9 @@ foreach (var e in new[]
 { #>
 
     public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
-        Create((ref Utf8JsonReader reader) =>
-        {
-            var result = reader.TokenType == JsonTokenType.Number && reader.TryGet<#= e.Api #>(out var n) ? n : throw new JsonException();
-            _ = reader.Read();
-            return result;
-        });
+        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
+                                         ? Value(value)
+                                         : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
 <#
 }
 

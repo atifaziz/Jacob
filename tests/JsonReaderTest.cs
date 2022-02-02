@@ -323,6 +323,7 @@ public class JsonReaderTest
 
     [Theory]
     [InlineData(new ulong[] { 42 }, "[42]")]
+    [InlineData(new ulong[] { 1, 2, 3 }, "[1, 2, 3]")]
     public void Array_With_Valid_Input(ulong[] expected, string json)
     {
         var result = JsonReader.Array(JsonReader.UInt64()).Read(Strictify(json));
@@ -356,6 +357,12 @@ public class JsonReaderTest
         var result = reader.Read(Strictify("['foo', 'bar', 'baz']"));
 
         Assert.Equal("FOO-BAR-BAZ", result);
+    }
+
+    [Fact]
+    public void Select_Doesnt_Move_Reader()
+    {
+        TestMovesReaderPastReadValue(from s in JsonReader.String() select s, "'foobar'");
     }
 
     [Fact]
@@ -445,12 +452,14 @@ public class JsonReaderTest
 
     private static readonly IJsonReader<object> EitherReader =
         JsonReader.Either(JsonReader.String().AsObject(),
-                          JsonReader.Array(JsonReader.UInt64().AsObject()));
+                          JsonReader.Either(JsonReader.Array(JsonReader.UInt64().AsObject()),
+                                            JsonReader.Array(JsonReader.Boolean().AsObject())));
 
     [Theory]
     [InlineData("'foobar'")]
     [InlineData("[123, 456, 789]")]
-    public void Either_Moves_Reader(string json)
+    [InlineData("[true, false]")]
+    public void Either_Doesnt_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(EitherReader, json);
     }
@@ -459,11 +468,13 @@ public class JsonReaderTest
     [InlineData("foobar", "'foobar'")]
     [InlineData(new ulong[] { 123, 456, 789 }, "[123, 456, 789]")]
     [InlineData(new ulong[0], "[]")]
+    [InlineData(new[] { true, false }, "[true, false]")]
     public void Either_With_Valid_Input(object expected, string json)
     {
         var result = EitherReader.Read(Strictify(json));
         Assert.Equal(expected, result);
     }
+
     [Theory]
     [InlineData("null")]
     [InlineData("false")]
@@ -505,7 +516,7 @@ public class JsonReaderTest
         var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
 
         var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(json)));
-        Assert.Equal($"Invalid member for {typeof(LoRaBandwidth)}: {json}", ex.Message);
+        Assert.Equal($"Invalid member for {typeof(LoRaBandwidth)}.", ex.Message);
     }
 
     [Fact]
@@ -569,6 +580,12 @@ public class JsonReaderTest
         var reader = JsonReader.Int32().Validate(n => n >= 1_000);
 
         var ex = Assert.Throws<JsonException>(() => reader.Read(Strictify(input)));
-        Assert.Equal($"Invalid value in JSON: {input}", ex.Message);
+        Assert.Equal("Invalid JSON value.", ex.Message);
+    }
+
+    [Fact]
+    public void Validate_Doesnt_Move_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
     }
 }
