@@ -91,6 +91,12 @@ public static partial class JsonReader
                 _ => Error("Invalid JSON value where a JSON Boolean was expected.")
             });
 
+    public static IJsonReader<DateTime, JsonReadResult<DateTime>> DateTime() =>
+        Create((ref Utf8JsonReader rdr) =>
+            rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
+            ? Value(value)
+            : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
+
     public static IJsonReader<T, JsonReadResult<T>> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.Null

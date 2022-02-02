@@ -164,6 +164,38 @@ public class JsonReaderTest
     }
 
     [Fact]
+    public void DateTime_Moves_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.DateTime(), "'2022-02-02T12:34:56'");
+    }
+
+    [Theory]
+    [InlineData(2022, 2, 2, 0, 0, 0, 0, "'2022-02-02'")]
+    [InlineData(2022, 2, 2, 12, 34, 56, 0, "'2022-02-02T12:34:56'")]
+    public void DateTime_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, string json)
+    {
+        var result = JsonReader.DateTime().Read(Strictify(json));
+        var expected = new DateTime(year, month, day, hour, minute, second, millisecond);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("false")]
+    [InlineData("true")]
+    [InlineData("42")]
+    [InlineData("[]")]
+    [InlineData("{}")]
+    [InlineData("'20220202'")]
+    [InlineData("'02/02/2022'")]
+    [InlineData("'2022-02-02 12:34:56'")]
+    public void DateTime_With_Invalid_Input(string json)
+    {
+        TestInvalidInput(JsonReader.DateTime(), json,
+                         "JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format.");
+    }
+
+    [Fact]
     public void Int32_Moves_Reader()
     {
         TestMovesReaderPastReadValue(JsonReader.Int32(), "42");
