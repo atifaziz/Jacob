@@ -340,15 +340,15 @@ public class JsonReaderTest
     [Fact]
     public void Array_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.UInt64()), "[42]");
+        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.Int32()), "[42]");
     }
 
     [Theory]
-    [InlineData(new ulong[] { 42 }, "[42]")]
-    [InlineData(new ulong[] { 1, 2, 3 }, "[1, 2, 3]")]
-    public void Array_With_Valid_Input(ulong[] expected, string json)
+    [InlineData(new[] { 42 }, "[42]")]
+    [InlineData(new[] { 1, 2, 3 }, "[1, 2, 3]")]
+    public void Array_With_Valid_Input(int[] expected, string json)
     {
-        var result = JsonReader.Array(JsonReader.UInt64()).Read(Strictify(json));
+        var result = JsonReader.Array(JsonReader.Int32()).Read(Strictify(json));
         Assert.Equal(expected, result);
     }
 
@@ -438,8 +438,8 @@ public class JsonReaderTest
         Assert.Equal("reader", ex.ParamName);
     }
 
-    private static readonly IJsonReader<(ulong, string), JsonReadResult<(ulong, string)>> Object2Reader =
-        JsonReader.Object(JsonReader.Property("num", JsonReader.UInt64(), (true, 0UL)),
+    private static readonly IJsonReader<(int, string), JsonReadResult<(int, string)>> Object2Reader =
+        JsonReader.Object(JsonReader.Property("num", JsonReader.Int32(), (true, 0)),
                           JsonReader.Property("str", JsonReader.String()),
                           ValueTuple.Create);
 
@@ -449,7 +449,7 @@ public class JsonReaderTest
     [InlineData(42, "foobar", "{ str: 'foobar', num: 42 }")]
     [InlineData(42, "foobar", "{ str: 'FOOBAR', num: -42, str: 'foobar', num: 42 }")]
     [InlineData(42, "foobar", "{ nums: [1, 2, 3], str: 'foobar', num: 42, obj: {} }")]
-    public void Object2_With_Valid_Input(ulong expectedNum, string expectedStr, string json)
+    public void Object2_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
         var (num, str) = Object2Reader.Read(Strictify(json));
 
@@ -464,7 +464,7 @@ public class JsonReaderTest
     [InlineData("Invalid JSON value where a JSON object was expected.", "'foobar'")]
     [InlineData("Invalid JSON value where a JSON object was expected.", "[]")]
     [InlineData("Invalid JSON object.", "{}")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with UInt64.", "{ num: '42', str: 'foobar' }")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "{ num: '42', str: 'foobar' }")]
     [InlineData("Invalid JSON object.", "{ NUM: 42, STR: 'foobar' }")]
     [InlineData("Invalid JSON object.", "{ num: 42 }")]
     public void Object2_With_Invalid_Input(string expectedError, string json)
@@ -474,7 +474,7 @@ public class JsonReaderTest
 
     private static readonly IJsonReader<object, JsonReadResult<object>> EitherReader =
         JsonReader.Either(JsonReader.String().AsObject(),
-                          JsonReader.Either(JsonReader.Array(JsonReader.UInt64()).AsObject(),
+                          JsonReader.Either(JsonReader.Array(JsonReader.Int32()).AsObject(),
                                             JsonReader.Array(JsonReader.Boolean()).AsObject()));
 
     [Theory]
@@ -488,8 +488,8 @@ public class JsonReaderTest
 
     [Theory]
     [InlineData("foobar", "'foobar'")]
-    [InlineData(new ulong[] { 123, 456, 789 }, "[123, 456, 789]")]
-    [InlineData(new ulong[0], "[]")]
+    [InlineData(new[] { 123, 456, 789 }, "[123, 456, 789]")]
+    [InlineData(new int[0], "[]")]
     [InlineData(new[] { true, false }, "[true, false]")]
     public void Either_With_Valid_Input(object expected, string json)
     {
@@ -542,16 +542,16 @@ public class JsonReaderTest
     [Fact]
     public void Tuple3_Moves_Reader()
     {
-        var reader = JsonReader.Tuple(JsonReader.UInt64(), JsonReader.String(), JsonReader.UInt64());
+        var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
         TestMovesReaderPastReadValue(reader, "[123, 'foobar', 456]");
     }
 
     [Fact]
     public void Tuple3_With_Valid_Input()
     {
-        var reader = JsonReader.Tuple(JsonReader.UInt64(), JsonReader.String(), JsonReader.UInt64());
+        var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
         var result = reader.Read(Strictify("[123, 'foobar', 456]"));
-        Assert.Equal((123UL, "foobar", 456UL), result);
+        Assert.Equal((123, "foobar", 456), result);
     }
 
     [Theory]
