@@ -20,6 +20,12 @@ public interface IReadResult<out T>
     T Value { get; }
 }
 
+public static class JsonReadResult
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonReadResult<T> Value<T>(T value) => new(value, null);
+}
+
 public record struct JsonReadError(string Message);
 
 public record struct JsonReadResult<T>(T Value, string? Error) : IReadResult<T>
@@ -401,7 +407,7 @@ public static partial class JsonReader
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonReadResult<T> Value<T>(T value) => new(value, null);
+    static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static JsonReadError Error(string message) => new(message);
