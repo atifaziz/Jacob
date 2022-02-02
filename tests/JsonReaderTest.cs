@@ -458,19 +458,18 @@ public class JsonReaderTest
     }
 
     [Theory]
-    [InlineData("null")]
-    [InlineData("false")]
-    [InlineData("true")]
-    [InlineData("'foobar'")]
-    [InlineData("[]")]
-    [InlineData("{}")]
-    [InlineData("{ num: '42', str: 'foobar' }")]
-    [InlineData("{ NUM: 42, STR: 'foobar' }")]
-    [InlineData("{ num: 42 }")]
-    public void Object2_With_Invalid_Input(string json)
+    [InlineData("Invalid JSON value where a JSON object was expected.", "null")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "false")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "true")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "'foobar'")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "[]")]
+    [InlineData("Invalid JSON object.", "{}")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with UInt64.", "{ num: '42', str: 'foobar' }")]
+    [InlineData("Invalid JSON object.", "{ NUM: 42, STR: 'foobar' }")]
+    [InlineData("Invalid JSON object.", "{ num: 42 }")]
+    public void Object2_With_Invalid_Input(string expectedError, string json)
     {
-        Assert.Throws<JsonException>(() => _ = Object2Reader.Read(Strictify(json)));
-        // TODO TestInvalidInput(Object2Reader, json, "Invalid JSON object.");
+        TestInvalidInput(Object2Reader, json, expectedError);
     }
 
     private static readonly IJsonReader<object, JsonReadResult<object>> EitherReader =

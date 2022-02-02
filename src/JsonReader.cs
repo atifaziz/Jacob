@@ -208,7 +208,7 @@ public static partial class JsonReader
         Create((ref Utf8JsonReader reader) =>
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                return Error("Invalid JSON value where a JSON object was expected.");
 
             _ = reader.Read(); // "{"
 
