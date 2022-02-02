@@ -422,10 +422,10 @@ public static partial class JsonReader
         {
             var (value, error) = this.handler(ref reader);
             if (error is not null)
-                return new(default!, error);
+                return new JsonReadError(error);
             if (this.shouldReadOnSuccess)
                 reader.Read();
-            return new(value, null);
+            return JsonReadResult.Value(value);
         }
     }
 }
