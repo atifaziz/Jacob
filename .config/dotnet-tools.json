@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "isRoot": true,
+  "tools": {
+    "dotnet-reportgenerator-globaltool": {
+      "version": "4.8.13",
+      "commands": [
+        "reportgenerator"
+      ]
+    },
+    "dotnet-t4": {
+      "version": "2.2.1",
+      "commands": [
+        "t4"
+      ]
+    }
+  }
+}
