@@ -588,4 +588,23 @@ public class JsonReaderTest
     {
         TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
     }
+
+    [Theory]
+    [InlineData(@"[
+            { x: 123, y: 456 },
+        ]")]
+    [InlineData(@"[
+            { x: 123, y: 456 },
+            { x: 123, y: null },
+        ]")]
+    public void TestPath(string json)
+    {
+        var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify(json)));
+        _ = rdr.Read();
+        var pathTracker = new SimplePathTracker();
+        _ = JsonReader.Array(JsonReader.Object(JsonReader.Property("x", JsonReader.Single()),
+                                               JsonReader.Property("y", JsonReader.Single()),
+                                               ValueTuple.Create))
+                      .Read(ref rdr, pathTracker);
+    }
 }

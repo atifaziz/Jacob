@@ -15,39 +15,46 @@ using System.Text.Json;
 partial class JsonReader
 {
     public static IJsonReader<byte> Byte() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
 
     public static IJsonReader<ushort> UInt16() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
 
     public static IJsonReader<uint> UInt32() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
 
     public static IJsonReader<ulong> UInt64() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
 
     public static IJsonReader<double> Double() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
 
     public static IJsonReader<float> Single() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
 
     public static IJsonReader<int> Int32() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
+        Create((ref Utf8JsonReader rdr, IPathTracker _) =>
+            rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
+            ? Value(value)
+            : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause

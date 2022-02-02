@@ -16,40 +16,103 @@ public interface IJsonReader<out T>
 {
     T LastReadValue { get; }
     string? LastReadError { get; }
-    bool TryRead(ref Utf8JsonReader reader);
+    bool TryRead(ref Utf8JsonReader reader, IPathTracker tracer);
 }
 
 public interface IJsonProperty<out T>
 {
+    string Name { get; }
     bool IsMatch(ref Utf8JsonReader reader);
     IJsonReader<T> Reader { get; }
     bool HasDefaultValue { get; }
     T DefaultValue { get; }
 }
 
+public interface IPathTracker
+{
+    void ArrayIndex(int index);
+    void ObjectProperty(string name);
+    void Pop();
+}
+
+public sealed class SimplePathTracker : IPathTracker
+{
+    private readonly List<(int, string?)> crumbs = new();
+
+    public void ArrayIndex(int index)
+    {
+        if (this.crumbs.Count > 0 && this.crumbs[^1] is (_, null))
+            this.crumbs[^1] = (index, null);
+        else
+            this.crumbs.Add((index, null));
+    }
+
+    public void ObjectProperty(string name)
+    {
+        if (this.crumbs.Count > 0 && this.crumbs[^1] is (_, { }))
+            this.crumbs[^1] = (0, name);
+        else
+            this.crumbs.Add((0, name));
+    }
+
+    public void Pop()
+    {
+        this.crumbs.RemoveAt(this.crumbs.Count - 1);
+    }
+
+    public override string ToString()
+    {
+        if (this.crumbs.Count == 0)
+            return "$";
+
+        var sb = new StringBuilder().Append('$');
+
+        foreach (var (index, name) in this.crumbs)
+        {
+            if (name is { } someName)
+                sb.Append('.').Append(someName);
+            else
+                sb.Append('[').Append(index).Append(']');
+        }
+
+        return sb.ToString();
+    }
+}
+
 #pragma warning disable CA1720 // Identifier contains type name (by design)
 
 public static partial class JsonReader
 {
-    public static T Read<T>(this IJsonReader<T> reader, string json) =>
-        reader.Read(Encoding.UTF8.GetBytes(json));
+    private sealed class NopPathTracker : IPathTracker
+    {
+        public static readonly IPathTracker Instance = new NopPathTracker();
 
-    public static T Read<T>(this IJsonReader<T> reader, ReadOnlySpan<byte> utf8JsonTextBytes)
+        private NopPathTracker() { }
+
+        public void ArrayIndex(int index) { }
+        public void ObjectProperty(string name) { }
+        public void Pop() { }
+    }
+
+    public static T Read<T>(this IJsonReader<T> reader, string json, IPathTracker? pathTracker = null) =>
+        reader.Read(Encoding.UTF8.GetBytes(json), pathTracker);
+
+    public static T Read<T>(this IJsonReader<T> reader, ReadOnlySpan<byte> utf8JsonTextBytes, IPathTracker? pathTracker = null)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
         var rdr = new Utf8JsonReader(utf8JsonTextBytes);
         _ = rdr.Read();
-        return reader.Read(ref rdr);
+        return reader.Read(ref rdr, pathTracker ?? NopPathTracker.Instance);
     }
 
     public static IJsonReader<string> String() =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
             rdr.TokenType == JsonTokenType.String
             ? Value(rdr.GetString()!)
             : Error("Invalid JSON value where a JSON string was expected."));
 
     public static IJsonReader<bool> Boolean() =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
             rdr.TokenType switch
             {
                 JsonTokenType.True => Value(true),
@@ -58,7 +121,7 @@ public static partial class JsonReader
             });
 
     public static IJsonReader<T> Null<T>(T @null) =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
             rdr.TokenType == JsonTokenType.Null
             ? Value(@null)
             : Error("Invalid JSON value where a JSON null was expected."));
@@ -77,7 +140,7 @@ public static partial class JsonReader
         reader.Validate(errorMessage: null, predicate);
 
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, string? errorMessage, Func<T, bool> predicate) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        CreatePure((ref Utf8JsonReader rdr, IPathTracker pathTracker) => reader.OptRead(ref rdr, pathTracker) switch
         {
             (_, { }) error => error,
             var (value, _) => predicate(value)
@@ -93,13 +156,13 @@ public static partial class JsonReader
 
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2,
                                            string? errorMessage) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        CreatePure((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
         {
             var irdr = rdr;
-            switch (reader1.OptRead(ref irdr))
+            switch (reader1.OptRead(ref irdr, pathTracker))
             {
                 case (_, { }):
-                    switch (reader2.OptRead(ref rdr))
+                    switch (reader2.OptRead(ref rdr, pathTracker))
                     {
                         case (_, { }):
                             return Error(errorMessage ?? "Invalid JSON value.");
@@ -112,18 +175,18 @@ public static partial class JsonReader
             }
         });
 
-    [DebuggerDisplay("{" + nameof(name) + "}")]
+    [DebuggerDisplay("{" + nameof(Name) + "}")]
     private sealed class JsonProperty<T> : IJsonProperty<T>
     {
-        private readonly string name;
-
         public JsonProperty(string name, IJsonReader<T> reader, (bool, T) @default = default) =>
-            (this.name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
+            (Name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
+
+        public string Name { get; }
 
         public bool IsMatch(ref Utf8JsonReader reader) =>
             reader.TokenType != JsonTokenType.PropertyName
                 ? throw new ArgumentException(null, nameof(reader))
-                : reader.ValueTextEquals(this.name);
+                : reader.ValueTextEquals(Name);
 
         public IJsonReader<T> Reader { get; }
         public bool HasDefaultValue { get; }
@@ -139,6 +202,7 @@ public static partial class JsonReader
 
         private NonProperty() { }
 
+        public string Name => string.Empty;
         public bool IsMatch(ref Utf8JsonReader reader) => false;
         public IJsonReader<Unit> Reader => throw new NotSupportedException();
         public bool HasDefaultValue => true;
@@ -171,10 +235,10 @@ public static partial class JsonReader
             IJsonProperty<T13> property13, IJsonProperty<T14> property14, IJsonProperty<T15> property15,
             IJsonProperty<T16> property16,
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
-        Create((ref Utf8JsonReader reader) =>
+        Create((ref Utf8JsonReader reader, IPathTracker pathTracker) =>
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                return Error("Invalid JSON value where a JSON object was expected.");
 
             _ = reader.Read(); // "{"
 
@@ -220,7 +284,7 @@ public static partial class JsonReader
                 reader.Skip();
                 _ = reader.Read();
 
-                static bool ReadPropertyValue<TValue>(IJsonProperty<TValue> property,
+                bool ReadPropertyValue<TValue>(IJsonProperty<TValue> property,
                     ref Utf8JsonReader reader,
                     ref (bool, TValue) value,
                     ref string? error)
@@ -228,9 +292,11 @@ public static partial class JsonReader
                     if (value is (true, _) || !property.IsMatch(ref reader))
                         return false;
 
+                    pathTracker.ObjectProperty(property.Name);
+
                     _ = reader.Read();
 
-                    switch (property.Reader.OptRead(ref reader))
+                    switch (property.Reader.OptRead(ref reader, pathTracker))
                     {
                         case (_, { } err):
                             error = err;
@@ -268,6 +334,8 @@ public static partial class JsonReader
             DefaultUnassigned(property15, ref value15);
             DefaultUnassigned(property16, ref value16);
 
+            pathTracker.Pop();
+
             return (value1, value2, value3,
                     value4, value5, value6,
                     value7, value8, value9,
@@ -287,20 +355,20 @@ public static partial class JsonReader
         Tuple<T1, T2, T3>(IJsonReader<T1> item1Reader,
                           IJsonReader<T2> item2Reader,
                           IJsonReader<T3> item3Reader) =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
 
             _ = rdr.Read(); // "["
 
-            switch (item1Reader.OptRead(ref rdr) switch
+            switch (item1Reader.OptRead(ref rdr, pathTracker) switch
                     {
                         (_, { } error) => Error(error),
-                        var (item1, _) => item2Reader.OptRead(ref rdr) switch
+                        var (item1, _) => item2Reader.OptRead(ref rdr, pathTracker) switch
                         {
                             (_, { } error) => Error(error),
-                            var (item2, _) => item3Reader.OptRead(ref rdr) switch
+                            var (item2, _) => item3Reader.OptRead(ref rdr, pathTracker) switch
                             {
                                 (_, { } error) => Error(error),
                                 var (item3, _) => Value((item1, item2, item3))
@@ -326,7 +394,7 @@ public static partial class JsonReader
         });
 
     public static IJsonReader<T[]> Array<T>(IJsonReader<T> itemReader) =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, IPathTracker pathTracker) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
@@ -336,7 +404,9 @@ public static partial class JsonReader
             var list = new List<T>();
             while (rdr.TokenType != JsonTokenType.EndArray)
             {
-                switch (itemReader.OptRead(ref rdr))
+                pathTracker.ArrayIndex(list.Count);
+
+                switch (itemReader.OptRead(ref rdr, pathTracker))
                 {
                     case (_, { } error):
                         return Error(error);
@@ -346,6 +416,9 @@ public static partial class JsonReader
                 }
             }
 
+            if (list.Count > 0)
+                pathTracker.Pop();
+
             // Implementation of "Create" will effectively do the following:
             // _ = rdr.Read(); // "]"
 
@@ -353,25 +426,27 @@ public static partial class JsonReader
         });
 
     public static IJsonReader<TResult> Select<T, TResult>(this IJsonReader<T> reader, Func<T, TResult> selector) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        CreatePure((ref Utf8JsonReader rdr, IPathTracker pathTracker) => reader.OptRead(ref rdr, pathTracker) switch
         {
             (_, { } error) => Error(error),
             var (value, _) => Value(selector(value)),
         });
 
-    public static T Read<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader)
+    public static T Read<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader, IPathTracker? pathTracker = null)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
 
-        return reader.OptRead(ref utf8Reader) switch
+        switch (reader.OptRead(ref utf8Reader, pathTracker ?? NopPathTracker.Instance))
         {
-            (_, { } message) => throw new JsonException(message),
-            var (value, _) => value,
-        };
+            case (_, { } message):
+                throw new JsonException(message + (pathTracker?.ToString() is { } path ? $" Path: {path}" : null));
+            case var (value, _):
+                return value;
+        }
     }
 
-    private static ReadResult<T> OptRead<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader) =>
-        reader.TryRead(ref utf8Reader) ? Value(reader.LastReadValue) : Error(reader.LastReadError!);
+    private static ReadResult<T> OptRead<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader, IPathTracker pathTracker) =>
+        reader.TryRead(ref utf8Reader, pathTracker) ? Value(reader.LastReadValue) : Error(reader.LastReadError!);
 
     private static IJsonReader<T> Create<T>(JsonReaderHandler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
@@ -392,7 +467,7 @@ public static partial class JsonReader
         public static implicit operator ReadResult<T>(ReadErrorResult error) => new(default!, error.Message);
     }
 
-    private delegate ReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader);
+    private delegate ReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader, IPathTracker pathTracker);
 
     sealed class DelegatingJsonReader<T> : IJsonReader<T>
     {
@@ -409,9 +484,9 @@ public static partial class JsonReader
         public T LastReadValue { get; private set; }
         public string? LastReadError { get; private set; }
 
-        public bool TryRead(ref Utf8JsonReader reader)
+        public bool TryRead(ref Utf8JsonReader reader, IPathTracker pathTracker)
         {
-            (LastReadValue, LastReadError) = this.handler(ref reader);
+            (LastReadValue, LastReadError) = this.handler(ref reader, pathTracker);
             if (LastReadError is not null)
                 return false;
             if (this.shouldReadOnSuccess)
