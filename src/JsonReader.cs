@@ -100,7 +100,7 @@ public static partial class JsonReader
         reader.Validate(errorMessage: null, predicate);
 
     public static IJsonReader<T, JsonReadResult<T>> Validate<T>(this IJsonReader<T, JsonReadResult<T>> reader, string? errorMessage, Func<T, bool> predicate) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        CreatePure((ref Utf8JsonReader rdr) => reader.TryRead(ref rdr) switch
         {
             (_, { }) error => error,
             var (value, _) => predicate(value)
@@ -119,10 +119,10 @@ public static partial class JsonReader
         CreatePure((ref Utf8JsonReader rdr) =>
         {
             var irdr = rdr;
-            switch (reader1.OptRead(ref irdr))
+            switch (reader1.TryRead(ref irdr))
             {
                 case (_, { }):
-                    switch (reader2.OptRead(ref rdr))
+                    switch (reader2.TryRead(ref rdr))
                     {
                         case (_, { }):
                             return Error(errorMessage ?? "Invalid JSON value.");
@@ -253,7 +253,7 @@ public static partial class JsonReader
 
                     _ = reader.Read();
 
-                    switch (property.Reader.OptRead(ref reader))
+                    switch (property.Reader.TryRead(ref reader))
                     {
                         case (_, { } err):
                             error = err;
@@ -317,13 +317,13 @@ public static partial class JsonReader
 
             _ = rdr.Read(); // "["
 
-            switch (item1Reader.OptRead(ref rdr) switch
+            switch (item1Reader.TryRead(ref rdr) switch
                     {
                         (_, { } error) => Error(error),
-                        var (item1, _) => item2Reader.OptRead(ref rdr) switch
+                        var (item1, _) => item2Reader.TryRead(ref rdr) switch
                         {
                             (_, { } error) => Error(error),
-                            var (item2, _) => item3Reader.OptRead(ref rdr) switch
+                            var (item2, _) => item3Reader.TryRead(ref rdr) switch
                             {
                                 (_, { } error) => Error(error),
                                 var (item3, _) => Value((item1, item2, item3))
@@ -359,7 +359,7 @@ public static partial class JsonReader
             var list = new List<T>();
             while (rdr.TokenType != JsonTokenType.EndArray)
             {
-                switch (itemReader.OptRead(ref rdr))
+                switch (itemReader.TryRead(ref rdr))
                 {
                     case (_, { } error):
                         return Error(error);
@@ -376,7 +376,7 @@ public static partial class JsonReader
         });
 
     public static IJsonReader<TResult, JsonReadResult<TResult>> Select<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader, Func<T, TResult> selector) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
+        CreatePure((ref Utf8JsonReader rdr) => reader.TryRead(ref rdr) switch
         {
             (_, { } error) => Error(error),
             var (value, _) => Value(selector(value)),
@@ -386,19 +386,12 @@ public static partial class JsonReader
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
 
-        return reader.OptRead(ref utf8Reader) switch
+        return reader.TryRead(ref utf8Reader) switch
         {
             (_, { } message) => throw new JsonException(message),
             var (value, _) => value,
         };
     }
-
-    private static JsonReadResult<T> OptRead<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader) =>
-        reader.TryRead(ref utf8Reader) switch
-        {
-            (_, { } error) => Error(error),
-            (var value, null) => Value(value),
-        };
 
     private static IJsonReader<T, JsonReadResult<T>> Create<T>(JsonReaderHandler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
