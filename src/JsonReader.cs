@@ -131,8 +131,10 @@ public static partial class JsonReader
     public static IJsonReader<T, JsonReadResult<T>> Either<T>(IJsonReader<T, JsonReadResult<T>> reader1, IJsonReader<T, JsonReadResult<T>> reader2) =>
         Either(reader1, reader2, null);
 
-    public static IJsonReader<T, JsonReadResult<T>> Either<T>(IJsonReader<T, JsonReadResult<T>> reader1, IJsonReader<T, JsonReadResult<T>> reader2,
-                                           string? errorMessage) =>
+    public static IJsonReader<T, JsonReadResult<T>>
+        Either<T>(IJsonReader<T, JsonReadResult<T>> reader1,
+                  IJsonReader<T, JsonReadResult<T>> reader2,
+                  string? errorMessage) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
             var irdr = rdr;
