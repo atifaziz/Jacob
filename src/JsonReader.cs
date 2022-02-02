@@ -20,7 +20,14 @@ public interface IReadResult<out T>
     T Value { get; }
 }
 
-public record struct ReadResult<T>(T Value, string? Error) : IReadResult<T>;
+public record struct ReadErrorResult(string Message);
+
+public record struct ReadResult<T>(T Value, string? Error) : IReadResult<T>
+{
+#pragma warning disable CA2225 // Operator overloads have named alternates
+    public static implicit operator ReadResult<T>(ReadErrorResult error) => new(default!, error.Message);
+#pragma warning restore CA2225 // Operator overloads have named alternates
+}
 
 public interface IJsonReader<out T, out TReadResult>
     where TReadResult : IReadResult<T>
@@ -41,10 +48,10 @@ public interface IJsonProperty<out T, out TReadResult>
 
 public static partial class JsonReader
 {
-    public static T Read<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, string json) =>
+    public static T Read<T>(this IJsonReader<T, ReadResult<T>> reader, string json) =>
         reader.Read(Encoding.UTF8.GetBytes(json));
 
-    public static T Read<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, ReadOnlySpan<byte> utf8JsonTextBytes)
+    public static T Read<T>(this IJsonReader<T, ReadResult<T>> reader, ReadOnlySpan<byte> utf8JsonTextBytes)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
         var rdr = new Utf8JsonReader(utf8JsonTextBytes);
@@ -52,13 +59,13 @@ public static partial class JsonReader
         return reader.Read(ref rdr);
     }
 
-    public static IJsonReader<string, JsonR.ReadResult<string>> String() =>
+    public static IJsonReader<string, ReadResult<string>> String() =>
         Create((ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.String
             ? Value(rdr.GetString()!)
             : Error("Invalid JSON value where a JSON string was expected."));
 
-    public static IJsonReader<bool, JsonR.ReadResult<bool>> Boolean() =>
+    public static IJsonReader<bool, ReadResult<bool>> Boolean() =>
         Create((ref Utf8JsonReader rdr) =>
             rdr.TokenType switch
             {
@@ -67,7 +74,7 @@ public static partial class JsonReader
                 _ => Error("Invalid JSON value where a JSON Boolean was expected.")
             });
 
-    public static IJsonReader<T, JsonR.ReadResult<T>> Null<T>(T @null) =>
+    public static IJsonReader<T, ReadResult<T>> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.Null
             ? Value(@null)
@@ -80,13 +87,13 @@ public static partial class JsonReader
         Enum.IsDefined(typeof(T), value);
 #endif
 
-    public static IJsonReader<TEnum, JsonR.ReadResult<TEnum>> AsEnum<TSource, TEnum>(this IJsonReader<TSource, JsonR.ReadResult<TSource>> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
+    public static IJsonReader<TEnum, ReadResult<TEnum>> AsEnum<TSource, TEnum>(this IJsonReader<TSource, ReadResult<TSource>> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
-    public static IJsonReader<T, JsonR.ReadResult<T>> Validate<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, Func<T, bool> predicate) =>
+    public static IJsonReader<T, ReadResult<T>> Validate<T>(this IJsonReader<T, ReadResult<T>> reader, Func<T, bool> predicate) =>
         reader.Validate(errorMessage: null, predicate);
 
-    public static IJsonReader<T, JsonR.ReadResult<T>> Validate<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, string? errorMessage, Func<T, bool> predicate) =>
+    public static IJsonReader<T, ReadResult<T>> Validate<T>(this IJsonReader<T, ReadResult<T>> reader, string? errorMessage, Func<T, bool> predicate) =>
         CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
         {
             (_, { }) error => error,
@@ -95,13 +102,13 @@ public static partial class JsonReader
                             : Error(errorMessage ?? "Invalid JSON value.")
         });
 
-    public static IJsonReader<object, JsonR.ReadResult<object>> AsObject<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader) =>
+    public static IJsonReader<object, ReadResult<object>> AsObject<T>(this IJsonReader<T, ReadResult<T>> reader) =>
         from v in reader select (object)v;
 
-    public static IJsonReader<T, JsonR.ReadResult<T>> Either<T>(IJsonReader<T, JsonR.ReadResult<T>> reader1, IJsonReader<T, JsonR.ReadResult<T>> reader2) =>
+    public static IJsonReader<T, ReadResult<T>> Either<T>(IJsonReader<T, ReadResult<T>> reader1, IJsonReader<T, ReadResult<T>> reader2) =>
         Either(reader1, reader2, null);
 
-    public static IJsonReader<T, JsonR.ReadResult<T>> Either<T>(IJsonReader<T, JsonR.ReadResult<T>> reader1, IJsonReader<T, JsonR.ReadResult<T>> reader2,
+    public static IJsonReader<T, ReadResult<T>> Either<T>(IJsonReader<T, ReadResult<T>> reader1, IJsonReader<T, ReadResult<T>> reader2,
                                            string? errorMessage) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
@@ -123,11 +130,11 @@ public static partial class JsonReader
         });
 
     [DebuggerDisplay("{" + nameof(name) + "}")]
-    private sealed class JsonProperty<T> : IJsonProperty<T, JsonR.ReadResult<T>>
+    private sealed class JsonProperty<T> : IJsonProperty<T, ReadResult<T>>
     {
         private readonly string name;
 
-        public JsonProperty(string name, IJsonReader<T, JsonR.ReadResult<T>> reader, (bool, T) @default = default) =>
+        public JsonProperty(string name, IJsonReader<T, ReadResult<T>> reader, (bool, T) @default = default) =>
             (this.name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
 
         public bool IsMatch(ref Utf8JsonReader reader) =>
@@ -135,22 +142,22 @@ public static partial class JsonReader
                 ? throw new ArgumentException(null, nameof(reader))
                 : reader.ValueTextEquals(this.name);
 
-        public IJsonReader<T, JsonR.ReadResult<T>> Reader { get; }
+        public IJsonReader<T, ReadResult<T>> Reader { get; }
         public bool HasDefaultValue { get; }
         public T DefaultValue { get; }
     }
 
-    public static IJsonProperty<T, JsonR.ReadResult<T>> Property<T>(string name, IJsonReader<T, JsonR.ReadResult<T>> reader, (bool, T) @default = default) =>
+    public static IJsonProperty<T, ReadResult<T>> Property<T>(string name, IJsonReader<T, ReadResult<T>> reader, (bool, T) @default = default) =>
         new JsonProperty<T>(name, reader, @default);
 
-    private sealed class NonProperty : IJsonProperty<Unit, JsonR.ReadResult<Unit>>
+    private sealed class NonProperty : IJsonProperty<Unit, ReadResult<Unit>>
     {
         public static readonly NonProperty Instance = new();
 
         private NonProperty() { }
 
         public bool IsMatch(ref Utf8JsonReader reader) => false;
-        public IJsonReader<Unit, JsonR.ReadResult<Unit>> Reader => throw new NotSupportedException();
+        public IJsonReader<Unit, ReadResult<Unit>> Reader => throw new NotSupportedException();
         public bool HasDefaultValue => true;
         public Unit DefaultValue => default;
     }
@@ -159,7 +166,7 @@ public static partial class JsonReader
     /// Properties without a default value that are missing from the read JSON object will cause
     /// <see cref="JsonException"/> to be thrown.
     /// </remarks>
-    public static IJsonReader<T, JsonR.ReadResult<T>> Object<T>(IJsonProperty<T, JsonR.ReadResult<T>> property) =>
+    public static IJsonReader<T, ReadResult<T>> Object<T>(IJsonProperty<T, ReadResult<T>> property) =>
         Object(property, NonProperty.Instance, NonProperty.Instance,
                NonProperty.Instance, NonProperty.Instance, NonProperty.Instance,
                NonProperty.Instance, NonProperty.Instance, NonProperty.Instance,
@@ -172,14 +179,14 @@ public static partial class JsonReader
     /// Properties without a default value that are missing from the read JSON object will cause
     /// <see cref="JsonException"/> to be thrown.
     /// </remarks>
-    public static IJsonReader<TResult, JsonR.ReadResult<TResult>>
+    public static IJsonReader<TResult, ReadResult<TResult>>
         Object<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>(
-            IJsonProperty<T1, JsonR.ReadResult<T1>> property1, IJsonProperty<T2, JsonR.ReadResult<T2>> property2, IJsonProperty<T3, JsonR.ReadResult<T3>> property3,
-            IJsonProperty<T4, JsonR.ReadResult<T4>> property4, IJsonProperty<T5, JsonR.ReadResult<T5>> property5, IJsonProperty<T6, JsonR.ReadResult<T6>> property6,
-            IJsonProperty<T7, JsonR.ReadResult<T7>> property7, IJsonProperty<T8, JsonR.ReadResult<T8>> property8, IJsonProperty<T9, JsonR.ReadResult<T9>> property9,
-            IJsonProperty<T10, JsonR.ReadResult<T10>> property10, IJsonProperty<T11, JsonR.ReadResult<T11>> property11, IJsonProperty<T12, JsonR.ReadResult<T12>> property12,
-            IJsonProperty<T13, JsonR.ReadResult<T13>> property13, IJsonProperty<T14, JsonR.ReadResult<T14>> property14, IJsonProperty<T15, JsonR.ReadResult<T15>> property15,
-            IJsonProperty<T16, JsonR.ReadResult<T16>> property16,
+            IJsonProperty<T1, ReadResult<T1>> property1, IJsonProperty<T2, ReadResult<T2>> property2, IJsonProperty<T3, ReadResult<T3>> property3,
+            IJsonProperty<T4, ReadResult<T4>> property4, IJsonProperty<T5, ReadResult<T5>> property5, IJsonProperty<T6, ReadResult<T6>> property6,
+            IJsonProperty<T7, ReadResult<T7>> property7, IJsonProperty<T8, ReadResult<T8>> property8, IJsonProperty<T9, ReadResult<T9>> property9,
+            IJsonProperty<T10, ReadResult<T10>> property10, IJsonProperty<T11, ReadResult<T11>> property11, IJsonProperty<T12, ReadResult<T12>> property12,
+            IJsonProperty<T13, ReadResult<T13>> property13, IJsonProperty<T14, ReadResult<T14>> property14, IJsonProperty<T15, ReadResult<T15>> property15,
+            IJsonProperty<T16, ReadResult<T16>> property16,
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
         Create((ref Utf8JsonReader reader) =>
         {
@@ -230,7 +237,7 @@ public static partial class JsonReader
                 reader.Skip();
                 _ = reader.Read();
 
-                static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonR.ReadResult<TValue>> property,
+                static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, ReadResult<TValue>> property,
                     ref Utf8JsonReader reader,
                     ref (bool, TValue) value,
                     ref string? error)
@@ -255,7 +262,7 @@ public static partial class JsonReader
             // Implementation of "Create" will effectively do the following:
             // _ = rdr.Read(); // "}"
 
-            static void DefaultUnassigned<T>(IJsonProperty<T, JsonR.ReadResult<T>> property, ref (bool, T) v)
+            static void DefaultUnassigned<T>(IJsonProperty<T, ReadResult<T>> property, ref (bool, T) v)
             {
                 if (v is (false, _) && property.HasDefaultValue)
                     v = (true, property.DefaultValue);
@@ -293,10 +300,10 @@ public static partial class JsonReader
                  : Error("Invalid JSON object.");
         });
 
-    public static IJsonReader<(T1, T2, T3), JsonR.ReadResult<(T1, T2, T3)>>
-        Tuple<T1, T2, T3>(IJsonReader<T1, JsonR.ReadResult<T1>> item1Reader,
-                          IJsonReader<T2, JsonR.ReadResult<T2>> item2Reader,
-                          IJsonReader<T3, JsonR.ReadResult<T3>> item3Reader) =>
+    public static IJsonReader<(T1, T2, T3), ReadResult<(T1, T2, T3)>>
+        Tuple<T1, T2, T3>(IJsonReader<T1, ReadResult<T1>> item1Reader,
+                          IJsonReader<T2, ReadResult<T2>> item2Reader,
+                          IJsonReader<T3, ReadResult<T3>> item3Reader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
@@ -335,7 +342,7 @@ public static partial class JsonReader
             }
         });
 
-    public static IJsonReader<T[], JsonR.ReadResult<T[]>> Array<T>(IJsonReader<T, JsonR.ReadResult<T>> itemReader) =>
+    public static IJsonReader<T[], ReadResult<T[]>> Array<T>(IJsonReader<T, ReadResult<T>> itemReader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
@@ -362,14 +369,14 @@ public static partial class JsonReader
             return Value(list.ToArray());
         });
 
-    public static IJsonReader<TResult, JsonR.ReadResult<TResult>> Select<T, TResult>(this IJsonReader<T, JsonR.ReadResult<T>> reader, Func<T, TResult> selector) =>
+    public static IJsonReader<TResult, ReadResult<TResult>> Select<T, TResult>(this IJsonReader<T, ReadResult<T>> reader, Func<T, TResult> selector) =>
         CreatePure((ref Utf8JsonReader rdr) => reader.OptRead(ref rdr) switch
         {
             (_, { } error) => Error(error),
             var (value, _) => Value(selector(value)),
         });
 
-    public static T Read<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
+    public static T Read<T>(this IJsonReader<T, ReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
 
@@ -380,17 +387,17 @@ public static partial class JsonReader
         };
     }
 
-    private static ReadResult<T> OptRead<T>(this IJsonReader<T, JsonR.ReadResult<T>> reader, ref Utf8JsonReader utf8Reader) =>
+    private static ReadResult<T> OptRead<T>(this IJsonReader<T, ReadResult<T>> reader, ref Utf8JsonReader utf8Reader) =>
         reader.TryRead(ref utf8Reader) switch
         {
             (_, { } error) => Error(error),
             (var value, null) => Value(value),
         };
 
-    private static IJsonReader<T, JsonR.ReadResult<T>> Create<T>(JsonReaderHandler<T> handler) =>
+    private static IJsonReader<T, ReadResult<T>> Create<T>(JsonReaderHandler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
 
-    private static IJsonReader<T, JsonR.ReadResult<T>> CreatePure<T>(JsonReaderHandler<T> handler) =>
+    private static IJsonReader<T, ReadResult<T>> CreatePure<T>(JsonReaderHandler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -399,16 +406,9 @@ public static partial class JsonReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static ReadErrorResult Error(string message) => new(message);
 
-    private record struct ReadErrorResult(string Message);
-
-    private record struct ReadResult<T>(T Value, string? Error)
-    {
-        public static implicit operator ReadResult<T>(ReadErrorResult error) => new(default!, error.Message);
-    }
-
     private delegate ReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader);
 
-    sealed class DelegatingJsonReader<T> : IJsonReader<T, JsonR.ReadResult<T>>
+    sealed class DelegatingJsonReader<T> : IJsonReader<T, ReadResult<T>>
     {
         readonly JsonReaderHandler<T> handler;
         readonly bool shouldReadOnSuccess;
@@ -419,7 +419,7 @@ public static partial class JsonReader
             this.shouldReadOnSuccess = shouldReadOnSuccess;
         }
 
-        public JsonR.ReadResult<T> TryRead(ref Utf8JsonReader reader)
+        public ReadResult<T> TryRead(ref Utf8JsonReader reader)
         {
             var (value, error) = this.handler(ref reader);
             if (error is not null)
