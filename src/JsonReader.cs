@@ -21,7 +21,7 @@ public interface IJsonReader<out T>
 
 public interface IJsonProperty<out T>
 {
-    bool IsMatch(Utf8JsonReader reader);
+    bool IsMatch(ref Utf8JsonReader reader);
     IJsonReader<T> Reader { get; }
     bool HasDefaultValue { get; }
     T DefaultValue { get; }
@@ -120,7 +120,7 @@ public static partial class JsonReader
         public JsonProperty(string name, IJsonReader<T> reader, (bool, T) @default = default) =>
             (this.name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
 
-        public bool IsMatch(Utf8JsonReader reader) =>
+        public bool IsMatch(ref Utf8JsonReader reader) =>
             reader.TokenType != JsonTokenType.PropertyName
                 ? throw new ArgumentException(null, nameof(reader))
                 : reader.ValueTextEquals(this.name);
@@ -139,7 +139,7 @@ public static partial class JsonReader
 
         private NonProperty() { }
 
-        public bool IsMatch(Utf8JsonReader reader) => false;
+        public bool IsMatch(ref Utf8JsonReader reader) => false;
         public IJsonReader<Unit> Reader => throw new NotSupportedException();
         public bool HasDefaultValue => true;
         public Unit DefaultValue => default;
@@ -225,7 +225,7 @@ public static partial class JsonReader
                     ref (bool, TValue) value,
                     ref string? error)
                 {
-                    if (value is (true, _) || !property.IsMatch(reader))
+                    if (value is (true, _) || !property.IsMatch(ref reader))
                         return false;
 
                     _ = reader.Read();
