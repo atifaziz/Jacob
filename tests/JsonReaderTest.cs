@@ -26,7 +26,7 @@ public class JsonReaderTest
     public static string Strictify(string json) =>
         JToken.Parse(json).ToString(Formatting.None);
 
-    private static void TestMovesReaderPastReadValue<T>(IJsonReader<T> reader, string json)
+    private static void TestMovesReaderPastReadValue<T>(IJsonReader<T, ReadResult<T>> reader, string json)
     {
         var sentinel = $"END-{Guid.NewGuid()}";
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify($"[{json}, '{sentinel}']")));
@@ -416,7 +416,7 @@ public class JsonReaderTest
         Assert.Equal("reader", ex.ParamName);
     }
 
-    private static readonly IJsonReader<(ulong, string)> Object2Reader =
+    private static readonly IJsonReader<(ulong, string), ReadResult<(ulong, string)>> Object2Reader =
         JsonReader.Object(JsonReader.Property("num", JsonReader.UInt64(), (true, 0UL)),
                           JsonReader.Property("str", JsonReader.String()),
                           ValueTuple.Create);
@@ -450,10 +450,10 @@ public class JsonReaderTest
         Assert.Throws<JsonException>(() => _ = Object2Reader.Read(Strictify(json)));
     }
 
-    private static readonly IJsonReader<object> EitherReader =
+    private static readonly IJsonReader<object, ReadResult<object>> EitherReader =
         JsonReader.Either(JsonReader.String().AsObject(),
-                          JsonReader.Either(JsonReader.Array(JsonReader.UInt64().AsObject()),
-                                            JsonReader.Array(JsonReader.Boolean().AsObject())));
+                          JsonReader.Either(JsonReader.Array(JsonReader.UInt64()).AsObject(),
+                                            JsonReader.Array(JsonReader.Boolean()).AsObject()));
 
     [Theory]
     [InlineData("'foobar'")]
