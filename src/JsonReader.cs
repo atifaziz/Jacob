@@ -411,10 +411,10 @@ public static partial class JsonReader
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
+    private static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    static JsonReadError Error(string message) => new(message);
+    private static JsonReadError Error(string message) => new(message);
 
     private delegate JsonReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader);
 
