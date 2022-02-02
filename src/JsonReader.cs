@@ -65,6 +65,17 @@ public static partial class JsonReader
         return reader.Read(ref rdr);
     }
 
+    public static JsonReadResult<T> TryRead<T>(this IJsonReader<T, JsonReadResult<T>> reader, string json) =>
+        reader.TryRead(Encoding.UTF8.GetBytes(json));
+
+    public static JsonReadResult<T> TryRead<T>(this IJsonReader<T, JsonReadResult<T>> reader, ReadOnlySpan<byte> utf8JsonTextBytes)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+        var rdr = new Utf8JsonReader(utf8JsonTextBytes);
+        _ = rdr.Read();
+        return reader.TryRead(ref rdr);
+    }
+
     public static IJsonReader<string, JsonReadResult<string>> String() =>
         Create((ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.String
@@ -338,7 +349,7 @@ public static partial class JsonReader
                 case var result:
                 {
                     if (rdr.TokenType != JsonTokenType.EndArray)
-                        return Error("Invalid JSON; expected JSON array to end.");
+                        return Error("Invalid JSON value; JSON array has too many values.");
 
                     // Implementation of "Create" will effectively do the following:
                     // _ = rdr.Read(); // "]"
