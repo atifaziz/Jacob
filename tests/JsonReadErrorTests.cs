@@ -11,7 +11,7 @@ public class JsonReadErrorTests
     [Fact]
     public void Constructor_Initializes_Message()
     {
-        var message = "oops";
+        const string message = "oops";
         var error = new JsonReadError(message);
         Assert.Equal(message, error.Message);
     }
@@ -19,7 +19,7 @@ public class JsonReadErrorTests
     [Fact]
     public void ToString_Returns_Message()
     {
-        var message = "oops";
+        const string message = "oops";
         var error = new JsonReadError(message);
         Assert.Equal(message, error.ToString());
     }
