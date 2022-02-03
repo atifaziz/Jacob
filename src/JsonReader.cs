@@ -77,13 +77,13 @@ public static partial class JsonReader
     }
 
     public static IJsonReader<string, JsonReadResult<string>> String() =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create(static (ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.String
             ? Value(rdr.GetString()!)
             : Error("Invalid JSON value where a JSON string was expected."));
 
     public static IJsonReader<bool, JsonReadResult<bool>> Boolean() =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create(static (ref Utf8JsonReader rdr) =>
             rdr.TokenType switch
             {
                 JsonTokenType.True => Value(true),
@@ -92,7 +92,7 @@ public static partial class JsonReader
             });
 
     public static IJsonReader<DateTime, JsonReadResult<DateTime>> DateTime() =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create(static (ref Utf8JsonReader rdr) =>
             rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
             ? Value(value)
             : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
