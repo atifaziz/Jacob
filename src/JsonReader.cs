@@ -7,6 +7,7 @@ namespace JsonR;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -112,6 +113,12 @@ public static partial class JsonReader
                 rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
                 ? Value(value)
                 : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
+
+    public static IJsonReader<DateTime, JsonReadResult<DateTime>> DateTime(string format, IFormatProvider? provider) =>
+        DateTime(format, provider, DateTimeStyles.None);
+
+    public static IJsonReader<DateTime, JsonReadResult<DateTime>> DateTime(string format, IFormatProvider? provider, DateTimeStyles styles) =>
+        String().TryMap(s => System.DateTime.TryParseExact(s, format, provider, styles, out var value) ? Value(value) : Error(""));
 
     public static IJsonReader<T, JsonReadResult<T>> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
