@@ -136,6 +136,27 @@ public static partial class JsonReader
         Enum.IsDefined(typeof(T), value);
 #endif
 
+    private static bool TryParseEnum<T>(string input, bool ignoreCase, out T result) where T : struct, Enum
+    {
+#if NET5_0_OR_GREATER
+        return Enum.TryParse(input, ignoreCase, out result);
+#else
+        if (Enum.TryParse(typeof(T), input, ignoreCase, out var obj))
+        {
+            result = (T)obj!;
+            return true;
+        }
+        else
+        {
+            result = default;
+            return false;
+        }
+#endif
+    }
+
+    public static IJsonReader<T, JsonReadResult<T>> AsEnum<T>(this IJsonReader<string, JsonReadResult<string>> reader) where T : struct, Enum =>
+        reader.TryMap(s => TryParseEnum(s, false, out T value) ? Value(value) : Error($"Invalid member for {typeof(T)}."));
+
     public static IJsonReader<TEnum, JsonReadResult<TEnum>> AsEnum<TSource, TEnum>(this IJsonReader<TSource, JsonReadResult<TSource>> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
@@ -389,6 +410,18 @@ public static partial class JsonReader
                 (_, { } error) => Error(error),
                 var (value, _) => selector(value)
             });
+
+    public static IJsonReader<TResult, JsonReadResult<TResult>> MapReader<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader,
+                                                                                      Func<T, IJsonReader<TResult, JsonReadResult<TResult>>> mapper) =>
+        CreatePure((ref Utf8JsonReader rdr) =>
+        {
+            var irdr = rdr;
+            return reader.TryRead(ref irdr) switch
+            {
+                (_, { } error) => Error(error),
+                var (value, _) => mapper(value).TryRead(ref rdr)
+            };
+        });
 
     public static JsonConverter<T> ToConverter<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
         new JsonReaderConverter<T>(reader);
