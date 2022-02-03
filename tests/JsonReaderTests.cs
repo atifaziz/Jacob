@@ -12,7 +12,7 @@ using Xunit;
 using JToken = Newtonsoft.Json.Linq.JToken;
 using Formatting = Newtonsoft.Json.Formatting;
 
-public class JsonReaderTest
+public class JsonReaderTests
 {
     /// <summary>
     /// Takes somewhat non-conforming JSON
