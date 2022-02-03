@@ -32,10 +32,14 @@ partial class JsonReader
     })
     { #>
 
+    private static IJsonReader<<#= e.Native #>, JsonReadResult<<#= e.Native #>>> <#= e.Native #>Reader;
+
     public static IJsonReader<<#= e.Native #>, JsonReadResult<<#= e.Native #>>> <#= e.Api #>() =>
-        Create((ref Utf8JsonReader rdr) => rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
-                                         ? Value(value)
-                                         : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
+        <#= e.Native #>Reader ??=
+            Create((ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
+                ? Value(value)
+                : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
 <#
     }
 }

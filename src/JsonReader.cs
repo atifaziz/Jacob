@@ -76,26 +76,35 @@ public static partial class JsonReader
         return reader.TryRead(ref rdr);
     }
 
+    static IJsonReader<string, JsonReadResult<string>>? stringReader;
+
     public static IJsonReader<string, JsonReadResult<string>> String() =>
-        Create(static (ref Utf8JsonReader rdr) =>
-            rdr.TokenType == JsonTokenType.String
-            ? Value(rdr.GetString()!)
-            : Error("Invalid JSON value where a JSON string was expected."));
+        stringReader ??=
+            Create(static (ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.String
+                ? Value(rdr.GetString()!)
+                : Error("Invalid JSON value where a JSON string was expected."));
+
+    static IJsonReader<bool, JsonReadResult<bool>>? booleanReader;
 
     public static IJsonReader<bool, JsonReadResult<bool>> Boolean() =>
-        Create(static (ref Utf8JsonReader rdr) =>
-            rdr.TokenType switch
-            {
-                JsonTokenType.True => Value(true),
-                JsonTokenType.False => Value(false),
-                _ => Error("Invalid JSON value where a JSON Boolean was expected.")
-            });
+        booleanReader ??=
+            Create(static (ref Utf8JsonReader rdr) =>
+                rdr.TokenType switch
+                {
+                    JsonTokenType.True => Value(true),
+                    JsonTokenType.False => Value(false),
+                    _ => Error("Invalid JSON value where a JSON Boolean was expected.")
+                });
+
+    static IJsonReader<DateTime, JsonReadResult<DateTime>>? dateTimeReader;
 
     public static IJsonReader<DateTime, JsonReadResult<DateTime>> DateTime() =>
-        Create(static (ref Utf8JsonReader rdr) =>
-            rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
-            ? Value(value)
-            : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
+        dateTimeReader ??=
+            Create(static (ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
+                ? Value(value)
+                : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
 
     public static IJsonReader<T, JsonReadResult<T>> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
