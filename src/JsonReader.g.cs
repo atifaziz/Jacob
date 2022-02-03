@@ -23,6 +23,24 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
 
+    private static IJsonReader<int, JsonReadResult<int>> intReader;
+
+    public static IJsonReader<int, JsonReadResult<int>> Int32() =>
+        intReader ??=
+            Create((ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
+                ? Value(value)
+                : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
+
+    private static IJsonReader<long, JsonReadResult<long>> longReader;
+
+    public static IJsonReader<long, JsonReadResult<long>> Int64() =>
+        longReader ??=
+            Create((ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt64(out var value)
+                ? Value(value)
+                : Error("Invalid JSON value; expecting a JSON number compatible with Int64."));
+
     private static IJsonReader<ushort, JsonReadResult<ushort>> ushortReader;
 
     public static IJsonReader<ushort, JsonReadResult<ushort>> UInt16() =>
@@ -67,15 +85,6 @@ partial class JsonReader
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
-
-    private static IJsonReader<int, JsonReadResult<int>> intReader;
-
-    public static IJsonReader<int, JsonReadResult<int>> Int32() =>
-        intReader ??=
-            Create((ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause

@@ -340,6 +340,34 @@ public class JsonReaderTests
     }
 
     [Fact]
+    public void Int64_Moves_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.Int64(), "42");
+    }
+
+    [Theory]
+    [InlineData(42, "42")]
+    public void Int64_With_Valid_Input(long expected, string json)
+    {
+        var result = JsonReader.Int64().Read(Strictify(json));
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("false")]
+    [InlineData("true")]
+    [InlineData("9223372036854775808")] // long.MaxValue + 1
+    [InlineData("'foobar'")]
+    [InlineData("[]")]
+    [InlineData("{}")]
+    public void Int64_With_Invalid_Input(string json)
+    {
+        TestInvalidInput(JsonReader.Int64(), json,
+                         "Invalid JSON value; expecting a JSON number compatible with Int64.");
+    }
+
+    [Fact]
     public void Double_Moves_Reader()
     {
         TestMovesReaderPastReadValue(JsonReader.Double(), "42");
