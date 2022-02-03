@@ -126,13 +126,14 @@ public static partial class JsonReader
         reader.Validate(errorMessage: null, predicate);
 
     public static IJsonReader<T, JsonReadResult<T>> Validate<T>(this IJsonReader<T, JsonReadResult<T>> reader, string? errorMessage, Func<T, bool> predicate) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.TryRead(ref rdr) switch
-        {
-            (_, { }) error => error,
-            var (value, _) => predicate(value)
-                            ? Value(value)
-                            : Error(errorMessage ?? "Invalid JSON value.")
-        });
+        CreatePure((ref Utf8JsonReader rdr) =>
+            reader.TryRead(ref rdr) switch
+            {
+                (_, { }) error => error,
+                var (value, _) => predicate(value)
+                                ? Value(value)
+                                : Error(errorMessage ?? "Invalid JSON value.")
+            });
 
     public static IJsonReader<object, JsonReadResult<object>> AsObject<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
         from v in reader select (object)v;
@@ -274,9 +275,9 @@ public static partial class JsonReader
                 _ = reader.Read();
 
                 static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                    ref Utf8JsonReader reader,
-                    ref (bool, TValue) value,
-                    ref string? error)
+                                                      ref Utf8JsonReader reader,
+                                                      ref (bool, TValue) value,
+                                                      ref string? error)
                 {
                     if (value is (true, _) || !property.IsMatch(ref reader))
                         return false;
@@ -364,11 +365,12 @@ public static partial class JsonReader
         });
 
     public static IJsonReader<TResult, JsonReadResult<TResult>> Select<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader, Func<T, TResult> selector) =>
-        CreatePure((ref Utf8JsonReader rdr) => reader.TryRead(ref rdr) switch
-        {
-            (_, { } error) => Error(error),
-            var (value, _) => Value(selector(value)),
-        });
+        CreatePure((ref Utf8JsonReader rdr) =>
+            reader.TryRead(ref rdr) switch
+            {
+                (_, { } error) => Error(error),
+                var (value, _) => Value(selector(value)),
+            });
 
     public static T Read<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
     {
