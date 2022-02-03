@@ -84,6 +84,9 @@ public static partial class JsonReader
         return reader.TryRead(ref rdr);
     }
 
+    public static IJsonReader<T, JsonReadResult<T>> Error<T>(string message) =>
+        Create<T>((ref Utf8JsonReader _) => Error(message));
+
     static IJsonReader<string, JsonReadResult<string>>? stringReader;
 
     public static IJsonReader<string, JsonReadResult<string>> String() =>

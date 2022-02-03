@@ -56,6 +56,19 @@ public class JsonReaderTests
         TestMovesReaderPastReadValue(JsonReader.String(), "'foobar'");
     }
 
+    [Fact]
+    public void Error_Returns_Error()
+    {
+        const string message = "oops";
+        var reader = JsonReader.Error<string>(message);
+        var utf8Reader = new Utf8JsonReader(Encoding.UTF8.GetBytes("42"));
+        var (value, error) = reader.TryRead(ref utf8Reader);
+
+        Assert.Equal(0, utf8Reader.BytesConsumed);
+        Assert.Null(value);
+        Assert.Equal(message, error);
+    }
+
     [Theory]
     [InlineData("", "''")]
     [InlineData("foobar", "'foobar'")]
