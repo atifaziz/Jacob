@@ -613,6 +613,12 @@ public class JsonReaderTests
     }
 
     [Fact]
+    public void AsEnum_Doesnt_Move_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), "125");
+    }
+
+    [Fact]
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
