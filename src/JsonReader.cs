@@ -127,14 +127,7 @@ public static partial class JsonReader
         reader.Validate(errorMessage: null, predicate);
 
     public static IJsonReader<T, JsonReadResult<T>> Validate<T>(this IJsonReader<T, JsonReadResult<T>> reader, string? errorMessage, Func<T, bool> predicate) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
-            reader.TryRead(ref rdr) switch
-            {
-                (_, { }) error => error,
-                var (value, _) => predicate(value)
-                                ? Value(value)
-                                : Error(errorMessage ?? "Invalid JSON value.")
-            });
+        reader.TryMap(v => predicate(v) ? Value(v) : Error(errorMessage ?? "Invalid JSON value."));
 
     public static IJsonReader<object, JsonReadResult<object>> AsObject<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
         from v in reader select (object)v;
@@ -371,6 +364,14 @@ public static partial class JsonReader
             {
                 (_, { } error) => Error(error),
                 var (value, _) => Value(selector(value)),
+            });
+
+    public static IJsonReader<TResult, JsonReadResult<TResult>> TryMap<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader, Func<T, JsonReadResult<TResult>> selector) =>
+        CreatePure((ref Utf8JsonReader rdr) =>
+            reader.TryRead(ref rdr) switch
+            {
+                (_, { } error) => Error(error),
+                var (value, _) => selector(value)
             });
 
     public static JsonConverter<T> ToConverter<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
