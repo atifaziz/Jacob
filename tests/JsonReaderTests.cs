@@ -715,38 +715,4 @@ public class JsonReaderTests
     {
         TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
     }
-
-    static readonly IJsonReader<object, JsonReadResult<object>> DiscriminatingReader =
-        JsonReader.Object(JsonReader.Property("kind", JsonReader.String().AsEnum<JsonValueKind>()))
-                  .MapReader(k => k switch
-                  {
-                      JsonValueKind.Number => JsonReader.Object(JsonReader.Property("num", JsonReader.Int32())).AsObject(),
-                      JsonValueKind.String => JsonReader.Object(JsonReader.Property("str", JsonReader.String())).AsObject(),
-                      _ => JsonReader.Error<object>("Invalid JSON object.")
-                  });
-
-    [Theory]
-    [InlineData(42, "{ num: 42, kind: 'Number' }")]
-    [InlineData("foobar", "{ str: 'foobar', kind: 'String' }")]
-    public void MapReader_With_Valid_Input(object expected, string json)
-    {
-        Assert.Equal(expected, DiscriminatingReader.Read(Strictify(json)));
-    }
-
-    [Theory]
-    [InlineData("{ }")]
-    [InlineData("{ kind: 'Number' }")]
-    [InlineData("{ kind: 'String', num: 42 }")]
-    [InlineData("{ kind: 'Null' }")]
-    [InlineData("{ kind: 'Array' }")]
-    public void MapReader_With_Invalid_Input(string json)
-    {
-        TestInvalidInput(DiscriminatingReader, json, "Invalid JSON object.");
-    }
-
-    [Fact]
-    public void MapReader_Doesnt_Move_Reader()
-    {
-        TestMovesReaderPastReadValue(DiscriminatingReader, "{ num: 42, kind: 'Number' }");
-    }
 }

@@ -411,18 +411,6 @@ public static partial class JsonReader
                 var (value, _) => selector(value)
             });
 
-    public static IJsonReader<TResult, JsonReadResult<TResult>> MapReader<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader,
-                                                                                      Func<T, IJsonReader<TResult, JsonReadResult<TResult>>> mapper) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
-        {
-            var irdr = rdr;
-            return reader.TryRead(ref irdr) switch
-            {
-                (_, { } error) => Error(error),
-                var (value, _) => mapper(value).TryRead(ref rdr)
-            };
-        });
-
     public static JsonConverter<T> ToConverter<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
         new JsonReaderConverter<T>(reader);
 
