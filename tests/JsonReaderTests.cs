@@ -594,7 +594,7 @@ public class JsonReaderTests
     [InlineData(LoRaBandwidth.BW125, "125")]
     [InlineData(LoRaBandwidth.BW250, "250")]
     [InlineData(LoRaBandwidth.BW500, "500")]
-    public void AsEnum_With_Valid_Input(LoRaBandwidth expected, string json)
+    public void Number_AsEnum_With_Valid_Input(LoRaBandwidth expected, string json)
     {
         var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
         var result = reader.Read(Strictify(json));
@@ -606,16 +606,74 @@ public class JsonReaderTests
     [InlineData("225")]
     [InlineData("350")]
     [InlineData("600")]
-    public void AsEnum_With_Invalid_Input(string json)
+    public void Number_AsEnum_With_Invalid_Input(string json)
     {
         TestInvalidInput(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), json,
                          $"Invalid member for {typeof(LoRaBandwidth)}.");
     }
 
     [Fact]
-    public void AsEnum_Doesnt_Move_Reader()
+    public void Number_AsEnum_Doesnt_Move_Reader()
     {
         TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), "125");
+    }
+
+    [Theory]
+    [InlineData(JsonValueKind.Undefined, "'Undefined'")]
+    [InlineData(JsonValueKind.Object, "'Object'")]
+    [InlineData(JsonValueKind.Array, "'Array'")]
+    [InlineData(JsonValueKind.String, "'String'")]
+    [InlineData(JsonValueKind.Number, "'Number'")]
+    [InlineData(JsonValueKind.True, "'True'")]
+    [InlineData(JsonValueKind.False, "'False'")]
+    [InlineData(JsonValueKind.Null, "'Null'")]
+    public void String_AsEnum_With_Valid_Input(JsonValueKind expected, string json)
+    {
+        var reader = JsonReader.String().AsEnum<JsonValueKind>();
+        var result = reader.Read(Strictify(json));
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(JsonValueKind.Undefined, true, "'undefined'")]
+    [InlineData(JsonValueKind.Object, true, "'object'")]
+    [InlineData(JsonValueKind.Array, true, "'array'")]
+    [InlineData(JsonValueKind.String, true, "'string'")]
+    [InlineData(JsonValueKind.Number, true, "'number'")]
+    [InlineData(JsonValueKind.True, true, "'true'")]
+    [InlineData(JsonValueKind.False, true, "'false'")]
+    [InlineData(JsonValueKind.Null, true, "'null'")]
+    [InlineData(JsonValueKind.Undefined, false, "'Undefined'")]
+    [InlineData(JsonValueKind.Object, false, "'Object'")]
+    [InlineData(JsonValueKind.Array, false, "'Array'")]
+    [InlineData(JsonValueKind.String, false, "'String'")]
+    [InlineData(JsonValueKind.Number, false, "'Number'")]
+    [InlineData(JsonValueKind.True, false, "'True'")]
+    [InlineData(JsonValueKind.False, false, "'False'")]
+    [InlineData(JsonValueKind.Null, false, "'Null'")]
+    public void String_AsEnum_With_Ignore_Case_Option_With_Valid_Input(JsonValueKind expected, bool ignoreCase, string json)
+    {
+        var reader = JsonReader.String().AsEnum<JsonValueKind>(ignoreCase);
+        var result = reader.Read(Strictify(json));
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("'foo'")]
+    [InlineData("'bar'")]
+    [InlineData("'baz'")]
+    public void String_AsEnum_With_Invalid_Input(string json)
+    {
+        TestInvalidInput(JsonReader.String().AsEnum<JsonValueKind>(), json,
+                         $"Invalid member for {typeof(JsonValueKind)}.");
+    }
+
+    [Fact]
+    public void String_AsEnum_Doesnt_Move_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), "'Null'");
     }
 
     [Fact]

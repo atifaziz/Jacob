@@ -155,7 +155,10 @@ public static partial class JsonReader
     }
 
     public static IJsonReader<T, JsonReadResult<T>> AsEnum<T>(this IJsonReader<string, JsonReadResult<string>> reader) where T : struct, Enum =>
-        reader.TryMap(s => TryParseEnum(s, false, out T value) ? Value(value) : Error($"Invalid member for {typeof(T)}."));
+        AsEnum<T>(reader, ignoreCase: false);
+
+    public static IJsonReader<T, JsonReadResult<T>> AsEnum<T>(this IJsonReader<string, JsonReadResult<string>> reader, bool ignoreCase) where T : struct, Enum =>
+        reader.TryMap(s => TryParseEnum(s, ignoreCase, out T value) ? Value(value) : Error($"Invalid member for {typeof(T)}."));
 
     public static IJsonReader<TEnum, JsonReadResult<TEnum>> AsEnum<TSource, TEnum>(this IJsonReader<TSource, JsonReadResult<TSource>> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
