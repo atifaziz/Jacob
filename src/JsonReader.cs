@@ -27,10 +27,16 @@ public static class JsonReadResult
     public static JsonReadResult<T> Value<T>(T value) => new(value, null);
 }
 
-public record struct JsonReadError(string Message);
+public record struct JsonReadError(string Message)
+{
+    public override string ToString() => Message;
+}
 
 public record struct JsonReadResult<T>(T Value, string? Error) : IReadResult<T>
 {
+    public override string ToString() =>
+        Error is { } someError ? $"Error: {someError}" : $"Value: {Value}";
+
 #pragma warning disable CA2225 // Operator overloads have named alternates
     public static implicit operator JsonReadResult<T>(JsonReadError error) => new(default!, error.Message);
 #pragma warning restore CA2225 // Operator overloads have named alternates
