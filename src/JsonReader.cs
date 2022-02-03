@@ -409,10 +409,10 @@ public static partial class JsonReader
         };
     }
 
-    private static IJsonReader<T, JsonReadResult<T>> Create<T>(JsonReaderHandler<T> handler) =>
+    private static IJsonReader<T, JsonReadResult<T>> Create<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
 
-    private static IJsonReader<T, JsonReadResult<T>> CreatePure<T>(JsonReaderHandler<T> handler) =>
+    private static IJsonReader<T, JsonReadResult<T>> CreatePure<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -421,14 +421,14 @@ public static partial class JsonReader
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static JsonReadError Error(string message) => new(message);
 
-    private delegate JsonReadResult<T> JsonReaderHandler<T>(ref Utf8JsonReader reader);
+    private delegate JsonReadResult<T> Handler<T>(ref Utf8JsonReader reader);
 
     sealed class DelegatingJsonReader<T> : IJsonReader<T, JsonReadResult<T>>
     {
-        readonly JsonReaderHandler<T> handler;
+        readonly Handler<T> handler;
         readonly bool shouldReadOnSuccess;
 
-        public DelegatingJsonReader(JsonReaderHandler<T> handler, bool shouldReadOnSuccess)
+        public DelegatingJsonReader(Handler<T> handler, bool shouldReadOnSuccess)
         {
             this.handler = handler;
             this.shouldReadOnSuccess = shouldReadOnSuccess;
