@@ -512,7 +512,7 @@ public class JsonReaderTests
         Assert.Equal("reader", ex.ParamName);
     }
 
-    private static readonly IJsonReader<(int, string), JsonReadResult<(int, string)>> Object2Reader =
+    private static readonly IJsonReader<(int, string), JsonReadResult<(int, string)>> ObjectReader =
         JsonReader.Object(JsonReader.Property("num", JsonReader.Int32(), (true, 0)),
                           JsonReader.Property("str", JsonReader.String()),
                           ValueTuple.Create);
@@ -523,9 +523,9 @@ public class JsonReaderTests
     [InlineData(42, "foobar", "{ str: 'foobar', num: 42 }")]
     [InlineData(42, "foobar", "{ str: 'FOOBAR', num: -42, str: 'foobar', num: 42 }")]
     [InlineData(42, "foobar", "{ nums: [1, 2, 3], str: 'foobar', num: 42, obj: {} }")]
-    public void Object2_With_Valid_Input(int expectedNum, string expectedStr, string json)
+    public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
-        var (num, str) = Object2Reader.Read(Strictify(json));
+        var (num, str) = ObjectReader.Read(Strictify(json));
 
         Assert.Equal(expectedNum, num);
         Assert.Equal(expectedStr, str);
@@ -541,9 +541,9 @@ public class JsonReaderTests
     [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "{ num: '42', str: 'foobar' }")]
     [InlineData("Invalid JSON object.", "{ NUM: 42, STR: 'foobar' }")]
     [InlineData("Invalid JSON object.", "{ num: 42 }")]
-    public void Object2_With_Invalid_Input(string expectedError, string json)
+    public void Object_With_Invalid_Input(string expectedError, string json)
     {
-        TestInvalidInput(Object2Reader, json, expectedError);
+        TestInvalidInput(ObjectReader, json, expectedError);
     }
 
     private static readonly IJsonReader<Dictionary<string, int>, JsonReadResult<Dictionary<string, int>>>
