@@ -546,6 +546,13 @@ public class JsonReaderTests
         TestInvalidInput(ObjectReader, json, expectedError);
     }
 
+    [Theory]
+    [InlineData("{ str: 'foobar', num: 42 }")]
+    public void Object_Does_Move_Reader(string json)
+    {
+        TestMovesReaderPastReadValue(ObjectReader, json);
+    }
+
     private static readonly IJsonReader<Dictionary<string, int>, JsonReadResult<Dictionary<string, int>>>
         KeyIntMapReader = JsonReader.Object(JsonReader.Int32(), ps => ps.ToDictionary(e => e.Key, e => e.Value));
 
