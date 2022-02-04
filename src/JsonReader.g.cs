@@ -7,7 +7,7 @@
 // Changes to this file will be lost if the code is re-generated.
 //------------------------------------------------------------------------------
 
-namespace JsonR;
+namespace Jacob;
 
 using System;
 using System.Text.Json;
