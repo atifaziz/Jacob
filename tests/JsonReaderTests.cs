@@ -803,6 +803,7 @@ public class JsonReaderTests
     [InlineData("[]")]
     [InlineData("{}")]
     [InlineData("'000-000'")]
+    [InlineData("'this0000-is00-not0-very-valid0000000'")]
     [InlineData("'00000000000000000000000000000000'")]
     [InlineData("'{00000000-0000-0000-0000-000000000000}'")]
     [InlineData("'(00000000-0000-0000-0000-000000000000)'")]
