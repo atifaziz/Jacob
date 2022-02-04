@@ -172,6 +172,15 @@ public static partial class JsonReader
     public static IJsonReader<object, JsonReadResult<object>> AsObject<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
         from v in reader select (object)v;
 
+    public static IJsonReader<T, JsonReadResult<T>> Or<T>(this IJsonReader<T, JsonReadResult<T>> reader1,
+                                                          IJsonReader<T, JsonReadResult<T>> reader2) =>
+        Either(reader1, reader2, null);
+
+    public static IJsonReader<T, JsonReadResult<T>> Or<T>(this IJsonReader<T, JsonReadResult<T>> reader1,
+                                                          IJsonReader<T, JsonReadResult<T>> reader2,
+                                                          string? errorMessage) =>
+        Either(reader1, reader2, errorMessage);
+
     public static IJsonReader<T, JsonReadResult<T>> Either<T>(IJsonReader<T, JsonReadResult<T>> reader1, IJsonReader<T, JsonReadResult<T>> reader2) =>
         Either(reader1, reader2, null);
 
