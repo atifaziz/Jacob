@@ -96,6 +96,15 @@ public static partial class JsonReader
                 ? Value(rdr.GetString()!)
                 : Error("Invalid JSON value where a JSON string was expected."));
 
+    static IJsonReader<Guid, JsonReadResult<Guid>>? guidReader;
+
+    public static IJsonReader<Guid, JsonReadResult<Guid>> Guid() =>
+        guidReader ??=
+            Create(static (ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.String && rdr.TryGetGuid(out var value)
+                ? Value(value)
+                : Error("Invalid JSON value where a Guid was expected in the 'D' format (hyphen-separated)."));
+
     static IJsonReader<bool, JsonReadResult<bool>>? booleanReader;
 
     public static IJsonReader<bool, JsonReadResult<bool>> Boolean() =>

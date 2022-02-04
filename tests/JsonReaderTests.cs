@@ -779,4 +779,37 @@ public class JsonReaderTests
     {
         TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
     }
+
+    [Fact]
+    public void Guid_Moves_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.Guid(), $"'{Guid.NewGuid()}'");
+    }
+
+    [Theory]
+    [InlineData("fe58502d-1da1-456d-960c-314e09c2dcd1", "'fe58502d-1da1-456d-960c-314e09c2dcd1'")]
+    public void Guid_With_Valid_Input(Guid expected, string json)
+    {
+        var result = JsonReader.Guid().Read(Strictify(json));
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("null")]
+    [InlineData("false")]
+    [InlineData("true")]
+    [InlineData("42")]
+    [InlineData("'foobar'")]
+    [InlineData("[]")]
+    [InlineData("{}")]
+    [InlineData("'000-000'")]
+    [InlineData("'00000000000000000000000000000000'")]
+    [InlineData("'{00000000-0000-0000-0000-000000000000}'")]
+    [InlineData("'(00000000-0000-0000-0000-000000000000)'")]
+    [InlineData("'{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}'")]
+    public void Guid_With_Invalid_Input(string json)
+    {
+        TestInvalidInput(JsonReader.Guid(), json,
+                         "Invalid JSON value where a Guid was expected in the 'D' format (hyphen-separated).");
+    }
 }
