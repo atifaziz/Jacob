@@ -372,6 +372,10 @@ public static partial class JsonReader
         });
 
     public static IJsonReader<T[], JsonReadResult<T[]>> Array<T>(IJsonReader<T, JsonReadResult<T>> itemReader) =>
+        Array(itemReader, list => list.ToArray());
+
+    public static IJsonReader<TResult, JsonReadResult<TResult>> Array<T, TResult>(IJsonReader<T, JsonReadResult<T>> itemReader,
+                                                                                  Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
@@ -395,7 +399,7 @@ public static partial class JsonReader
             // Implementation of "Create" will effectively do the following:
             // _ = rdr.Read(); // "]"
 
-            return Value(list.ToArray());
+            return Value(resultSelector(list));
         });
 
     public static IJsonReader<TResult, JsonReadResult<TResult>> Select<T, TResult>(this IJsonReader<T, JsonReadResult<T>> reader, Func<T, TResult> selector) =>
