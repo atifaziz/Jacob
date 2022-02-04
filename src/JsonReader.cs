@@ -249,6 +249,39 @@ public static partial class JsonReader
         public Unit DefaultValue => default;
     }
 
+    public static IJsonReader<TResult, JsonReadResult<TResult>>
+        Object<T, TResult>(IJsonReader<T, JsonReadResult<T>> reader,
+                           Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
+        Create((ref Utf8JsonReader rdr) =>
+        {
+            if (rdr.TokenType != JsonTokenType.StartObject)
+                return Error("Invalid JSON value where a JSON object was expected.");
+
+            _ = rdr.Read(); // "{"
+
+            var properties = new List<KeyValuePair<string, T>>();
+
+            while (rdr.TokenType != JsonTokenType.EndObject)
+            {
+                var name = rdr.GetString()!;
+                _ = rdr.Read();
+
+                switch (reader.TryRead(ref rdr))
+                {
+                    case (_, { } error):
+                        return Error(error);
+                    case var (value, _):
+                        properties.Add(KeyValuePair.Create(name, value));
+                        break;
+                }
+            }
+
+            // Implementation of "Create" will effectively do the following:
+            // _ = rdr.Read(); // "}"
+
+            return Value(resultSelector(properties));
+        });
+
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
     /// the reader to return an error result.

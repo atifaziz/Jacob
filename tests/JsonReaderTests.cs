@@ -5,6 +5,7 @@
 namespace JsonR.Tests;
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -543,6 +544,40 @@ public class JsonReaderTests
     public void Object2_With_Invalid_Input(string expectedError, string json)
     {
         TestInvalidInput(Object2Reader, json, expectedError);
+    }
+
+    private static readonly IJsonReader<Dictionary<string, int>, JsonReadResult<Dictionary<string, int>>>
+        KeyIntMapReader = JsonReader.Object(JsonReader.Int32(), ps => ps.ToDictionary(e => e.Key, e => e.Value));
+
+    [Fact]
+    public void Object_General_With_Valid_Input()
+    {
+        const string json = @"{ foo: 123, bar: 456, baz: 789 }";
+
+        var obj = KeyIntMapReader.Read(Strictify(json));
+
+        Assert.Equal(3, obj.Count);
+        Assert.Equal(123, obj["foo"]);
+        Assert.Equal(456, obj["bar"]);
+        Assert.Equal(789, obj["baz"]);
+    }
+
+    [Theory]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "null")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "false")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "true")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "'foobar'")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "[]")]
+    public void Object_General_With_Invalid_Input(string expectedError, string json)
+    {
+        TestInvalidInput(KeyIntMapReader, json, expectedError);
+    }
+
+    [Theory]
+    [InlineData("{ foo: 123, bar: 456, baz: 789 }")]
+    public void Object_General_Doesnt_Move_Reader(string json)
+    {
+        TestMovesReaderPastReadValue(KeyIntMapReader, json);
     }
 
     private static readonly IJsonReader<object, JsonReadResult<object>> EitherReader =
