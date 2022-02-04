@@ -61,7 +61,7 @@ partial class JsonReader
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
-    /// <see cref="JsonException"/> to be thrown.
+    /// the reader to return an error result.
     /// </remarks>
     public static IJsonReader<TResult, JsonReadResult<TResult>>
         Object<<#= ts #>, TResult>(

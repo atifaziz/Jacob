@@ -251,7 +251,7 @@ public static partial class JsonReader
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
-    /// <see cref="JsonException"/> to be thrown.
+    /// the reader to return an error result.
     /// </remarks>
     public static IJsonReader<T, JsonReadResult<T>> Object<T>(IJsonProperty<T, JsonReadResult<T>> property) =>
         Object(property, NonProperty.Instance, NonProperty.Instance,
@@ -264,7 +264,7 @@ public static partial class JsonReader
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
-    /// <see cref="JsonException"/> to be thrown.
+    /// the reader to return an error result.
     /// </remarks>
     public static IJsonReader<TResult, JsonReadResult<TResult>>
         Object<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>(
