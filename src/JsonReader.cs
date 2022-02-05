@@ -11,7 +11,6 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Unit = System.ValueTuple;
 
 #pragma warning disable CA1716 // Identifiers should not match keywords
@@ -468,24 +467,6 @@ public static partial class JsonReader
                 (_, { } error) => Error(error),
                 var (value, _) => selector(value)
             });
-
-    public static JsonConverter<T> ToConverter<T>(this IJsonReader<T, JsonReadResult<T>> reader) =>
-        new JsonReaderConverter<T>(reader);
-
-    private sealed class JsonReaderConverter<T> : JsonConverter<T>
-    {
-        private readonly IJsonReader<T, JsonReadResult<T>> reader;
-
-        internal JsonReaderConverter(IJsonReader<T, JsonReadResult<T>> reader) =>
-            this.reader = reader;
-
-        public override T Read(ref Utf8JsonReader reader, Type typeToConvert,
-                               JsonSerializerOptions options) =>
-            this.reader.Read(ref reader);
-
-        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options) =>
-            throw new NotSupportedException();
-    }
 
     public static T Read<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
     {
