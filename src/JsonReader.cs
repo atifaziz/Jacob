@@ -474,7 +474,7 @@ public static partial class JsonReader
 
         return reader.TryRead(ref utf8Reader) switch
         {
-            (_, { } message) => throw new JsonException(message),
+            (_, { } message) => throw new JsonException($@"{message} See token ""{utf8Reader.TokenType}"" at offset {utf8Reader.TokenStartIndex}."),
             var (value, _) => value,
         };
     }
