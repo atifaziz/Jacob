@@ -77,10 +77,10 @@ public class JsonBenchmarks
         JToken.Parse(json).ToString(Formatting.None);
 
     internal static readonly IJsonReader<(double, double), JsonReadResult<(double, double)>> LocationReader =
-    JsonReader.Object(
-        JsonReader.Property("latitude", JsonReader.Double()),
-        JsonReader.Property("longitude", JsonReader.Double()),
-        ValueTuple.Create);
+        JsonReader.Object(
+            JsonReader.Property("latitude", JsonReader.Double()),
+            JsonReader.Property("longitude", JsonReader.Double()),
+            ValueTuple.Create);
 
     internal static readonly IJsonReader<(Measurement, Measurement), JsonReadResult<(Measurement, Measurement)>> MeasurementReader =
         JsonReader.Object(
