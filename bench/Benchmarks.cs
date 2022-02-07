@@ -73,22 +73,22 @@ public class JsonBenchmarks
                                  measurements.ToList());
     }
 
-    private static string Strictify(string json) =>
+    static string Strictify(string json) =>
         JToken.Parse(json).ToString(Formatting.None);
 
-    internal static readonly IJsonReader<(double, double), JsonReadResult<(double, double)>> LocationReader =
+    static readonly IJsonReader<(double, double), JsonReadResult<(double, double)>> LocationReader =
         JsonReader.Object(
             JsonReader.Property("latitude", JsonReader.Double()),
             JsonReader.Property("longitude", JsonReader.Double()),
             ValueTuple.Create);
 
-    internal static readonly IJsonReader<(Measurement, Measurement), JsonReadResult<(Measurement, Measurement)>> MeasurementReader =
+    static readonly IJsonReader<(Measurement, Measurement), JsonReadResult<(Measurement, Measurement)>> MeasurementReader =
         JsonReader.Object(
             JsonReader.Property("temperature", JsonReader.Double()),
             JsonReader.Property("precipitation", JsonReader.Double()),
             (temperature, precipitation) => (new Measurement(MeasurementKind.Temperature, temperature), new Measurement(MeasurementKind.Precipitation, precipitation)));
 
-    internal static readonly IJsonReader<StationReport, JsonReadResult<StationReport>> StationReportReader =
+    static readonly IJsonReader<StationReport, JsonReadResult<StationReport>> StationReportReader =
         JsonReader.Object(
             JsonReader.Property("date", JsonReader.DateTime()),
             JsonReader.Property("id", JsonReader.String()),
@@ -101,7 +101,7 @@ public class JsonBenchmarks
 
 [JsonSourceGenerationOptions(WriteIndented = false)]
 [JsonSerializable(typeof(WeatherMeasurementData))]
-internal partial class SourceGenerationContext : JsonSerializerContext
+partial class SourceGenerationContext : JsonSerializerContext
 { }
 
 class WeatherMeasurementData
