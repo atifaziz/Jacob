@@ -152,12 +152,12 @@ it to a value of another type that may be closer to what the application might
 desire:
 
 ```c#
-    var reader =
-        from t in JsonReader.Tuple(JsonReader.String(), JsonReader.Int32())
-        select KeyValuePair.Create(t.Item1, t.Item2);
+var reader =
+    from t in JsonReader.Tuple(JsonReader.String(), JsonReader.Int32())
+    select KeyValuePair.Create(t.Item1, t.Item2);
 
-    var pair = reader.Read(Json.Strictify("['foobar', 42]"));
-    Console.WriteLine(pair);
+var pair = reader.Read(Json.Strictify("['foobar', 42]"));
+Console.WriteLine(pair);
 ```
 
 In the above example, a tuple `(string, int)` is converted to a
