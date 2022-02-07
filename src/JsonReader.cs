@@ -15,7 +15,7 @@ using Unit = System.ValueTuple;
 
 #pragma warning disable CA1716 // Identifiers should not match keywords
 
-public interface IReadResult<out T>
+public interface IJsonReadResult<out T>
 {
     string? Error { get; }
     T Value { get; }
@@ -32,7 +32,7 @@ public record struct JsonReadError(string Message)
     public override string ToString() => Message;
 }
 
-public record struct JsonReadResult<T>(T Value, string? Error) : IReadResult<T>
+public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult<T>
 {
     public override string ToString() =>
         Error is { } someError ? $"Error: {someError}" : $"Value: {Value}";
@@ -43,13 +43,13 @@ public record struct JsonReadResult<T>(T Value, string? Error) : IReadResult<T>
 }
 
 public interface IJsonReader<out T, out TReadResult>
-    where TReadResult : IReadResult<T>
+    where TReadResult : IJsonReadResult<T>
 {
     TReadResult TryRead(ref Utf8JsonReader reader);
 }
 
 public interface IJsonProperty<out T, out TReadResult>
-    where TReadResult : IReadResult<T>
+    where TReadResult : IJsonReadResult<T>
 {
     bool IsMatch(ref Utf8JsonReader reader);
     IJsonReader<T, TReadResult> Reader { get; }
