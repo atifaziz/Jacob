@@ -43,9 +43,14 @@ using Jacob;
 Furthermore, to make the JSON data easier to read when encoded as C# literals
 (e.g., by permitting single-quoted strings and unquoted JSON object member names
 so double-quotes don't need escaping), the examples assume the following helper
-method is defined:
+method is defined (as well as the [Newtonsoft.Json (13.x)] package referenced):
 
 ```c#
+// #r "nuget: Newtonsoft.Json, 13.0.1"
+
+using Formatting = Newtonsoft.Json.Formatting;
+using JToken = Newtonsoft.Json.Linq.JToken;
+
 static class Json
 {
     /// <summary>
@@ -243,3 +248,4 @@ for a combined effect of creating an object from the constituent parts.
 [`JsonConverter`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonconverter?view=net-6.0
 [x-strict-json]: https://github.com/JamesNK/Newtonsoft.Json/issues/646#issuecomment-356194475
 [deserialize]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer.deserialize?view=net-6.0
+[Newtonsoft.Json (13.x)]: https://www.nuget.org/packages/Newtonsoft.Json/13.0.1
