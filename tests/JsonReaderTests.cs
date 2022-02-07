@@ -226,7 +226,7 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData("Null", "null")]
-    [InlineData("False","false")]
+    [InlineData("False", "false")]
     [InlineData("True", "true")]
     [InlineData("String", "'foobar'")]
     [InlineData("StartArray", "[]")]
@@ -404,7 +404,7 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData("Null", "null")]
-    [InlineData("False","false")]
+    [InlineData("False", "false")]
     [InlineData("True", "true")]
     [InlineData("String", "'foobar'")]
     [InlineData("StartArray", "[]")]
@@ -876,7 +876,7 @@ public class JsonReaderTests
                                                                  JsonReader.Array(it).AsObject()));
 
         var result = reader.Read(Strictify(@"['foo', 'bar', ['baz', [['qux']]]]"));
-        Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } }},
+        Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } } },
                      result);
     }
 }
