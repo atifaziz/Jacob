@@ -51,7 +51,7 @@ public class JsonBenchmarks
     [Benchmark]
     public void JsonReaderBenchmark()
     {
-        var reader = new Utf8JsonReader(jsonDataBytes);
+        var reader = new Utf8JsonReader(this.jsonDataBytes);
         _ = reader.Read();
         _ = StationReportReader.Read(ref reader);
     }
@@ -59,14 +59,14 @@ public class JsonBenchmarks
     [Benchmark(Baseline = true)]
     public void SystemTextBenchmark()
     {
-        var data = JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
+        var data = JsonSerializer.Deserialize<WeatherMeasurementData>(this.jsonDataBytes);
         _ = Transform(data!);
     }
 
     [Benchmark]
     public void SourceGeneratedBenchmark()
     {
-        var data = JsonSerializer.Deserialize(jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
+        var data = JsonSerializer.Deserialize(this.jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
         _ = Transform(data!);
     }
 
