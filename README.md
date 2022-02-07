@@ -229,6 +229,14 @@ Once more, `JsonReader.Object` builds on top of readers for each each property
 for a combined effect of creating an object from the constituent parts.
 
 
+## Limitations
+
+- There is no API at this time for writing JSON data.
+
+- When usig `JsonReader.Object` with `JsonReader.Property`, a maximum of 16
+  properties of a JSON object can be read.
+
+
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
 [`JsonSerializer`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer
 [`JsonConverter`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.serialization.jsonconverter?view=net-6.0
