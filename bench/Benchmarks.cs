@@ -43,7 +43,7 @@ public class JsonBenchmarks
         _ = StationReportReader.Read(ref reader);
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public void SystemTextBenchmark()
     {
         var weatherMeasurementData = System.Text.Json.JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
