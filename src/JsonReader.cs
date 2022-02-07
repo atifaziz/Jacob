@@ -72,6 +72,17 @@ public static partial class JsonReader
         return reader.Read(ref rdr);
     }
 
+    public static T Read<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+
+        return reader.TryRead(ref utf8Reader) switch
+        {
+            (_, { } message) => throw new JsonException($@"{message} See token ""{utf8Reader.TokenType}"" at offset {utf8Reader.TokenStartIndex}."),
+            var (value, _) => value,
+        };
+    }
+
     public static JsonReadResult<T> TryRead<T>(this IJsonReader<T, JsonReadResult<T>> reader, string json) =>
         reader.TryRead(Encoding.UTF8.GetBytes(json));
 
@@ -474,17 +485,6 @@ public static partial class JsonReader
         var recReader = CreatePure((ref Utf8JsonReader rdr) => reader!.TryRead(ref rdr));
         reader = readerFunction(recReader);
         return recReader;
-    }
-
-    public static T Read<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
-    {
-        if (reader == null) throw new ArgumentNullException(nameof(reader));
-
-        return reader.TryRead(ref utf8Reader) switch
-        {
-            (_, { } message) => throw new JsonException($@"{message} See token ""{utf8Reader.TokenType}"" at offset {utf8Reader.TokenStartIndex}."),
-            var (value, _) => value,
-        };
     }
 
     public static IJsonReader<T, JsonReadResult<T>> Create<T>(Handler<T> handler) =>
