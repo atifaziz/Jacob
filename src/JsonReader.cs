@@ -202,13 +202,11 @@ public static partial class JsonReader
             switch (reader1.TryRead(ref irdr))
             {
                 case (_, { }):
-                    switch (reader2.TryRead(ref rdr))
+                    return reader2.TryRead(ref rdr) switch
                     {
-                        case (_, { }):
-                            return Error(errorMessage ?? "Invalid JSON value.");
-                        case var some:
-                            return some;
-                    }
+                        (_, { }) => Error(errorMessage ?? "Invalid JSON value."),
+                        var some => some
+                    };
                 case var some:
                     rdr = irdr;
                     return some;
