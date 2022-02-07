@@ -1,6 +1,6 @@
 # Jacob
 
-Jacob provides a succinct JSON reading combinator API over `Utf8JsonReader` for
+Jacob provides a succinct JSON combinator API over `Utf8JsonReader` for
 deserializing/reading JSON data.
 
 .NET Core 3.0 introduced [`Utf8JsonReader`], a high-performance, low-allocation,
