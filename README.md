@@ -36,6 +36,7 @@ All of the following examples assume these imports:
 ```c#
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Jacob;
 ```
 
