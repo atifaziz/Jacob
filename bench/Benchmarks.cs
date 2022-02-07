@@ -46,17 +46,31 @@ public class JsonBenchmarks
     [Benchmark(Baseline = true)]
     public void SystemTextBenchmark()
     {
-        var weatherMeasurementData = System.Text.Json.JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
-        var measurements = weatherMeasurementData!.Measurements!.Select(m => (new Measurement(MeasurementKind.Temperature, m.TemperatureCelsius), new Measurement(MeasurementKind.Precipitation, m.PrecipitationMm)));
-        _ = new StationReport(weatherMeasurementData!.Date, new Station(weatherMeasurementData!.StationId!, (weatherMeasurementData!.Location!.Latitude, weatherMeasurementData!.Location.Longitude)), measurements.SelectMany(m => new[] { m.Item1, m.Item2 }).ToList());
+        var data = System.Text.Json.JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
+        _ = Transform(data!);
     }
 
     [Benchmark]
     public void SourceGeneratedBenchmark()
     {
-        var weatherMeasurementData = System.Text.Json.JsonSerializer.Deserialize(jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
-        var measurements = weatherMeasurementData!.Measurements!.Select(m => (new Measurement(MeasurementKind.Temperature, m.TemperatureCelsius), new Measurement(MeasurementKind.Precipitation, m.PrecipitationMm)));
-        _ = new StationReport(weatherMeasurementData!.Date, new Station(weatherMeasurementData!.StationId!, (weatherMeasurementData!.Location!.Latitude, weatherMeasurementData!.Location.Longitude)), measurements.SelectMany(m => new[] { m.Item1, m.Item2 }).ToList());
+        var data = System.Text.Json.JsonSerializer.Deserialize(jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
+        _ = Transform(data!);
+    }
+
+    static StationReport Transform(WeatherMeasurementData data)
+    {
+        var measurements =
+            from md in data.Measurements!
+            from m in new[]
+            {
+                new Measurement(MeasurementKind.Temperature, md.TemperatureCelsius),
+                new Measurement(MeasurementKind.Precipitation, md.PrecipitationMm)
+            }
+            select m;
+
+        return new StationReport(data.Date,
+                                 new Station(data.StationId!, (data.Location!.Longitude, data.Location.Latitude)),
+                                 measurements.ToList());
     }
 
     private static string Strictify(string json) =>
