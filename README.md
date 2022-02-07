@@ -163,6 +163,28 @@ foreach (var (key, value) in pairs)
     Console.WriteLine($"Key = {key}, Value = {value}");
 ```
 
+`JsonReader.Either` allows a JSON value to be read in one of two ways. For
+example, here a JSON array is read whose elements are read as either an integer
+or a string:
+
+```c#
+var reader =
+    JsonReader.Either(JsonReader.String().AsObject(),
+                      JsonReader.Int32().AsObject());
+
+const string json = @"['foo', 123, 'bar', 456, 'baz', 789]";
+
+var values = JsonReader.Array(reader).Read(Json.Strictify(json));
+
+foreach (var value in values)
+    Console.WriteLine($"{value} ({value.GetType().Name})");
+```
+
+`Either` expects either reader to return the same type of value, which is why as
+`AsObject()` is used to convert each read string or integer to the common super
+type `object`. `Either` can also be combined with itself to support reading a
+JSON value in more than two ways.
+
 
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
 [`JsonSerializer`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer
