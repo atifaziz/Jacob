@@ -2,9 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-[assembly: System.CLSCompliant(false)]
-
-namespace Jacob.Benchmarks;
+#pragma warning disable CA1050 // Declare types in namespaces
 
 using System;
 using System.Collections.Generic;
@@ -16,6 +14,8 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Formatting = Newtonsoft.Json.Formatting;
 using JToken = Newtonsoft.Json.Linq.JToken;
+
+[assembly: CLSCompliant(false)]
 
 [MemoryDiagnoser]
 public class JsonBenchmarks
