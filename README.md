@@ -185,6 +185,35 @@ foreach (var value in values)
 type `object`. `Either` can also be combined with itself to support reading a
 JSON value in more than two ways.
 
+Finally, there's `JsonReader.Object` that takes property definitions via
+`JsonReader.Property` and a function to combine the read values into the final
+object:
+
+```c#
+var pairReader =
+    JsonReader.Object(
+        JsonReader.Property("key", JsonReader.String()),
+        JsonReader.Property("value", JsonReader.Int32()),
+        KeyValuePair.Create /*
+        above is same as:
+        (k, v) => KeyValuePair.Create(k, v) */
+    );
+
+const string json = @"[
+    { key  : 'foo', value: 123 },
+    { value: 456  , key: 'bar' },
+    { key  : 'baz', value: 789 },
+]";
+
+var pairs = JsonReader.Array(pairReader).Read(Json.Strictify(json));
+
+foreach (var (key, value) in pairs)
+    Console.WriteLine($"Key = {key}, Value = {value}");
+```
+
+Once more, `JsonReader.Object` builds on top of readers for each each property
+for a combined effect.
+
 
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
 [`JsonSerializer`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer
