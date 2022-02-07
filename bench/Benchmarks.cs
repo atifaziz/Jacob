@@ -14,8 +14,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using Formatting = Newtonsoft.Json.Formatting;
+using JToken = Newtonsoft.Json.Linq.JToken;
 
 [MemoryDiagnoser]
 public class JsonBenchmarks
@@ -46,14 +46,14 @@ public class JsonBenchmarks
     [Benchmark(Baseline = true)]
     public void SystemTextBenchmark()
     {
-        var data = System.Text.Json.JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
+        var data = JsonSerializer.Deserialize<WeatherMeasurementData>(jsonDataBytes);
         _ = Transform(data!);
     }
 
     [Benchmark]
     public void SourceGeneratedBenchmark()
     {
-        var data = System.Text.Json.JsonSerializer.Deserialize(jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
+        var data = JsonSerializer.Deserialize(jsonDataBytes, SourceGenerationContext.Default.WeatherMeasurementData);
         _ = Transform(data!);
     }
 
@@ -77,23 +77,23 @@ public class JsonBenchmarks
         JToken.Parse(json).ToString(Formatting.None);
 
     internal static readonly IJsonReader<(double, double), JsonReadResult<(double, double)>> LocationReader =
-    Jacob.JsonReader.Object(
-        Jacob.JsonReader.Property("latitude", Jacob.JsonReader.Double()),
-        Jacob.JsonReader.Property("longitude", Jacob.JsonReader.Double()),
+    JsonReader.Object(
+        JsonReader.Property("latitude", JsonReader.Double()),
+        JsonReader.Property("longitude", JsonReader.Double()),
         ValueTuple.Create);
 
     internal static readonly IJsonReader<(Measurement, Measurement), JsonReadResult<(Measurement, Measurement)>> MeasurementReader =
-        Jacob.JsonReader.Object(
-            Jacob.JsonReader.Property("temperature", Jacob.JsonReader.Double()),
-            Jacob.JsonReader.Property("precipitation", Jacob.JsonReader.Double()),
+        JsonReader.Object(
+            JsonReader.Property("temperature", JsonReader.Double()),
+            JsonReader.Property("precipitation", JsonReader.Double()),
             (temperature, precipitation) => (new Measurement(MeasurementKind.Temperature, temperature), new Measurement(MeasurementKind.Precipitation, precipitation)));
 
     internal static readonly IJsonReader<StationReport, JsonReadResult<StationReport>> StationReportReader =
-        Jacob.JsonReader.Object(
-            Jacob.JsonReader.Property("date", Jacob.JsonReader.DateTime()),
-            Jacob.JsonReader.Property("id", Jacob.JsonReader.String()),
-            Jacob.JsonReader.Property("location", LocationReader),
-            Jacob.JsonReader.Property("measurements", Jacob.JsonReader.Array(MeasurementReader)),
+        JsonReader.Object(
+            JsonReader.Property("date", JsonReader.DateTime()),
+            JsonReader.Property("id", JsonReader.String()),
+            JsonReader.Property("location", LocationReader),
+            JsonReader.Property("measurements", JsonReader.Array(MeasurementReader)),
             (date, id, location, measurements) => new StationReport(date, new Station(id, location), measurements.SelectMany(m => new[] { m.Item1, m.Item2 }).ToList()));
 
     static void Main(string[] args) => BenchmarkSwitcher.FromAssembly(typeof(JsonBenchmarks).Assembly).Run(args);
