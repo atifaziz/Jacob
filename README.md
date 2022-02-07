@@ -108,7 +108,8 @@ fails with the error:
 
     The JSON value could not be converted to System.ValueTuple`2[System.String,System.Int32]. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
 
-and this is where a custom [`JsonConverter`] implementation would be needed that knows how to deserialize a tuple of a string and an integer from a JSON array.
+and this is where a custom [`JsonConverter`] implementation would be needed that
+knows how to deserialize a tuple of a string and an integer from a JSON array.
 
 Once a reader is initialized, it can be reused:
 
@@ -141,7 +142,9 @@ it to a value of another type:
 ```
 
 Here, a tuple `(string, int)` is converted to a `KeyValuePair<string, int>`.
-Again, this demonstrates how readers just compose with one another. In the same vein, if an array of key-value pairs is what's needed, then it's just another composition away (this time, with `JsonReader.Array`):
+Again, this demonstrates how readers just compose with one another. In the same
+vein, if an array of key-value pairs is what's needed, then it's just another
+composition away (this time, with `JsonReader.Array`):
 
 ```c#
 var pairReader =
