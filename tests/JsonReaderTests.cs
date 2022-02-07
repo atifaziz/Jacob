@@ -27,7 +27,7 @@ public class JsonReaderTests
     public static string Strictify(string json) =>
         JToken.Parse(json).ToString(Formatting.None);
 
-    private static void TestMovesReaderPastReadValue<T>(IJsonReader<T, JsonReadResult<T>> reader, string json)
+    static void TestMovesReaderPastReadValue<T>(IJsonReader<T, JsonReadResult<T>> reader, string json)
     {
         var sentinel = $"END-{Guid.NewGuid()}";
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify($"[{json}, '{sentinel}']")));
@@ -38,8 +38,8 @@ public class JsonReaderTests
         Assert.Equal(sentinel, rdr.GetString());
     }
 
-    private static void TestInvalidInput<T>(IJsonReader<T, JsonReadResult<T>> reader, string json,
-                                            string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
+    static void TestInvalidInput<T>(IJsonReader<T, JsonReadResult<T>> reader, string json,
+                                    string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
     {
         json = Strictify(json);
 
@@ -516,7 +516,7 @@ public class JsonReaderTests
         Assert.Equal("reader", ex.ParamName);
     }
 
-    private static readonly IJsonReader<(int, string), JsonReadResult<(int, string)>> ObjectReader =
+    static readonly IJsonReader<(int, string), JsonReadResult<(int, string)>> ObjectReader =
         JsonReader.Object(JsonReader.Property("num", JsonReader.Int32(), (true, 0)),
                           JsonReader.Property("str", JsonReader.String()),
                           ValueTuple.Create);
@@ -557,7 +557,7 @@ public class JsonReaderTests
         TestMovesReaderPastReadValue(ObjectReader, json);
     }
 
-    private static readonly IJsonReader<Dictionary<string, int>, JsonReadResult<Dictionary<string, int>>>
+    static readonly IJsonReader<Dictionary<string, int>, JsonReadResult<Dictionary<string, int>>>
         KeyIntMapReader = JsonReader.Object(JsonReader.Int32(), ps => ps.ToDictionary(e => e.Key, e => e.Value));
 
     [Fact]
@@ -591,7 +591,7 @@ public class JsonReaderTests
         TestMovesReaderPastReadValue(KeyIntMapReader, json);
     }
 
-    private static readonly IJsonReader<object, JsonReadResult<object>> EitherReader =
+    static readonly IJsonReader<object, JsonReadResult<object>> EitherReader =
         JsonReader.Either(JsonReader.String().AsObject(),
                           JsonReader.Either(JsonReader.Array(JsonReader.Int32()).AsObject(),
                                             JsonReader.Array(JsonReader.Boolean()).AsObject()));

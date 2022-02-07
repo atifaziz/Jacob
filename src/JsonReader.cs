@@ -137,14 +137,14 @@ public static partial class JsonReader
             ? Value(@null)
             : Error("Invalid JSON value where a JSON null was expected."));
 
-    private static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
+    static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
 #if NET5_0_OR_GREATER
         Enum.IsDefined(value);
 #else
         Enum.IsDefined(typeof(T), value);
 #endif
 
-    private static bool TryParseEnum<T>(string input, bool ignoreCase, out T result) where T : struct, Enum
+    static bool TryParseEnum<T>(string input, bool ignoreCase, out T result) where T : struct, Enum
     {
 #if NET5_0_OR_GREATER
         return Enum.TryParse(input, ignoreCase, out result);
@@ -214,9 +214,9 @@ public static partial class JsonReader
         });
 
     [DebuggerDisplay("{" + nameof(name) + "}")]
-    private sealed class JsonProperty<T> : IJsonProperty<T, JsonReadResult<T>>
+    sealed class JsonProperty<T> : IJsonProperty<T, JsonReadResult<T>>
     {
-        private readonly string name;
+        readonly string name;
 
         public JsonProperty(string name, IJsonReader<T, JsonReadResult<T>> reader, (bool, T) @default = default) =>
             (this.name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
@@ -234,11 +234,11 @@ public static partial class JsonReader
     public static IJsonProperty<T, JsonReadResult<T>> Property<T>(string name, IJsonReader<T, JsonReadResult<T>> reader, (bool, T) @default = default) =>
         new JsonProperty<T>(name, reader, @default);
 
-    private sealed class NonProperty : IJsonProperty<Unit, JsonReadResult<Unit>>
+    sealed class NonProperty : IJsonProperty<Unit, JsonReadResult<Unit>>
     {
         public static readonly NonProperty Instance = new();
 
-        private NonProperty() { }
+        NonProperty() { }
 
         public bool IsMatch(ref Utf8JsonReader reader) => false;
         public IJsonReader<Unit, JsonReadResult<Unit>> Reader => throw new NotSupportedException();
@@ -490,14 +490,14 @@ public static partial class JsonReader
     public static IJsonReader<T, JsonReadResult<T>> Create<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
 
-    private static IJsonReader<T, JsonReadResult<T>> CreatePure<T>(Handler<T> handler) =>
+    static IJsonReader<T, JsonReadResult<T>> CreatePure<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
+    static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static JsonReadError Error(string message) => new(message);
+    static JsonReadError Error(string message) => new(message);
 
     public delegate JsonReadResult<T> Handler<T>(ref Utf8JsonReader reader);
 
