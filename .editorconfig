@@ -27,7 +27,11 @@ indent_size = 4
 max_line_length = 100
 
 [*.cs]
+dotnet_analyzer_diagnostic.severity = error
+dotnet_code_quality.severity = error
+
 csharp_style_namespace_declarations = file_scoped
+csharp_using_directive_placement = inside_namespace
 
 # This or Me qualifier
 dotnet_style_qualification_for_field = true
@@ -70,3 +74,21 @@ csharp_preserve_single_line_blocks = true
 # Enforce file header
 dotnet_diagnostic.IDE0073.severity = error
 file_header_template = Copyright (c) 2021 Atif Aziz.\nCopyright (c) Microsoft. All rights reserved.\nLicensed under the MIT license. See LICENSE file in the project root for full license information.
+
+# IDE0040: Accessibility modifiers required
+dotnet_diagnostic.IDE0040.severity = none
+
+# IDE0072: Populate switch
+dotnet_diagnostic.IDE0072.severity = suggestion
+
+# IDE0011: Add braces to 'if' statement.
+dotnet_diagnostic.IDE0011.severity = suggestion
+
+# IDE0010: Populate switch
+dotnet_diagnostic.IDE0010.severity = suggestion
+
+# IDE0055: Fix formatting
+dotnet_diagnostic.IDE0055.severity = suggestion
+
+# IDE0046: 'if' statement can be simplified
+dotnet_diagnostic.IDE0046.severity = suggestion
