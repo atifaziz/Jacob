@@ -518,7 +518,7 @@ public static partial class JsonReader
             if (error is not null)
                 return new JsonReadError(error);
             if (this.shouldReadOnSuccess)
-                reader.Read();
+                _ = reader.Read();
             return JsonReadResult.Value(value);
         }
     }

@@ -33,7 +33,7 @@ public class JsonReaderTests
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify($"[{json}, '{sentinel}']")));
         Assert.True(rdr.Read()); // start
         Assert.True(rdr.Read()); // "["
-        reader.Read(ref rdr);
+        _ = reader.Read(ref rdr);
         Assert.Equal(JsonTokenType.String, rdr.TokenType);
         Assert.Equal(sentinel, rdr.GetString());
     }
