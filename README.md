@@ -198,6 +198,16 @@ var values = JsonReader.Array(reader).Read(Json.Strictify(json));
 
 foreach (var value in values)
     Console.WriteLine($"{value} ({value.GetType().Name})");
+
+/* outputs:
+
+foo (String)
+123 (Int32)
+bar (String)
+456 (Int32)
+baz (String)
+789 (Int32)
+*/
 ```
 
 `Either` expects either reader to return the same type of value, which is why
