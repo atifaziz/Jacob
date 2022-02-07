@@ -860,4 +860,23 @@ public class JsonReaderTests
                          "Invalid JSON value where a Guid was expected in the 'D' format (hyphen-separated).",
                          expectedErrorToken);
     }
+
+    [Fact]
+    public void Recursive_With_Null_Function_Throws()
+    {
+        var ex = Assert.Throws<ArgumentNullException>(() => JsonReader.Recursive<object>(null!));
+        Assert.Equal("readerFunction", ex.ParamName);
+    }
+
+    [Fact]
+    public void Recursive_Sets_Up_Reader_With_Self()
+    {
+        var reader =
+            JsonReader.Recursive<object>(it => JsonReader.Either(JsonReader.String().AsObject(),
+                                                                 JsonReader.Array(it).AsObject()));
+
+        var result = reader.Read(Strictify(@"['foo', 'bar', ['baz', [['qux']]]]"));
+        Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } }},
+                     result);
+    }
 }

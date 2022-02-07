@@ -468,6 +468,16 @@ public static partial class JsonReader
                 var (value, _) => selector(value)
             });
 
+    public static IJsonReader<T, JsonReadResult<T>> Recursive<T>(
+        Func<IJsonReader<T, JsonReadResult<T>>, IJsonReader<T, JsonReadResult<T>>> readerFunction)
+    {
+        if (readerFunction == null) throw new ArgumentNullException(nameof(readerFunction));
+        IJsonReader<T, JsonReadResult<T>>? reader = null;
+        var recReader = CreatePure((ref Utf8JsonReader rdr) => reader!.TryRead(ref rdr));
+        reader = readerFunction(recReader);
+        return recReader;
+    }
+
     public static T Read<T>(this IJsonReader<T, JsonReadResult<T>> reader, ref Utf8JsonReader utf8Reader)
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
