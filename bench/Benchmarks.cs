@@ -89,19 +89,19 @@ public class JsonBenchmarks
     static string Strictify(string json) =>
         JToken.Parse(json).ToString(Formatting.None);
 
-    static readonly IJsonReader<(double, double), JsonReadResult<(double, double)>> LocationReader =
+    static readonly IJsonReader<(double, double)> LocationReader =
         JsonReader.Object(
             JsonReader.Property("latitude", JsonReader.Double()),
             JsonReader.Property("longitude", JsonReader.Double()),
             ValueTuple.Create);
 
-    static readonly IJsonReader<(Measurement, Measurement), JsonReadResult<(Measurement, Measurement)>> MeasurementReader =
+    static readonly IJsonReader<(Measurement, Measurement)> MeasurementReader =
         JsonReader.Object(
             JsonReader.Property("temperature", JsonReader.Double()),
             JsonReader.Property("precipitation", JsonReader.Double()),
             (temperature, precipitation) => (new Measurement(MeasurementKind.Temperature, temperature), new Measurement(MeasurementKind.Precipitation, precipitation)));
 
-    static readonly IJsonReader<StationReport, JsonReadResult<StationReport>> StationReportReader =
+    static readonly IJsonReader<StationReport> StationReportReader =
         JsonReader.Object(
             JsonReader.Property("date", JsonReader.DateTime()),
             JsonReader.Property("id", JsonReader.String()),
