@@ -242,6 +242,9 @@ for a combined effect of creating an object from the constituent parts.
 - When usig `JsonReader.Object` with `JsonReader.Property`, a maximum of 16
   properties of a JSON object can be read.
 
+- No support for asynchronous reading, since `Utf8JsonReader` doesn't support it
+  either.
+
 
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
 [`JsonSerializer`]: https://docs.microsoft.com/en-us/dotnet/api/system.text.json.jsonserializer
