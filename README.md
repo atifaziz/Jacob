@@ -250,7 +250,7 @@ for a combined effect of creating an object from the constituent parts.
 
 - There is no API at this time for writing JSON data.
 
-- When usig `JsonReader.Object` with `JsonReader.Property`, a maximum of 16
+- When using `JsonReader.Object` with `JsonReader.Property`, a maximum of 16
   properties of a JSON object can be read.
 
 - No support for asynchronous reading, since `Utf8JsonReader` doesn't support it
