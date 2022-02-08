@@ -177,13 +177,16 @@ public static partial class JsonReader
 #endif
     }
 
-    public static IJsonReader<T> AsEnum<T>(this IJsonReader<string> reader) where T : struct, Enum =>
+    public static IJsonReader<T> AsEnum<T>(this IJsonReader<string> reader)
+        where T : struct, Enum =>
         AsEnum<T>(reader, ignoreCase: false);
 
-    public static IJsonReader<T> AsEnum<T>(this IJsonReader<string> reader, bool ignoreCase) where T : struct, Enum =>
+    public static IJsonReader<T> AsEnum<T>(this IJsonReader<string> reader, bool ignoreCase)
+        where T : struct, Enum =>
         reader.TryMap(s => TryParseEnum(s, ignoreCase, out T value) ? Value(value) : Error($"Invalid member for {typeof(T)}."));
 
-    public static IJsonReader<TEnum> AsEnum<TSource, TEnum>(this IJsonReader<TSource> reader, Func<TSource, TEnum> selector) where TEnum : struct, Enum =>
+    public static IJsonReader<TEnum> AsEnum<TSource, TEnum>(this IJsonReader<TSource> reader, Func<TSource, TEnum> selector)
+        where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, Func<T, bool> predicate) =>
@@ -195,20 +198,17 @@ public static partial class JsonReader
     public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
         from v in reader select (object)v;
 
-    public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1,
-                                       IJsonReader<T> reader2) =>
+    public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
 
-    public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1,
-                                       IJsonReader<T> reader2,
+    public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1, IJsonReader<T> reader2,
                                        string? errorMessage) =>
         Either(reader1, reader2, errorMessage);
 
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
 
-    public static IJsonReader<T> Either<T>(IJsonReader<T> reader1,
-                                           IJsonReader<T> reader2,
+    public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2,
                                            string? errorMessage) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
@@ -260,9 +260,8 @@ public static partial class JsonReader
         public Unit DefaultValue => default;
     }
 
-    public static IJsonReader<TResult>
-        Object<T, TResult>(IJsonReader<T> reader,
-                           Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
+    public static IJsonReader<TResult> Object<T, TResult>(IJsonReader<T> reader,
+                                                          Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartObject)
@@ -437,7 +436,7 @@ public static partial class JsonReader
         Array(itemReader, list => list.ToArray());
 
     public static IJsonReader<TResult> Array<T, TResult>(IJsonReader<T> itemReader,
-                                                                                  Func<List<T>, TResult> resultSelector) =>
+                                                         Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
@@ -480,8 +479,7 @@ public static partial class JsonReader
                 var (value, _) => selector(value)
             });
 
-    public static IJsonReader<T> Recursive<T>(
-        Func<IJsonReader<T>, IJsonReader<T>> readerFunction)
+    public static IJsonReader<T> Recursive<T>(Func<IJsonReader<T>, IJsonReader<T>> readerFunction)
     {
         if (readerFunction == null) throw new ArgumentNullException(nameof(readerFunction));
         IJsonReader<T>? reader = null;
