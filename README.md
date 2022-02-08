@@ -5,24 +5,25 @@ deserializing/reading JSON data.
 
 .NET Core 3.0 introduced [`Utf8JsonReader`], a high-performance, low-allocation,
 forward-only reader for JSON text encoded in UTF-8. It is a low-level type for
-building custom parsers and deserializers and because it has _low-level_
+building custom parsers and deserializers, and because it has _low-level_
 semantics, its API is not very straightforward to use. It's far more common
 instead to see developers create simple classes that mirror the JSON data and
 then use [`JsonSerializer`] to deserialize/read the JSON data into instances of
 those classes. However, when your application or domain object model is far
 richer than the value types available in JSON, you have two possible approaches:
 
-1. Customize the deserialization by writing and registering a [`JsonConverter`],
-   which requires a non-trivial amount of coding and understanding, not to
+1. Customize the deserialization by writing and registering a [`JsonConverter`].
+   This requires a non-trivial amount of coding and understanding, not to
    mention having to work with `Utf8JsonReader` and writing unit tests for each
    converter. Moreover, the converters are not immediately reusable and
    composable (in an ad-hoc manner or otherwise) without considerable effort.
 
-2. Maintain two sets of object models: one for the pure purpose of deserializing
-   from JSON (usually anemic, containing very little logic) and another that is
-   the rich application/domain model. Then, have logic to transform the former
-   into the latter. This requires extra processing and an additional and
-   temporary intermediate represetation of the data in memory.
+2. Maintain two sets of object models: one that is usually anemic (containing
+   very little logic) and for the sole purpose of deserializing from JSON, and
+   another that is the rich application/domain model. Then, have logic to
+   transform the former into the latter. This requires extra processing as well
+   as additional and temporary intermediate represetations of the data in
+   memory.
 
 Jacob provides most of the benefits of `Utf8JsonReader`, such as low-allocation,
 but without all the ceremony and complexity associated with either of the above
