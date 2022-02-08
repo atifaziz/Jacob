@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
     <VersionPrefix>0.5</VersionPrefix>
+    <PackageOutputPath>..\dist</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>

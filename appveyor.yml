@@ -1,0 +1,42 @@
+version: '{build}'
+image:
+  - Visual Studio 2022
+  - Ubuntu
+skip_commits:
+  files:
+    - '.editorconfig'
+    - '*.md'
+    - '*.txt'
+branches:
+  only:
+    - master
+  except:
+    - /.+[\-.]wip$/
+    - wip
+pull_requests:
+  do_not_increment_build_number: true
+skip_tags: true
+environment:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+install:
+- cmd: curl -OsSL https://dot.net/v1/dotnet-install.ps1
+- ps: if ($isWindows) { ./dotnet-install.ps1 -JsonFile global.json }
+- sh: curl -OsSL https://dot.net/v1/dotnet-install.sh
+- sh: chmod +x dotnet-install.sh
+- sh: ./dotnet-install.sh --jsonfile global.json
+- sh: ./dotnet-install.sh --version 3.1.22 --runtime dotnet
+- sh: export PATH="$HOME/.dotnet:$PATH"
+before_build:
+- dotnet --info
+build_script:
+- ps: |-
+    $id = ([datetimeoffset]$env:APPVEYOR_REPO_COMMIT_TIMESTAMP).ToUniversalTime().ToString('yyyyMMdd''t''HHmm')
+    if ($isWindows) { .\pack.cmd ci-$id } else { ./pack.sh ci-$id }
+test_script:
+- cmd: test.cmd
+- ps: Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -Outfile codecov.exe
+- cmd: codecov.exe
+- sh: ./test.sh
+artifacts:
+- path: dist\*.nupkg

@@ -33,9 +33,9 @@ partial class JsonReader
     })
     { #>
 
-    private static IJsonReader<<#= e.Native #>, JsonReadResult<<#= e.Native #>>> <#= e.Native #>Reader;
+    private static IJsonReader<<#= e.Native #>> <#= e.Native #>Reader;
 
-    public static IJsonReader<<#= e.Native #>, JsonReadResult<<#= e.Native #>>> <#= e.Api #>() =>
+    public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
         <#= e.Native #>Reader ??=
             Create((ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
@@ -63,13 +63,12 @@ partial class JsonReader
     /// Properties without a default value that are missing from the read JSON object will cause
     /// the reader to return an error result.
     /// </remarks>
-    public static IJsonReader<TResult, JsonReadResult<TResult>>
-        Object<<#= ts #>, TResult>(
-            <#= string.Join(", ", from n in ns select "IJsonProperty<T" + n + ", JsonReadResult<T" + n + ">> property" + n) #>,
+    public static IJsonReader<TResult> Object<<#= ts #>, TResult>(
+            <#= string.Join(", ", from n in ns select "IJsonProperty<T" + n + "> property" + n) #>,
             Func<<#= ts #>, TResult> projector) =>
         Object(<#= string.Join(", ", from n in ns select "property" + n) #>,
-                <#= string.Join(", ", Enumerable.Repeat("NonProperty.Instance", maxArity - c)) #>,
-                (<#= vs #>, <#= string.Join(", ", Enumerable.Repeat("_", maxArity - c)) #>) =>
+               <#= string.Join(", ", Enumerable.Repeat("NonProperty.Instance", maxArity - c)) #>,
+               (<#= vs #>, <#= string.Join(", ", Enumerable.Repeat("_", maxArity - c)) #>) =>
             projector(<#= vs #>));
 <#  }
 }
@@ -88,10 +87,10 @@ partial class JsonReader
         var vs = string.Join(", ", from n in ns select "v" + n);
 #>
 
-    public static IJsonReader<(<#= ts #>), JsonReadResult<(<#= ts #>)>>
+    public static IJsonReader<(<#= ts #>)>
         Tuple<<#= ts #>>(
             <#= string.Join(@",
-            ", from n in ns select "IJsonReader<T" + n + ", JsonReadResult<T" + n + ">> item" + n + "Reader") #>) =>
+            ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
