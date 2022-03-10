@@ -27,17 +27,6 @@ public class JsonBenchmarks
         id: 'Zuerich Uetliberg',
         location: { latitude: 47.3494991, longitude: 8.4832738 },
         measurements: [
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
-            { temperature: 6.35, precipitation: 0.23 },
             { temperature: 6.35, precipitation: 0.23 }
         ]
     }");

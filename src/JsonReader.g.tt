@@ -37,7 +37,7 @@ partial class JsonReader
 
     public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
         <#= e.Native #>Reader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create((ref Utf8JsonReader rdr, JsonReaderState state) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
@@ -91,7 +91,7 @@ partial class JsonReader
         Tuple<<#= ts #>>(
             <#= string.Join(@",
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
-        Create((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr, JsonReaderState state) =>
         {
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
@@ -101,7 +101,7 @@ partial class JsonReader
         foreach (var n in ns)
         { #>
 
-            var (item<#= n #>, error<#= n #>) = item<#= n #>Reader.TryRead(ref rdr);
+            var (item<#= n #>, error<#= n #>) = item<#= n #>Reader.TryRead(ref rdr, state);
             if (error<#= n #> is not null)
                 return Error(error<#= n #>);
 <#
