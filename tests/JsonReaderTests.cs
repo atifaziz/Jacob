@@ -218,22 +218,42 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData(2022, 2, 2, 0, 0, 0, 0, null, null, "'2022-02-02'")]
+    [InlineData(2022, 2, 2, 12, 34, 0, 0, null, null, "'2022-02-02T12:34'")]
+    [InlineData(2022, 2, 2, 12, 34, 0, 0, 0, 0, "'2022-02-02T12:34Z'")]
     [InlineData(2022, 2, 2, 12, 34, 56, 0, null, null, "'2022-02-02T12:34:56'")]
+    [InlineData(2022, 2, 2, 12, 34, 56, 0, 0, 0, "'2022-02-02T12:34:56Z'")]
+    [InlineData(2022, 2, 2, 12, 34, 56, 78, null, null, "'2022-02-02T12:34:56.078'")]
+    [InlineData(2022, 2, 2, 12, 34, 56, 78, 0, 0, "'2022-02-02T12:34:56.078Z'")]
+    [InlineData(2022, 2, 2, 12, 34, 0, 0, 1, 0, "'2022-02-02T12:34:00+01:00'")]
     [InlineData(2022, 2, 2, 12, 34, 56, 0, 2, 0, "'2022-02-02T12:34:56+02:00'")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 0, 0, -5, "'2022-02-02T12:34:56-00:05'")]
-    public void DateTimeOffset_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, double? hourOffset, double? minuteOffset, string json)
+    [InlineData(2022, 2, 2, 12, 34, 56, 78, 0, -5, "'2022-02-02T12:34:56.078-00:05'")]
+    public void DateTimeOffset_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, int? hourOffset, int? minuteOffset, string json)
     {
-        var result = JsonReader.DateTimeOffset().Read(Strictify(json));
-        var expectedDateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
-        var expected = (hourOffset == null && minuteOffset == null) switch
-        {
-            true => new DateTimeOffset(expectedDateTime),
-            false when hourOffset != null && minuteOffset != null => new DateTimeOffset(expectedDateTime, TimeSpan.FromHours(hourOffset!.GetValueOrDefault()).Add(TimeSpan.FromMinutes(minuteOffset!.GetValueOrDefault()))),
-            false when hourOffset != null => new DateTimeOffset(expectedDateTime, TimeSpan.FromHours(hourOffset!.GetValueOrDefault())),
-            false when minuteOffset != null => new DateTimeOffset(expectedDateTime, TimeSpan.FromMinutes(minuteOffset!.GetValueOrDefault())),
-            _ => throw new NotImplementedException(),
-        };
-        Assert.Equal(expected, result);
+        var actual = JsonReader.DateTimeOffset().Read(Strictify(json));
+        var expectedOffset = hourOffset is { } h && minuteOffset is { } m ? new TimeSpan(h, m, 0) : DateTimeOffset.Now.Offset;
+        var expected = new DateTimeOffset(year, month, day, hour, minute, second, millisecond, expectedOffset);
+        Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData("Null", "null")]
+    [InlineData("False", "false")]
+    [InlineData("True", "true")]
+    [InlineData("Number", "42")]
+    [InlineData("StartArray", "[]")]
+    [InlineData("StartObject", "{}")]
+    [InlineData("String", "'20220202'")]
+    [InlineData("String", "'02/02/2022'")]
+    [InlineData("String", "'2022-02-02 12:34:56'")]
+    [InlineData("String", "'2022-02-02t12:34:56'")]
+    [InlineData("String", "'2022-02-02T12 34 56'")]
+    [InlineData("String", "'2022-02-02T12:34:56 01'")]
+    [InlineData("String", "'2022-02-02T12:34:56+01 00'")]
+    public void DateTimeOffset_With_Invalid_Input(string expectedErrorToken, string json)
+    {
+        TestInvalidInput(JsonReader.DateTimeOffset(), json,
+                         "JSON value cannot be interpreted as a date and time offset in ISO 8601-1 extended format.",
+                         expectedErrorToken);
     }
 
     [Fact]
