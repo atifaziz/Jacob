@@ -83,15 +83,18 @@ public static class GeoJsonReaders
                           JsonReader.Property("coordinates", JsonReader.Array(PolygonPositions, ImmutableArray.CreateRange)),
                           (_, coords) => new MultiPolygon(coords));
 
+    static readonly JsonReaderRef<GeometryCollection> GeometryCollectionRef = new();
+
     public static readonly IJsonReader<Geometry> Geometry =
         JsonReader.Either(from g in Point select (Geometry)g,
                           from g in LineString select (Geometry)g)
                   .Or(from g in Polygon select (Geometry)g)
                   .Or(from g in MultiPoint select (Geometry)g)
                   .Or(from g in MultiLineString select (Geometry)g)
-                  .Or(from g in MultiPolygon select (Geometry)g);
+                  .Or(from g in MultiPolygon select (Geometry)g)
+                  .Or(from g in GeometryCollectionRef select (Geometry)g);
 
-    public static readonly IJsonReader<GeometryCollection> GeometryCollection =
+    public static readonly IJsonReader<GeometryCollection> GeometryCollection = GeometryCollectionRef.Reader =
         JsonReader.Object(JsonReader.Property("type", JsonReader.String().Validate(s => s == "GeometryCollection")),
                           JsonReader.Property("geometries", JsonReader.Array(Geometry, ImmutableArray.CreateRange)),
                           (_, coords) => new GeometryCollection(coords));

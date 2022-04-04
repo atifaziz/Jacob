@@ -524,3 +524,15 @@ public static partial class JsonReader
         }
     }
 }
+
+public sealed class JsonReaderRef<T> : IJsonReader<T>
+{
+    IJsonReader<T>? reader;
+
+#pragma warning disable CA1044 // Properties should not be write only
+    public IJsonReader<T> Reader { set => this.reader = value; }
+#pragma warning restore CA1044 // Properties should not be write only
+
+    public JsonReadResult<T> TryRead(ref Utf8JsonReader reader) =>
+        this.reader is { } someReader ? someReader.TryRead(ref reader) : throw new InvalidOperationException();
+}
