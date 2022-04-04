@@ -9,17 +9,20 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
-using Jacob;
-using Xunit;
+using BenchmarkDotNet.Attributes;
 using JsonElement = System.Text.Json.JsonElement;
 using JsonReader = Jacob.JsonReader;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
-public static class GeoJsonBenchmarks
+[MemoryDiagnoser]
+public sealed class GeoJsonBenchmarks
 {
-    const string Json = @"[
-{
+    const int NumberOfJsonSnippetEntries = 7;
+
+    const string JsonSnippet = @"
+    {
         type: 'Point',
         coordinates: [100.0, 0.0]
     },
@@ -111,26 +114,41 @@ public static class GeoJsonBenchmarks
                 [102.0, 1.0]
             ]
         }]
-    }
-]";
+    }";
 
-    [Fact]
-    public static void JacobTest()
+    private byte[] _jsonDataBytes = Array.Empty<byte>();
+
+    [Params(10, 20)] public int NumberOfElements { get; set; }
+
+    [GlobalSetup]
+    public void Setup()
     {
-        var geometries = JsonReader
-                        .Array(JacobGeoJsonReader.GeometryReader.Or(from g in JacobGeoJsonReader
-                                .GeometryCollectionReader
-                             select (Geometry)g))
-                        .Read(Strictify(Json));
+        var jsonBuilder = new StringBuilder("[");
+        for (var i = 0; i < Math.Ceiling((float)NumberOfElements / NumberOfJsonSnippetEntries); ++i)
+            _ = jsonBuilder.Append(JsonSnippet);
+        _ = jsonBuilder.Append(']');
 
-        Assert.NotNull(geometries);
+        var json =
+            JsonSerializer.Deserialize<JsonElement[]>(Strictify(jsonBuilder.ToString()))!.Take(
+                NumberOfElements);
+
+        this._jsonDataBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(json));
     }
 
-    [Fact]
-    public static void SystemTextJsonTest()
+    [Benchmark]
+    public Geometry[] JsonReaderBenchmark()
     {
-        var geometries = SystemTextGeoJsonReader.Read(Strictify(Json));
-        Assert.NotNull(geometries);
+        return JsonReader
+              .Array(JacobGeoJsonReader.GeometryReader.Or(from g in JacobGeoJsonReader
+                                                             .GeometryCollectionReader
+                                                          select (Geometry)g))
+              .Read(this._jsonDataBytes);
+    }
+
+    [Benchmark]
+    public Geometry[] SystemTextJsonBenchmark()
+    {
+        return SystemTextGeoJsonReader.Read(this._jsonDataBytes);
     }
 
     private static string Strictify(string json) =>
@@ -139,7 +157,7 @@ public static class GeoJsonBenchmarks
 
 static class SystemTextGeoJsonReader
 {
-    public static Geometry[] Read(string json) =>
+    public static Geometry[] Read(byte[] json) =>
         JsonSerializer.Deserialize<GeometryJson[]>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
