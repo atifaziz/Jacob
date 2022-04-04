@@ -2,8 +2,6 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-#if NET6_0_OR_GREATER
-
 #pragma warning disable CA1050
 
 using System;
@@ -17,7 +15,7 @@ using JsonReader = Jacob.JsonReader;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 
 [MemoryDiagnoser]
-public sealed class GeoJsonBenchmarks
+public class GeoJsonBenchmarks
 {
     const int NumberOfJsonSnippetEntries = 7;
 
@@ -114,11 +112,11 @@ public sealed class GeoJsonBenchmarks
                 [102.0, 1.0]
             ]
         }]
-    }";
+    },";
 
     private byte[] _jsonDataBytes = Array.Empty<byte>();
 
-    [Params(10, 20)] public int NumberOfElements { get; set; }
+    [Params(10, 100, 1000, 10000)] public int NumberOfElements { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -145,7 +143,7 @@ public sealed class GeoJsonBenchmarks
               .Read(this._jsonDataBytes);
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public Geometry[] SystemTextJsonBenchmark()
     {
         return SystemTextGeoJsonReader.Read(this._jsonDataBytes);
@@ -338,5 +336,3 @@ public sealed record MultiPolygon(
 #pragma warning disable CA1711 // Identifiers should not have incorrect suffix
 public sealed record GeometryCollection(ImmutableArray<Geometry> Geometries) : Geometry;
 #pragma warning restore CA1711 // Identifiers should not have incorrect suffix
-
-#endif // NET6_0_OR_GREATER
