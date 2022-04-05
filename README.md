@@ -44,7 +44,7 @@ using Jacob;
 Furthermore, to make the JSON data easier to read when encoded as C# literals
 (e.g., by permitting single-quoted strings and unquoted JSON object member names
 so double-quotes don't need escaping), the examples assume the following helper
-method is defined (as well as the [Newtonsoft.Json (13.x)] package referenced):
+method is defined and the [Newtonsoft.Json (13.x)] package is referenced:
 
 ```c#
 // #r "nuget: Newtonsoft.Json, 13.0.1"
@@ -96,7 +96,7 @@ Console.WriteLine(s);
 ```
 
 However, the next example shows the benefits of a compositional API. It
-demonstrates is how to read a tuple of string and integer expressed in JSON as
+demonstrates how to read a tuple of string and integer expressed in JSON as
 an array of two elements:
 
 ```c#
@@ -109,8 +109,9 @@ Console.WriteLine($"Key = {key}, Value = {value}");
 Note how `JsonReader.Tuple` builds on top of the string and integer reader
 introduced in previous examples. By supplying those readers as arguments, the
 tuple reader then knows how to read each item of the tuple. The tuple reader
-also knows to expect only a JSON array of two elements, so if more are supplied,
-as in `["foobar", 42, null]`, then it will produce the following error:
+also knows to expect only a JSON array of two elements; if more elements are
+supplied, as in `["foobar", 42, null]`, then it will produce the following
+error:
 
     Invalid JSON value; JSON array has too many values. See token "Null" at offset 13.
 
@@ -242,8 +243,8 @@ foreach (var (key, value) in pairs)
     Console.WriteLine($"Key = {key}, Value = {value}");
 ```
 
-Once more, `JsonReader.Object` builds on top of readers for each each property
-for a combined effect of creating an object from the constituent parts.
+Once more, `JsonReader.Object` builds on top of readers for each property for
+a combined effect of creating an object from the constituent parts.
 
 
 ## Limitations

@@ -20,6 +20,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\eg\Jacob.Examples.csproj" />
     <ProjectReference Include="..\src\Jacob.csproj" />
   </ItemGroup>
 </Project>
