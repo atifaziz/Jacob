@@ -168,7 +168,7 @@ static class SystemTextGeoJsonReader
                                    select ConvertToPosition(jsonElement));
 
     private static ImmutableArray<Position> ConvertToLineStringPositions(JsonElement e) =>
-        ConvertToPositionsArray(e) is {Length: >= 2} result
+        ConvertToPositionsArray(e) is { Length: >= 2 } result
             ? result
             : throw new ArgumentException(null, nameof(e));
 
@@ -176,10 +176,10 @@ static class SystemTextGeoJsonReader
         ConvertToPolygonPositions(JsonElement e) =>
         ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
                                    select ConvertToPositionsArray(jsonElement) is
-                                       {Length: >= 4} result
+                                   { Length: >= 4 } result
                                        ? result
                                        : throw new ArgumentException(null, nameof(e))) is
-            {Length: >= 1} result
+        { Length: >= 1 } result
             ? result
             : throw new ArgumentException(null, nameof(e));
 
@@ -188,7 +188,7 @@ static class SystemTextGeoJsonReader
         {
             "GeometryCollection" => new GeometryCollection(g.Geometries.Select(ConvertToGeometry)
                                                             .ToImmutableArray()),
-            "Point"      => new Point(ConvertToPosition(g.Coordinates)),
+            "Point" => new Point(ConvertToPosition(g.Coordinates)),
             "LineString" => new LineString(ConvertToLineStringPositions(g.Coordinates)),
             "MultiPoint" => new MultiPoint(ConvertToPositionsArray(g.Coordinates)),
             "MultiLineString" => new MultiLineString(ImmutableArray.CreateRange(
@@ -202,7 +202,7 @@ static class SystemTextGeoJsonReader
         };
 
 #pragma warning disable CA1812
-    private sealed record GeometryJson(string Type, GeometryJson[] Geometries,
+    private record struct GeometryJson(string Type, GeometryJson[] Geometries,
                                        JsonElement Coordinates);
 #pragma warning restore CA1812
 }
