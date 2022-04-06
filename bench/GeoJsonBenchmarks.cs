@@ -20,13 +20,13 @@ using System.Collections.Generic;
 [MemoryDiagnoser]
 public class GeoJsonBenchmarks
 {
-    const string PointJsonSnippet = @"
+    const string PointJson = @"
     {
         type: 'Point',
         coordinates: [100.0, 0.0]
     }";
 
-    const string LineStringJsonSnippet = @"
+    const string LineStringJson = @"
     {
         type: 'LineString',
         coordinates: [
@@ -35,7 +35,7 @@ public class GeoJsonBenchmarks
         ]
     }";
 
-    const string PolygonJsonSnippet = @"
+    const string PolygonJson = @"
     {
         type: 'Polygon',
         coordinates: [
@@ -56,7 +56,7 @@ public class GeoJsonBenchmarks
         ]
     }";
 
-    const string MultiPointJsonSnippet = @"
+    const string MultiPointJson = @"
     {
         type: 'MultiPoint',
         coordinates: [
@@ -65,7 +65,7 @@ public class GeoJsonBenchmarks
         ]
     }";
 
-    const string MultiLineStringJsonSnippet = @"
+    const string MultiLineStringJson = @"
     {
         type: 'MultiLineString',
         coordinates: [
@@ -80,7 +80,7 @@ public class GeoJsonBenchmarks
         ]
     }";
 
-    const string MultiPolygonJsonSnippet = @"
+    const string MultiPolygonJson = @"
     {
         type: 'MultiPolygon',
         coordinates: [
@@ -112,7 +112,7 @@ public class GeoJsonBenchmarks
         ]
     }";
 
-    const string GeometryCollectionJsonSnippet = @"
+    const string GeometryCollectionJson = @"
     {
         type: 'GeometryCollection',
         geometries: [{
@@ -127,15 +127,15 @@ public class GeoJsonBenchmarks
         }]
     }";
 
-    static readonly Dictionary<Distribution, string[]> JsonSnippets = new()
+    static readonly Dictionary<Distribution, string[]> Jsons = new()
     {
         [Distribution.RoundRobin] = new[]
         {
-            PointJsonSnippet, LineStringJsonSnippet, PolygonJsonSnippet,
-            MultiPointJsonSnippet, MultiLineStringJsonSnippet,
-            MultiPolygonJsonSnippet, GeometryCollectionJsonSnippet
+            PointJson, LineStringJson, PolygonJson,
+            MultiPointJson, MultiLineStringJson,
+            MultiPolygonJson, GeometryCollectionJson
         },
-        [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJsonSnippet }
+        [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJson }
     };
 
     byte[] jsonDataBytes = Array.Empty<byte>();
@@ -148,7 +148,7 @@ public class GeoJsonBenchmarks
     public void Setup()
     {
         var json = new StringBuilder("[");
-        _ = json.Append(string.Join(',', JsonSnippets[ElementDistribution].Repeat().Take(NumberOfElements)));
+        _ = json.Append(string.Join(',', Jsons[ElementDistribution].Repeat().Take(NumberOfElements)));
         _ = json.Append(']');
 
         this.jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
