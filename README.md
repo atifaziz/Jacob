@@ -276,11 +276,11 @@ In another configuration, we benchmark the worst-case scenario performance of
 `JsonReader.Either` by deserializing an array with elements of type
 `MultiPolygon`. We measure the following:
 
-BenchmarkDotNet=v0.12.1, OS=Windows 10.0.22000
-Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
-.NET Core SDK=6.0.201
-  [Host]     : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
-  DefaultJob : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
+    BenchmarkDotNet=v0.12.1, OS=Windows 10.0.22000
+    Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
+    .NET Core SDK=6.0.201
+    [Host]     : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
+    DefaultJob : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
 
 |                  Method | NumberOfElements | ElementDistribution |          Mean |         Error |        StdDev |        Median | Ratio | RatioSD |     Gen 0 |     Gen 1 |     Gen 2 |   Allocated |
 |------------------------ |----------------- |-------------------- |--------------:|--------------:|--------------:|--------------:|------:|--------:|----------:|----------:|----------:|------------:|
