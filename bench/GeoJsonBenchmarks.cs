@@ -127,7 +127,7 @@ public class GeoJsonBenchmarks
         }]
     }";
 
-    private static readonly Dictionary<Distribution, string[]> JsonSnippets = new()
+    static readonly Dictionary<Distribution, string[]> JsonSnippets = new()
     {
         [Distribution.RoundRobin] = new[]
         {
@@ -138,7 +138,7 @@ public class GeoJsonBenchmarks
         [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJsonSnippet }
     };
 
-    private byte[] _jsonDataBytes = Array.Empty<byte>();
+    byte[] _jsonDataBytes = Array.Empty<byte>();
 
     [Params(10, 100, 1000, 10000)] public int NumberOfElements { get; set; }
 
@@ -166,7 +166,7 @@ public class GeoJsonBenchmarks
         return SystemTextGeoJsonReader.Read(this._jsonDataBytes);
     }
 
-    private static string Strictify(string json) =>
+    static string Strictify(string json) =>
         Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Newtonsoft.Json.Formatting.None);
 }
 
@@ -184,21 +184,21 @@ static class SystemTextGeoJsonReader
             PropertyNameCaseInsensitive = true
         })!.Select(ConvertToGeometry).ToArray();
 
-    private static Position ConvertToPosition(JsonElement e) =>
+    static Position ConvertToPosition(JsonElement e) =>
         e.GetArrayLength() is var len and (2 or 3)
             ? new Position(e[0].GetDouble(), e[1].GetDouble(), len is 2 ? 0 : e[2].GetDouble())
             : throw new ArgumentException(null, nameof(e));
 
-    private static ImmutableArray<Position> ConvertToPositionsArray(JsonElement e) =>
+    static ImmutableArray<Position> ConvertToPositionsArray(JsonElement e) =>
         ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
                                    select ConvertToPosition(jsonElement));
 
-    private static ImmutableArray<Position> ConvertToLineStringPositions(JsonElement e) =>
+    static ImmutableArray<Position> ConvertToLineStringPositions(JsonElement e) =>
         ConvertToPositionsArray(e) is { Length: >= 2 } result
             ? result
             : throw new ArgumentException(null, nameof(e));
 
-    private static ImmutableArray<ImmutableArray<Position>>
+    static ImmutableArray<ImmutableArray<Position>>
         ConvertToPolygonPositions(JsonElement e) =>
         ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
                                    select ConvertToPositionsArray(jsonElement) is
@@ -209,7 +209,7 @@ static class SystemTextGeoJsonReader
             ? result
             : throw new ArgumentException(null, nameof(e));
 
-    private static Geometry ConvertToGeometry(GeometryJson g) =>
+    static Geometry ConvertToGeometry(GeometryJson g) =>
         g.Type switch
         {
             "GeometryCollection" => new GeometryCollection(g.Geometries.Select(ConvertToGeometry)
@@ -227,6 +227,6 @@ static class SystemTextGeoJsonReader
             _ => throw new InvalidOperationException($"Type {g.Type} is not supported.")
         };
 
-    private record struct GeometryJson(string Type, GeometryJson[] Geometries,
-                                       JsonElement Coordinates);
+    record struct GeometryJson(string Type, GeometryJson[] Geometries,
+                               JsonElement Coordinates);
 }
