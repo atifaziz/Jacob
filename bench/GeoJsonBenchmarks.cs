@@ -18,9 +18,59 @@ using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 [MemoryDiagnoser]
 public class GeoJsonBenchmarks
 {
-    const int NumberOfJsonSnippetEntries = 1;
+    const int NumberOfJsonSnippetEntries = 7;
 
     const string JsonSnippet = @"
+    {
+        type: 'Point',
+        coordinates: [100.0, 0.0]
+    },
+    {
+        type: 'LineString',
+        coordinates: [
+            [100.0, 0.0],
+            [101.0, 1.0]
+        ]
+    },
+    {
+        type: 'Polygon',
+        coordinates: [
+            [
+                [100.0, 0.0],
+                [101.0, 0.0],
+                [101.0, 1.0],
+                [100.0, 1.0],
+                [100.0, 0.0]
+            ],
+            [
+                [100.8, 0.8],
+                [100.8, 0.2],
+                [100.2, 0.2],
+                [100.2, 0.8],
+                [100.8, 0.8]
+            ]
+        ]
+    },
+    {
+        type: 'MultiPoint',
+        coordinates: [
+            [100.0, 0.0],
+            [101.0, 1.0]
+        ]
+    },
+    {
+        type: 'MultiLineString',
+        coordinates: [
+            [
+                [100.0, 0.0],
+                [101.0, 1.0]
+            ],
+            [
+                [102.0, 2.0],
+                [103.0, 3.0]
+            ]
+        ]
+    },
     {
         type: 'MultiPolygon',
         coordinates: [
@@ -50,6 +100,19 @@ public class GeoJsonBenchmarks
                 ]
             ]
         ]
+    },
+    {
+        type: 'GeometryCollection',
+        geometries: [{
+            type: 'Point',
+            coordinates: [100.0, 0.0]
+        }, {
+            type: 'LineString',
+            coordinates: [
+                [101.0, 0.0],
+                [102.0, 1.0]
+            ]
+        }]
     },";
 
     private byte[] _jsonDataBytes = Array.Empty<byte>();
