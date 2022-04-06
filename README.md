@@ -279,34 +279,34 @@ In another configuration, we benchmark the worst-case scenario performance of
     BenchmarkDotNet=v0.12.1, OS=Windows 10.0.22000
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
     .NET Core SDK=6.0.201
-    [Host]     : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
-    DefaultJob : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
+      [Host]     : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
+      DefaultJob : .NET Core 6.0.3 (CoreCLR 6.0.322.12309, CoreFX 6.0.322.12309), X64 RyuJIT
 
-|                  Method | NumberOfElements | ElementDistribution |          Mean |         Error |        StdDev |        Median | Ratio | RatioSD |     Gen 0 |     Gen 1 |     Gen 2 |   Allocated |
-|------------------------ |----------------- |-------------------- |--------------:|--------------:|--------------:|--------------:|------:|--------:|----------:|----------:|----------:|------------:|
-|     **JsonReaderBenchmark** |               **10** |          **RoundRobin** |      **49.58 μs** |      **1.474 μs** |      **4.109 μs** |      **48.38 μs** |  **0.12** |    **0.01** |    **1.8921** |         **-** |         **-** |     **7.83 KB** |
-| SystemTextJsonBenchmark |               10 |          RoundRobin |     413.93 μs |     10.205 μs |     29.444 μs |     404.48 μs |  1.00 |    0.00 |    7.8125 |    3.9063 |         - |    32.67 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |               **10** |    **MultiPolygonOnly** |      **97.07 μs** |      **1.940 μs** |      **2.075 μs** |      **96.93 μs** |  **0.26** |    **0.01** |    **4.8828** |    **0.1221** |         **-** |    **20.16 KB** |
-| SystemTextJsonBenchmark |               10 |    MultiPolygonOnly |     406.01 μs |     14.323 μs |     41.326 μs |     395.44 μs |  1.00 |    0.00 |   13.1836 |    6.3477 |         - |    54.49 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |              **100** |          **RoundRobin** |     **542.52 μs** |     **16.072 μs** |     **45.332 μs** |     **532.89 μs** |  **0.71** |    **0.04** |   **20.5078** |    **0.9766** |         **-** |    **83.88 KB** |
-| SystemTextJsonBenchmark |              100 |          RoundRobin |     756.16 μs |     11.452 μs |     10.152 μs |     756.10 μs |  1.00 |    0.00 |   42.9688 |   18.5547 |         - |   178.26 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |              **100** |    **MultiPolygonOnly** |   **1,001.52 μs** |     **19.620 μs** |     **27.505 μs** |     **997.67 μs** |  **0.80** |    **0.03** |   **46.8750** |   **15.6250** |         **-** |   **199.17 KB** |
-| SystemTextJsonBenchmark |              100 |    MultiPolygonOnly |   1,249.10 μs |     24.708 μs |     36.217 μs |   1,249.12 μs |  1.00 |    0.00 |   78.1250 |   33.2031 |         - |   390.25 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |             **1000** |          **RoundRobin** |   **5,219.09 μs** |    **101.381 μs** |    **112.685 μs** |   **5,257.60 μs** |  **1.04** |    **0.10** |  **132.8125** |   **62.5000** |         **-** |   **844.31 KB** |
-| SystemTextJsonBenchmark |             1000 |          RoundRobin |   5,777.77 μs |    322.186 μs |    949.974 μs |   5,742.35 μs |  1.00 |    0.00 |  265.6250 |  132.8125 |         - |   1627.6 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |             **1000** |    **MultiPolygonOnly** |  **14,326.93 μs** |    **504.802 μs** |  **1,472.532 μs** |  **14,537.96 μs** |  **1.02** |    **0.25** |  **312.5000** |  **156.2500** |         **-** |  **1985.12 KB** |
-| SystemTextJsonBenchmark |             1000 |    MultiPolygonOnly |  14,730.27 μs |  1,191.268 μs |  3,512.480 μs |  15,213.63 μs |  1.00 |    0.00 |  609.3750 |  296.8750 |         - |  3732.68 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |            **10000** |          **RoundRobin** |  **74,123.48 μs** |  **3,955.458 μs** | **11,412.402 μs** |  **71,241.50 μs** |  **1.05** |    **0.22** | **1000.0000** |         **-** |         **-** |  **8536.84 KB** |
-| SystemTextJsonBenchmark |            10000 |          RoundRobin |  72,438.24 μs |  3,274.010 μs |  9,126.630 μs |  70,668.97 μs |  1.00 |    0.00 | 2800.0000 | 1400.0000 |  400.0000 | 16492.68 KB |
-|                         |                  |                     |               |               |               |               |       |         |           |           |           |             |
-|     **JsonReaderBenchmark** |            **10000** |    **MultiPolygonOnly** | **164,291.51 μs** |  **8,808.222 μs** | **24,553.803 μs** | **158,093.38 μs** |  **0.90** |    **0.19** | **3500.0000** | **1500.0000** |  **500.0000** | **19945.63 KB** |
-| SystemTextJsonBenchmark |            10000 |    MultiPolygonOnly | 185,037.99 μs | 10,861.693 μs | 31,855.464 μs | 181,425.20 μs |  1.00 |    0.00 | 6000.0000 | 2000.0000 | 1000.0000 |  37537.1 KB |
+|                  Method | NumberOfElements | ElementDistribution |          Mean |        Error |       StdDev | Ratio | RatioSD |     Gen 0 |     Gen 1 |     Gen 2 |   Allocated |
+|------------------------ |----------------- |-------------------- |--------------:|-------------:|-------------:|------:|--------:|----------:|----------:|----------:|------------:|
+|     **JsonReaderBenchmark** |               **10** |          **RoundRobin** |      **46.12 μs** |     **0.882 μs** |     **1.115 μs** |  **1.32** |    **0.04** |    **1.8921** |         **-** |         **-** |     **7.83 KB** |
+| SystemTextJsonBenchmark |               10 |          RoundRobin |      35.06 μs |     0.673 μs |     0.661 μs |  1.00 |    0.00 |    3.7842 |         - |         - |     15.7 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |               **10** |    **MultiPolygonOnly** |      **93.75 μs** |     **1.806 μs** |     **1.855 μs** |  **1.06** |    **0.04** |    **4.8828** |    **0.1221** |         **-** |    **20.16 KB** |
+| SystemTextJsonBenchmark |               10 |    MultiPolygonOnly |      87.64 μs |     1.749 μs |     3.109 μs |  1.00 |    0.00 |    9.2773 |         - |         - |    38.02 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |              **100** |          **RoundRobin** |     **486.69 μs** |     **9.342 μs** |     **9.175 μs** |  **1.32** |    **0.03** |   **20.5078** |    **0.9766** |         **-** |    **83.88 KB** |
+| SystemTextJsonBenchmark |              100 |          RoundRobin |     367.92 μs |     5.094 μs |     4.516 μs |  1.00 |    0.00 |   39.0625 |    5.8594 |         - |   161.09 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |              **100** |    **MultiPolygonOnly** |     **960.07 μs** |    **16.182 μs** |    **15.137 μs** |  **1.11** |    **0.02** |   **47.8516** |   **15.6250** |         **-** |   **199.16 KB** |
+| SystemTextJsonBenchmark |              100 |    MultiPolygonOnly |     862.43 μs |     9.172 μs |     8.580 μs |  1.00 |    0.00 |   83.9844 |   25.3906 |         - |   373.46 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |             **1000** |          **RoundRobin** |   **5,007.96 μs** |    **86.742 μs** |    **76.894 μs** |  **1.26** |    **0.02** |  **132.8125** |   **62.5000** |         **-** |   **844.31 KB** |
+| SystemTextJsonBenchmark |             1000 |          RoundRobin |   3,968.88 μs |    52.979 μs |    46.965 μs |  1.00 |    0.00 |  257.8125 |  125.0000 |         - |  1609.24 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |             **1000** |    **MultiPolygonOnly** |  **10,259.01 μs** |   **201.294 μs** |   **178.442 μs** |  **0.99** |    **0.02** |  **312.5000** |  **156.2500** |         **-** |  **1985.12 KB** |
+| SystemTextJsonBenchmark |             1000 |    MultiPolygonOnly |  10,358.38 μs |   174.165 μs |   154.393 μs |  1.00 |    0.00 |  593.7500 |  296.8750 |         - |  3713.12 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |            **10000** |          **RoundRobin** |  **60,955.24 μs** | **1,119.826 μs** | **1,149.979 μs** |  **1.00** |    **0.03** | **1444.4444** |  **444.4444** |  **111.1111** |  **8537.14 KB** |
+| SystemTextJsonBenchmark |            10000 |          RoundRobin |  61,381.19 μs |   849.500 μs |   709.371 μs |  1.00 |    0.00 | 2888.8889 | 1444.4444 |  444.4444 | 16470.32 KB |
+|                         |                  |                     |               |              |              |       |         |           |           |           |             |
+|     **JsonReaderBenchmark** |            **10000** |    **MultiPolygonOnly** | **128,842.65 μs** | **2,549.790 μs** | **3,574.449 μs** |  **0.90** |    **0.03** | **3500.0000** | **1500.0000** |  **500.0000** | **19945.18 KB** |
+| SystemTextJsonBenchmark |            10000 |    MultiPolygonOnly | 142,806.56 μs | 2,738.989 μs | 3,044.380 μs |  1.00 |    0.00 | 6750.0000 | 3000.0000 | 1000.0000 | 37511.51 KB |
 
 
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
