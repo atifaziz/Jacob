@@ -14,24 +14,27 @@ using Jacob.Examples.GeoJson;
 using JsonElement = System.Text.Json.JsonElement;
 using JsonReader = Jacob.JsonReader;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
+using static MoreLinq.Extensions.RepeatExtension;
 
 [MemoryDiagnoser]
 public class GeoJsonBenchmarks
 {
-    const int NumberOfJsonSnippetEntries = 7;
-
-    const string JsonSnippet = @"
+    const string PointJsonSnippet = @"
     {
         type: 'Point',
         coordinates: [100.0, 0.0]
-    },
+    }";
+
+    const string LineStringJsonSnippet = @"
     {
         type: 'LineString',
         coordinates: [
             [100.0, 0.0],
             [101.0, 1.0]
         ]
-    },
+    }";
+
+    const string PolygonJsonSnippet = @"
     {
         type: 'Polygon',
         coordinates: [
@@ -50,14 +53,18 @@ public class GeoJsonBenchmarks
                 [100.8, 0.8]
             ]
         ]
-    },
+    }";
+
+    const string MultiPointJsonSnippet = @"
     {
         type: 'MultiPoint',
         coordinates: [
             [100.0, 0.0],
             [101.0, 1.0]
         ]
-    },
+    }";
+
+    const string MultiLineStringJsonSnippet = @"
     {
         type: 'MultiLineString',
         coordinates: [
@@ -70,7 +77,9 @@ public class GeoJsonBenchmarks
                 [103.0, 3.0]
             ]
         ]
-    },
+    }";
+
+    const string MultiPolygonJsonSnippet = @"
     {
         type: 'MultiPolygon',
         coordinates: [
@@ -100,7 +109,9 @@ public class GeoJsonBenchmarks
                 ]
             ]
         ]
-    },
+    }";
+
+    const string GeometryCollectionJsonSnippet = @"
     {
         type: 'GeometryCollection',
         geometries: [{
@@ -113,7 +124,14 @@ public class GeoJsonBenchmarks
                 [102.0, 1.0]
             ]
         }]
-    },";
+    }";
+
+    private static readonly string[] JsonSnippet = new[]
+    {
+        PointJsonSnippet, LineStringJsonSnippet, PolygonJsonSnippet,
+        MultiPointJsonSnippet, MultiLineStringJsonSnippet,
+        MultiPolygonJsonSnippet, GeometryCollectionJsonSnippet
+    };
 
     private byte[] _jsonDataBytes = Array.Empty<byte>();
 
@@ -123,15 +141,10 @@ public class GeoJsonBenchmarks
     public void Setup()
     {
         var jsonBuilder = new StringBuilder("[");
-        for (var i = 0; i < Math.Ceiling((float)NumberOfElements / NumberOfJsonSnippetEntries); ++i)
-            _ = jsonBuilder.Append(JsonSnippet);
+        _ = jsonBuilder.Append(string.Join(',', JsonSnippet.Repeat().Take(NumberOfElements)));
         _ = jsonBuilder.Append(']');
 
-        var json =
-            JsonSerializer.Deserialize<JsonElement[]>(Strictify(jsonBuilder.ToString()))!.Take(
-                NumberOfElements);
-
-        this._jsonDataBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(json));
+        this._jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(jsonBuilder.ToString()));
     }
 
     [Benchmark]
