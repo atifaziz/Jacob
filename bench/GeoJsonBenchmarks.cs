@@ -177,11 +177,13 @@ public class GeoJsonBenchmarks
 
     static class SystemTextGeoJsonReader
     {
+        static readonly JsonSerializerOptions SerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         public static Geometry[] Read(byte[] json) =>
-            JsonSerializer.Deserialize<GeometryJson[]>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            })!.Select(ConvertToGeometry).ToArray();
+            JsonSerializer.Deserialize<GeometryJson[]>(json, SerializerOptions)!.Select(ConvertToGeometry).ToArray();
 
         static Position ConvertToPosition(JsonElement e) =>
             e.GetArrayLength() is var len and (2 or 3)
