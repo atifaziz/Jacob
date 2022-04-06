@@ -227,8 +227,6 @@ static class SystemTextGeoJsonReader
             _ => throw new InvalidOperationException($"Type {g.Type} is not supported.")
         };
 
-#pragma warning disable CA1812
     private record struct GeometryJson(string Type, GeometryJson[] Geometries,
                                        JsonElement Coordinates);
-#pragma warning restore CA1812
 }
