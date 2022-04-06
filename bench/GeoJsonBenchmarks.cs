@@ -138,7 +138,7 @@ public class GeoJsonBenchmarks
         [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJsonSnippet }
     };
 
-    byte[] _jsonDataBytes = Array.Empty<byte>();
+    byte[] jsonDataBytes = Array.Empty<byte>();
 
     [Params(10, 100, 1000, 10000)] public int NumberOfElements { get; set; }
 
@@ -151,19 +151,19 @@ public class GeoJsonBenchmarks
         _ = json.Append(string.Join(',', JsonSnippets[ElementDistribution].Repeat().Take(NumberOfElements)));
         _ = json.Append(']');
 
-        this._jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
+        this.jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
     }
 
     [Benchmark]
     public Geometry[] JsonReaderBenchmark()
     {
-        return JsonReader.Array(GeoJsonReaders.Geometry).Read(this._jsonDataBytes);
+        return JsonReader.Array(GeoJsonReaders.Geometry).Read(this.jsonDataBytes);
     }
 
     [Benchmark(Baseline = true)]
     public Geometry[] SystemTextJsonBenchmark()
     {
-        return SystemTextGeoJsonReader.Read(this._jsonDataBytes);
+        return SystemTextGeoJsonReader.Read(this.jsonDataBytes);
     }
 
     static string Strictify(string json) =>
