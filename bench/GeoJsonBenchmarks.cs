@@ -15,6 +15,7 @@ using JsonElement = System.Text.Json.JsonElement;
 using JsonReader = Jacob.JsonReader;
 using JsonSerializerOptions = System.Text.Json.JsonSerializerOptions;
 using static MoreLinq.Extensions.RepeatExtension;
+using System.Collections.Generic;
 
 [MemoryDiagnoser]
 public class GeoJsonBenchmarks
@@ -126,25 +127,31 @@ public class GeoJsonBenchmarks
         }]
     }";
 
-    private static readonly string[] JsonSnippet = new[]
+    private static readonly Dictionary<Distribution, string[]> JsonSnippets = new()
     {
-        PointJsonSnippet, LineStringJsonSnippet, PolygonJsonSnippet,
-        MultiPointJsonSnippet, MultiLineStringJsonSnippet,
-        MultiPolygonJsonSnippet, GeometryCollectionJsonSnippet
+        [Distribution.RoundRobin] = new[]
+        {
+            PointJsonSnippet, LineStringJsonSnippet, PolygonJsonSnippet,
+            MultiPointJsonSnippet, MultiLineStringJsonSnippet,
+            MultiPolygonJsonSnippet, GeometryCollectionJsonSnippet
+        },
+        [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJsonSnippet }
     };
 
     private byte[] _jsonDataBytes = Array.Empty<byte>();
 
     [Params(10, 100, 1000, 10000)] public int NumberOfElements { get; set; }
 
+    [ParamsAllValues] public Distribution ElementDistribution { get; set; }
+
     [GlobalSetup]
     public void Setup()
     {
-        var jsonBuilder = new StringBuilder("[");
-        _ = jsonBuilder.Append(string.Join(',', JsonSnippet.Repeat().Take(NumberOfElements)));
-        _ = jsonBuilder.Append(']');
+        var json = new StringBuilder("[");
+        _ = json.Append(string.Join(',', JsonSnippets[ElementDistribution].Repeat().Take(NumberOfElements)));
+        _ = json.Append(']');
 
-        this._jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(jsonBuilder.ToString()));
+        this._jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
     }
 
     [Benchmark]
@@ -161,6 +168,12 @@ public class GeoJsonBenchmarks
 
     private static string Strictify(string json) =>
         Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Newtonsoft.Json.Formatting.None);
+}
+
+public enum Distribution
+{
+    RoundRobin,
+    MultiPolygonOnly
 }
 
 static class SystemTextGeoJsonReader
