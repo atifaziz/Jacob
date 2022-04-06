@@ -168,65 +168,66 @@ public class GeoJsonBenchmarks
 
     static string Strictify(string json) =>
         Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Newtonsoft.Json.Formatting.None);
+
+    public enum Distribution
+    {
+        RoundRobin,
+        MultiPolygonOnly
+    }
+
+    static class SystemTextGeoJsonReader
+    {
+        public static Geometry[] Read(byte[] json) =>
+            JsonSerializer.Deserialize<GeometryJson[]>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            })!.Select(ConvertToGeometry).ToArray();
+
+        static Position ConvertToPosition(JsonElement e) =>
+            e.GetArrayLength() is var len and (2 or 3)
+                ? new Position(e[0].GetDouble(), e[1].GetDouble(), len is 2 ? 0 : e[2].GetDouble())
+                : throw new ArgumentException(null, nameof(e));
+
+        static ImmutableArray<Position> ConvertToPositionsArray(JsonElement e) =>
+            ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
+                                       select ConvertToPosition(jsonElement));
+
+        static ImmutableArray<Position> ConvertToLineStringPositions(JsonElement e) =>
+            ConvertToPositionsArray(e) is { Length: >= 2 } result
+                ? result
+                : throw new ArgumentException(null, nameof(e));
+
+        static ImmutableArray<ImmutableArray<Position>>
+            ConvertToPolygonPositions(JsonElement e) =>
+            ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
+                                       select ConvertToPositionsArray(jsonElement) is
+                                       { Length: >= 4 } result
+                                           ? result
+                                           : throw new ArgumentException(null, nameof(e))) is
+            { Length: >= 1 } result
+                ? result
+                : throw new ArgumentException(null, nameof(e));
+
+        static Geometry ConvertToGeometry(GeometryJson g) =>
+            g.Type switch
+            {
+                "GeometryCollection" => new GeometryCollection(g.Geometries.Select(ConvertToGeometry)
+                                                                .ToImmutableArray()),
+                "Point" => new Point(ConvertToPosition(g.Coordinates)),
+                "LineString" => new LineString(ConvertToLineStringPositions(g.Coordinates)),
+                "MultiPoint" => new MultiPoint(ConvertToPositionsArray(g.Coordinates)),
+                "MultiLineString" => new MultiLineString(ImmutableArray.CreateRange(
+                    from el in g.Coordinates.EnumerateArray()
+                    select ConvertToLineStringPositions(el))),
+                "Polygon" => new Polygon(ConvertToPolygonPositions(g.Coordinates)),
+                "MultiPolygon" => new MultiPolygon(g.Coordinates.EnumerateArray()
+                                                    .Select(ConvertToPolygonPositions)
+                                                    .ToImmutableArray()),
+                _ => throw new InvalidOperationException($"Type {g.Type} is not supported.")
+            };
+
+        record struct GeometryJson(string Type, GeometryJson[] Geometries,
+                                   JsonElement Coordinates);
+    }
 }
 
-public enum Distribution
-{
-    RoundRobin,
-    MultiPolygonOnly
-}
-
-static class SystemTextGeoJsonReader
-{
-    public static Geometry[] Read(byte[] json) =>
-        JsonSerializer.Deserialize<GeometryJson[]>(json, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!.Select(ConvertToGeometry).ToArray();
-
-    static Position ConvertToPosition(JsonElement e) =>
-        e.GetArrayLength() is var len and (2 or 3)
-            ? new Position(e[0].GetDouble(), e[1].GetDouble(), len is 2 ? 0 : e[2].GetDouble())
-            : throw new ArgumentException(null, nameof(e));
-
-    static ImmutableArray<Position> ConvertToPositionsArray(JsonElement e) =>
-        ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
-                                   select ConvertToPosition(jsonElement));
-
-    static ImmutableArray<Position> ConvertToLineStringPositions(JsonElement e) =>
-        ConvertToPositionsArray(e) is { Length: >= 2 } result
-            ? result
-            : throw new ArgumentException(null, nameof(e));
-
-    static ImmutableArray<ImmutableArray<Position>>
-        ConvertToPolygonPositions(JsonElement e) =>
-        ImmutableArray.CreateRange(from jsonElement in e.EnumerateArray()
-                                   select ConvertToPositionsArray(jsonElement) is
-                                   { Length: >= 4 } result
-                                       ? result
-                                       : throw new ArgumentException(null, nameof(e))) is
-        { Length: >= 1 } result
-            ? result
-            : throw new ArgumentException(null, nameof(e));
-
-    static Geometry ConvertToGeometry(GeometryJson g) =>
-        g.Type switch
-        {
-            "GeometryCollection" => new GeometryCollection(g.Geometries.Select(ConvertToGeometry)
-                                                            .ToImmutableArray()),
-            "Point" => new Point(ConvertToPosition(g.Coordinates)),
-            "LineString" => new LineString(ConvertToLineStringPositions(g.Coordinates)),
-            "MultiPoint" => new MultiPoint(ConvertToPositionsArray(g.Coordinates)),
-            "MultiLineString" => new MultiLineString(ImmutableArray.CreateRange(
-                from el in g.Coordinates.EnumerateArray()
-                select ConvertToLineStringPositions(el))),
-            "Polygon" => new Polygon(ConvertToPolygonPositions(g.Coordinates)),
-            "MultiPolygon" => new MultiPolygon(g.Coordinates.EnumerateArray()
-                                                .Select(ConvertToPolygonPositions)
-                                                .ToImmutableArray()),
-            _ => throw new InvalidOperationException($"Type {g.Type} is not supported.")
-        };
-
-    record struct GeometryJson(string Type, GeometryJson[] Geometries,
-                               JsonElement Coordinates);
-}
