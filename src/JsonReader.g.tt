@@ -33,14 +33,16 @@ partial class JsonReader
     })
     { #>
 
-    private static IJsonReader<<#= e.Native #>> <#= e.Native #>Reader;
+    static IJsonReader<<#= e.Native #>> <#= e.Native #>Reader;
 
     public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
         <#= e.Native #>Reader ??=
-            Create((ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
+            CreatePure(static (ref Utf8JsonReader rdr) =>
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with <#= e.Api #>."));
 <#
     }
 }
@@ -91,27 +93,32 @@ partial class JsonReader
         Tuple<<#= ts #>>(
             <#= string.Join(@",
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
-        Create((ref Utf8JsonReader rdr) =>
+        CreatePure((ref Utf8JsonReader rdr) =>
         {
+            if (!rdr.Read())
+                throw IncompleteReadNotSupportedException();
+
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
-
-            _ = rdr.Read(); // "["
 <#
         foreach (var n in ns)
         { #>
 
-            var (item<#= n #>, error<#= n #>) = item<#= n #>Reader.TryRead(ref rdr);
-            if (error<#= n #> is not null)
-                return Error(error<#= n #>);
+            T<#= n #> item<#= n #>;
+            switch(item<#= n #>Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw IncompleteReadNotSupportedException();
+                case (_, { } error<#= n #>): return Error(error<#= n #>);
+                case (var item, _): item<#= n #> = item; break;
+            }
 <#
         } #>
 
+            if (!rdr.Read())
+                throw IncompleteReadNotSupportedException();
+
             if (rdr.TokenType != JsonTokenType.EndArray)
                 return Error("Invalid JSON value; JSON array has too many values.");
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "]"
 
             return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
         });

@@ -14,6 +14,7 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 using Formatting = Newtonsoft.Json.Formatting;
 using JToken = Newtonsoft.Json.Linq.JToken;
+using Utf8JsonReader = Jacob.Utf8JsonReader;
 
 [assembly: CLSCompliant(false)]
 
