@@ -140,7 +140,7 @@ public class GeoJsonBenchmarks
 
     byte[] jsonDataBytes = Array.Empty<byte>();
 
-    [Params(10, 100, 1000, 10000)] public int NumberOfElements { get; set; }
+    [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
     [ParamsAllValues] public Distribution ElementDistribution { get; set; }
 
@@ -148,7 +148,7 @@ public class GeoJsonBenchmarks
     public void Setup()
     {
         var json = new StringBuilder("[");
-        _ = json.Append(string.Join(',', Jsons[ElementDistribution].Repeat().Take(NumberOfElements)));
+        _ = json.Append(string.Join(',', Jsons[ElementDistribution].Repeat().Take(ObjectCount)));
         _ = json.Append(']');
 
         this.jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
