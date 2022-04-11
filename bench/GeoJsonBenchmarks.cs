@@ -127,34 +127,34 @@ public class GeoJsonBenchmarks
         }]
     }";
 
-    public enum Distribution
+    public enum SampleSetId
     {
-        RoundRobin,
-        MultiPolygonOnly
+        All,
+        MultiPolygon
     }
 
-    static readonly Dictionary<Distribution, string[]> Jsons = new()
+    static readonly Dictionary<SampleSetId, string[]> Jsons = new()
     {
-        [Distribution.RoundRobin] = new[]
+        [SampleSetId.All] = new[]
         {
             PointJson, LineStringJson, PolygonJson,
             MultiPointJson, MultiLineStringJson,
             MultiPolygonJson, GeometryCollectionJson
         },
-        [Distribution.MultiPolygonOnly] = new[] { MultiPolygonJson }
+        [SampleSetId.MultiPolygon] = new[] { MultiPolygonJson }
     };
 
     byte[] jsonDataBytes = Array.Empty<byte>();
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
-    [ParamsAllValues] public Distribution ElementDistribution { get; set; }
+    [ParamsAllValues] public SampleSetId SampleSet { get; set; }
 
     [GlobalSetup]
     public void Setup()
     {
         var json = new StringBuilder("[");
-        _ = json.Append(string.Join(',', Jsons[ElementDistribution].Repeat().Take(ObjectCount)));
+        _ = json.Append(string.Join(',', Jsons[SampleSet].Repeat().Take(ObjectCount)));
         _ = json.Append(']');
 
         this.jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
