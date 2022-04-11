@@ -127,6 +127,12 @@ public class GeoJsonBenchmarks
         }]
     }";
 
+    public enum Distribution
+    {
+        RoundRobin,
+        MultiPolygonOnly
+    }
+
     static readonly Dictionary<Distribution, string[]> Jsons = new()
     {
         [Distribution.RoundRobin] = new[]
@@ -168,12 +174,6 @@ public class GeoJsonBenchmarks
 
     static string Strictify(string json) =>
         Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Newtonsoft.Json.Formatting.None);
-
-    public enum Distribution
-    {
-        RoundRobin,
-        MultiPolygonOnly
-    }
 
     static class SystemTextGeoJsonReader
     {
