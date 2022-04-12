@@ -25,15 +25,29 @@ public static class JsonReadResult
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonReadResult<T> Value<T>(T value) => new(value, null);
+
+    public static bool IsIncomplete<T>(this IJsonReadResult<T> result) =>
+        result is null
+            ? throw new ArgumentNullException(nameof(result))
+            : ReferenceEquals(result.Error, IncompleteJsonReadError.Value);
+}
+
+public static class IncompleteJsonReadError
+{
+    public static readonly string Value = "(incomplete)";
 }
 
 public record struct JsonReadError(string Message)
 {
+    public static readonly JsonReadError Incomplete = new(IncompleteJsonReadError.Value);
+
     public override string ToString() => Message;
 }
 
 public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult<T>
 {
+    public bool Incomplete => ReferenceEquals(Error, IncompleteJsonReadError.Value);
+
     public override string ToString() =>
         Error is { } someError ? $"Error: {someError}" : $"Value: {Value}";
 
@@ -72,9 +86,11 @@ public static partial class JsonReader
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
         var rdr = new Utf8JsonReader(utf8JsonTextBytes);
-        _ = rdr.Read();
         return reader.Read(ref rdr);
     }
+
+    public static JsonReadResult<T> TryRead<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader) =>
+        reader?.TryRead(ref utf8Reader) ?? throw new ArgumentNullException(nameof(reader));
 
     public static T Read<T>(this IJsonReader<T> reader, ref Utf8JsonReader utf8Reader)
     {
@@ -94,7 +110,6 @@ public static partial class JsonReader
     {
         if (reader == null) throw new ArgumentNullException(nameof(reader));
         var rdr = new Utf8JsonReader(utf8JsonTextBytes);
-        _ = rdr.Read();
         return reader.TryRead(ref rdr);
     }
 
@@ -106,39 +121,47 @@ public static partial class JsonReader
     public static IJsonReader<string> String() =>
         stringReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.String
-                ? Value(rdr.GetString()!)
-                : Error("Invalid JSON value where a JSON string was expected."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.String
+                        ? Value(rdr.GetString()!)
+                        : Error("Invalid JSON value where a JSON string was expected."));
 
     static IJsonReader<Guid>? guidReader;
 
     public static IJsonReader<Guid> Guid() =>
         guidReader ??=
-            Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.String && rdr.TryGetGuid(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value where a Guid was expected in the 'D' format (hyphen-separated)."));
+            Create((ref Utf8JsonReader rdr) =>
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.String && rdr.TryGetGuid(out var value)
+                        ? Value(value)
+                        : Error("Invalid JSON value where a Guid was expected in the 'D' format (hyphen-separated)."));
 
     static IJsonReader<bool>? booleanReader;
 
     public static IJsonReader<bool> Boolean() =>
         booleanReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType switch
-                {
-                    JsonTokenType.True => Value(true),
-                    JsonTokenType.False => Value(false),
-                    _ => Error("Invalid JSON value where a JSON Boolean was expected.")
-                });
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType switch
+                      {
+                          JsonTokenType.True => Value(true),
+                          JsonTokenType.False => Value(false),
+                          _ => Error("Invalid JSON value where a JSON Boolean was expected.")
+                      });
 
     static IJsonReader<DateTime>? dateTimeReader;
 
     public static IJsonReader<DateTime> DateTime() =>
         dateTimeReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
-                ? Value(value)
-                : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTime(out var value)
+                        ? Value(value)
+                        : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
 
     public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider) =>
         DateTime(format, provider, DateTimeStyles.None);
@@ -148,9 +171,11 @@ public static partial class JsonReader
 
     public static IJsonReader<T> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
-            rdr.TokenType == JsonTokenType.Null
-            ? Value(@null)
-            : Error("Invalid JSON value where a JSON null was expected."));
+            !rdr.Read()
+                ? JsonReadError.Incomplete
+                : rdr.TokenType == JsonTokenType.Null
+                    ? Value(@null)
+                    : Error("Invalid JSON value where a JSON null was expected."));
 
     static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
 #if NET5_0_OR_GREATER
@@ -210,11 +235,13 @@ public static partial class JsonReader
 
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2,
                                            string? errorMessage) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr) =>
         {
             var irdr = rdr;
             switch (reader1.TryRead(ref irdr))
             {
+                case { Incomplete: true }:
+                    throw PartialJsonNotSupportedException();
                 case (_, { }):
                     return reader2.TryRead(ref rdr) switch
                     {
@@ -224,6 +251,43 @@ public static partial class JsonReader
                 case var some:
                     rdr = irdr;
                     return some;
+            }
+        });
+
+    public static IJsonReader<T> Buffer<T>(this IJsonReader<T> reader) =>
+        Create((ref Utf8JsonReader rdr) =>
+        {
+            if (rdr.IsResuming)
+                _ = rdr.Pop();
+
+            var bookmark = rdr;
+            var read = rdr.Read();
+
+            if (!read)
+                return rdr.Suspend(new());
+
+            switch (rdr.TokenType)
+            {
+                case JsonTokenType.Null or JsonTokenType.False or JsonTokenType.True
+                    or JsonTokenType.Number or JsonTokenType.String:
+                {
+                    rdr.AssumeTokenRead();
+                    return reader.TryRead(ref rdr);
+                }
+                case JsonTokenType.StartObject or JsonTokenType.StartArray:
+                {
+                    var depth = rdr.CurrentDepth;
+                    do
+                    {
+                        read = rdr.Read();
+                    }
+                    while (read && depth < rdr.CurrentDepth);
+                    rdr = bookmark;
+                    return read ? reader.TryRead(ref rdr) : rdr.Suspend(new());
+                }
+                case var tokenType:
+                    throw new
+                        InvalidOperationException($"Operation is not valid when reader is on token: {tokenType}");
             }
         });
 
@@ -264,20 +328,28 @@ public static partial class JsonReader
                                                           Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.TokenType != JsonTokenType.StartObject)
-                return Error("Invalid JSON value where a JSON object was expected.");
+            if (!rdr.TryReadToken(out var tokenType))
+                throw PartialJsonNotSupportedException();
 
-            _ = rdr.Read(); // "{"
+            if (tokenType is not JsonTokenType.StartObject)
+                return Error("Invalid JSON value where a JSON object was expected.");
 
             var properties = new List<KeyValuePair<string, T>>();
 
-            while (rdr.TokenType != JsonTokenType.EndObject)
+            while (true)
             {
+                if (!rdr.TryReadToken(out tokenType))
+                    throw PartialJsonNotSupportedException();
+
+                if (tokenType is JsonTokenType.EndObject)
+                    break;
+
                 var name = rdr.GetString()!;
-                _ = rdr.Read();
 
                 switch (reader.TryRead(ref rdr))
                 {
+                    case { Incomplete: true }:
+                        throw PartialJsonNotSupportedException();
                     case (_, { } error):
                         return Error(error);
                     case var (value, _):
@@ -285,9 +357,6 @@ public static partial class JsonReader
                         break;
                 }
             }
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "}"
 
             return Value(resultSelector(properties));
         });
@@ -322,10 +391,11 @@ public static partial class JsonReader
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
         Create((ref Utf8JsonReader reader) =>
         {
-            if (reader.TokenType != JsonTokenType.StartObject)
-                return Error("Invalid JSON value where a JSON object was expected.");
+            if (!reader.TryReadToken(out var tokenType))
+                throw PartialJsonNotSupportedException();
 
-            _ = reader.Read(); // "{"
+            if (tokenType is not JsonTokenType.StartObject)
+                return Error("Invalid JSON value where a JSON object was expected.");
 
             (bool, T1) value1 = default;
             (bool, T2) value2 = default;
@@ -344,9 +414,15 @@ public static partial class JsonReader
             (bool, T15) value15 = default;
             (bool, T16) value16 = default;
 
-            while (reader.TokenType != JsonTokenType.EndObject)
+            while (true)
             {
                 string? error = null;
+
+                if (!reader.TryReadToken(out tokenType))
+                    throw PartialJsonNotSupportedException();
+
+                if (tokenType is JsonTokenType.EndObject)
+                    break;
 
                 if (ReadPropertyValue(property1, ref reader, ref value1, ref error)) continue; if (error is not null) return Error(error);
                 if (ReadPropertyValue(property2, ref reader, ref value2, ref error)) continue; if (error is not null) return Error(error);
@@ -365,9 +441,7 @@ public static partial class JsonReader
                 if (ReadPropertyValue(property15, ref reader, ref value15, ref error)) continue; if (error is not null) return Error(error);
                 if (ReadPropertyValue(property16, ref reader, ref value16, ref error)) continue; if (error is not null) return Error(error);
 
-                _ = reader.Read();
                 reader.Skip();
-                _ = reader.Read();
 
                 static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
                                                       ref Utf8JsonReader reader,
@@ -377,10 +451,10 @@ public static partial class JsonReader
                     if (value is (true, _) || !property.IsMatch(ref reader))
                         return false;
 
-                    _ = reader.Read();
-
                     switch (property.Reader.TryRead(ref reader))
                     {
+                        case { Incomplete: true }:
+                            throw PartialJsonNotSupportedException();
                         case (_, { } err):
                             error = err;
                             return false;
@@ -390,9 +464,6 @@ public static partial class JsonReader
                     }
                 }
             }
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "}"
 
             static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
             {
@@ -435,36 +506,81 @@ public static partial class JsonReader
     public static IJsonReader<T[]> Array<T>(IJsonReader<T> itemReader) =>
         Array(itemReader, list => list.ToArray());
 
+    enum ArrayReadState { Initial, ItemOrEnd, Item }
+
+    sealed class ArrayReadStateData<T>
+    {
+        public ArrayReadState State { get; }
+        public List<T>? List { get; }
+
+        public ArrayReadStateData(ArrayReadState state, List<T>? list) =>
+            (State, List) = (state, list);
+    }
+
     public static IJsonReader<TResult> Array<T, TResult>(IJsonReader<T> itemReader,
                                                          Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.TokenType != JsonTokenType.StartArray)
-                return Error("Invalid JSON value where a JSON array was expected.");
+            var (ars, list) =
+                rdr.IsResuming && (ArrayReadStateData<T>)rdr.Pop() is var ps
+                    ? (ps.State, ps.List)
+                    : (ArrayReadState.Initial, null);
 
-            _ = rdr.Read(); // "["
+            return Read(ref rdr, ars, list);
 
-            var list = new List<T>();
-            while (rdr.TokenType != JsonTokenType.EndArray)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ArrayReadState state, List<T>? list)
             {
-                switch (itemReader.TryRead(ref rdr))
+                restart:
+                switch (state)
                 {
-                    case (_, { } error):
-                        return Error(error);
-                    case var (item, _):
-                        list.Add(item);
-                        break;
+                    case ArrayReadState.Initial:
+                    {
+                        if (!rdr.Read())
+                            return rdr.Suspend(new ArrayReadStateData<T>(state, list));
+
+                        if (rdr.TokenType != JsonTokenType.StartArray)
+                            return Error("Invalid JSON value where a JSON array was expected.");
+
+                        state = ArrayReadState.ItemOrEnd;
+                        goto restart;
+                    }
+                    case ArrayReadState.ItemOrEnd:
+                    {
+                        if (!rdr.Read())
+                            return rdr.Suspend(new ArrayReadStateData<T>(state, list));
+
+                        if (rdr.TokenType == JsonTokenType.EndArray)
+                            break;
+
+                        rdr.AssumeTokenRead();
+                        list ??= new List<T>();
+                        state = ArrayReadState.Item;
+                        goto restart;
+                    }
+                    case ArrayReadState.Item:
+                    {
+                        switch (itemReader.TryRead(ref rdr))
+                        {
+                            case var r when r.IsIncomplete():
+                                return rdr.Suspend(new ArrayReadStateData<T>(state, list));
+                            case (_, { } error):
+                                return Error(error);
+                            case var (item, _):
+                                Debug.Assert(list is not null);
+                                list.Add(item);
+                                break;
+                        }
+                        state = ArrayReadState.ItemOrEnd;
+                        goto restart;
+                    }
                 }
+
+                return Value(resultSelector(list ?? new List<T>()));
             }
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "]"
-
-            return Value(resultSelector(list));
         });
 
     public static IJsonReader<TResult> Select<T, TResult>(this IJsonReader<T> reader, Func<T, TResult> selector) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr) =>
             reader.TryRead(ref rdr) switch
             {
                 (_, { } error) => Error(error),
@@ -472,7 +588,7 @@ public static partial class JsonReader
             });
 
     public static IJsonReader<TResult> TryMap<T, TResult>(this IJsonReader<T> reader, Func<T, JsonReadResult<TResult>> selector) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr) =>
             reader.TryRead(ref rdr) switch
             {
                 (_, { } error) => Error(error),
@@ -483,16 +599,16 @@ public static partial class JsonReader
     {
         if (readerFunction == null) throw new ArgumentNullException(nameof(readerFunction));
         IJsonReader<T>? reader = null;
-        var recReader = CreatePure((ref Utf8JsonReader rdr) => reader!.TryRead(ref rdr));
+        var recReader = Create((ref Utf8JsonReader rdr) => reader!.TryRead(ref rdr));
         reader = readerFunction(recReader);
         return recReader;
     }
 
-    public static IJsonReader<T> Create<T>(Handler<T> handler) =>
-        new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: true);
+    static NotSupportedException PartialJsonNotSupportedException() =>
+        new($"Partial JSON reading is not supported. Combine with {nameof(Buffer)}.");
 
-    static IJsonReader<T> CreatePure<T>(Handler<T> handler) =>
-        new DelegatingJsonReader<T>(handler, shouldReadOnSuccess: false);
+    static IJsonReader<T> Create<T>(Handler<T> handler) =>
+        new DelegatingJsonReader<T>(handler);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     static JsonReadResult<T> Value<T>(T value) => JsonReadResult.Value(value);
@@ -505,21 +621,14 @@ public static partial class JsonReader
     sealed class DelegatingJsonReader<T> : IJsonReader<T>
     {
         readonly Handler<T> handler;
-        readonly bool shouldReadOnSuccess;
 
-        public DelegatingJsonReader(Handler<T> handler, bool shouldReadOnSuccess)
-        {
-            this.handler = handler;
-            this.shouldReadOnSuccess = shouldReadOnSuccess;
-        }
+        public DelegatingJsonReader(Handler<T> handler) => this.handler = handler;
 
         public JsonReadResult<T> TryRead(ref Utf8JsonReader reader)
         {
             var (value, error) = this.handler(ref reader);
             if (error is not null)
                 return new JsonReadError(error);
-            if (this.shouldReadOnSuccess)
-                _ = reader.Read();
             return JsonReadResult.Value(value);
         }
     }

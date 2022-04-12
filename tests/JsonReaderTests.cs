@@ -12,6 +12,7 @@ using System.Text.Json;
 using Xunit;
 using JToken = Newtonsoft.Json.Linq.JToken;
 using Formatting = Newtonsoft.Json.Formatting;
+using Utf8JsonReader = Utf8JsonReader;
 
 public class JsonReaderTests
 {
@@ -27,13 +28,13 @@ public class JsonReaderTests
     public static string Strictify(string json) =>
         JToken.Parse(json).ToString(Formatting.None);
 
-    static void TestMovesReaderPastReadValue<T>(IJsonReader<T> reader, string json)
+    static void TestReaderPositionPostRead<T>(IJsonReader<T> reader, string json)
     {
         var sentinel = $"END-{Guid.NewGuid()}";
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify($"[{json}, '{sentinel}']")));
-        Assert.True(rdr.Read()); // start
-        Assert.True(rdr.Read()); // "["
+        Assert.True(rdr.Read());
         _ = reader.Read(ref rdr);
+        Assert.True(rdr.Read());
         Assert.Equal(JsonTokenType.String, rdr.TokenType);
         Assert.Equal(sentinel, rdr.GetString());
     }
@@ -54,7 +55,7 @@ public class JsonReaderTests
     [Fact]
     public void String_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String(), "'foobar'");
+        TestReaderPositionPostRead(JsonReader.String(), "'foobar'");
     }
 
     [Fact]
@@ -97,7 +98,7 @@ public class JsonReaderTests
     [Fact]
     public void Byte_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Byte(), "42");
+        TestReaderPositionPostRead(JsonReader.Byte(), "42");
     }
 
     [Theory]
@@ -127,7 +128,7 @@ public class JsonReaderTests
     [Fact]
     public void Null_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Null((object?)null), "null");
+        TestReaderPositionPostRead(JsonReader.Null((object?)null), "null");
     }
 
     [Fact]
@@ -153,7 +154,7 @@ public class JsonReaderTests
     [Fact]
     public void Boolean_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Boolean(), "true");
+        TestReaderPositionPostRead(JsonReader.Boolean(), "true");
     }
 
     [Theory]
@@ -180,7 +181,7 @@ public class JsonReaderTests
     [Fact]
     public void DateTime_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.DateTime(), "'2022-02-02T12:34:56'");
+        TestReaderPositionPostRead(JsonReader.DateTime(), "'2022-02-02T12:34:56'");
     }
 
     [Theory]
@@ -213,7 +214,7 @@ public class JsonReaderTests
     [Fact]
     public void Int32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32(), "42");
+        TestReaderPositionPostRead(JsonReader.Int32(), "42");
     }
 
     [Theory]
@@ -240,7 +241,7 @@ public class JsonReaderTests
     [Fact]
     public void Single_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Single(), "4.2");
+        TestReaderPositionPostRead(JsonReader.Single(), "4.2");
     }
 
     [Theory]
@@ -268,7 +269,7 @@ public class JsonReaderTests
     [Fact]
     public void UInt16_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt16(), "42");
+        TestReaderPositionPostRead(JsonReader.UInt16(), "42");
     }
 
     [Theory]
@@ -299,7 +300,7 @@ public class JsonReaderTests
     [Fact]
     public void UInt32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt32(), "42");
+        TestReaderPositionPostRead(JsonReader.UInt32(), "42");
     }
 
     [Theory]
@@ -330,7 +331,7 @@ public class JsonReaderTests
     [Fact]
     public void UInt64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt64(), "42");
+        TestReaderPositionPostRead(JsonReader.UInt64(), "42");
     }
 
     [Theory]
@@ -360,7 +361,7 @@ public class JsonReaderTests
     [Fact]
     public void Int64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int64(), "42");
+        TestReaderPositionPostRead(JsonReader.Int64(), "42");
     }
 
     [Theory]
@@ -388,7 +389,7 @@ public class JsonReaderTests
     [Fact]
     public void Double_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Double(), "42");
+        TestReaderPositionPostRead(JsonReader.Double(), "42");
     }
 
     [Theory]
@@ -418,7 +419,7 @@ public class JsonReaderTests
     [Fact]
     public void Array_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.Int32()), "[42]");
+        TestReaderPositionPostRead(JsonReader.Array(JsonReader.Int32()), "[42]");
     }
 
     [Theory]
@@ -462,7 +463,7 @@ public class JsonReaderTests
     [Fact]
     public void Select_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(from s in JsonReader.String() select s, "'foobar'");
+        TestReaderPositionPostRead(from s in JsonReader.String() select s, "'foobar'");
     }
 
     [Fact]
@@ -554,7 +555,7 @@ public class JsonReaderTests
     [InlineData("{ str: 'foobar', num: 42 }")]
     public void Object_Does_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(ObjectReader, json);
+        TestReaderPositionPostRead(ObjectReader, json);
     }
 
     static readonly IJsonReader<Dictionary<string, int>>
@@ -588,7 +589,7 @@ public class JsonReaderTests
     [InlineData("{ foo: 123, bar: 456, baz: 789 }")]
     public void Object_General_Doesnt_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(KeyIntMapReader, json);
+        TestReaderPositionPostRead(KeyIntMapReader, json);
     }
 
     static readonly IJsonReader<object> EitherReader =
@@ -602,7 +603,7 @@ public class JsonReaderTests
     [InlineData("[true, false]")]
     public void Either_Doesnt_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(EitherReader, json);
+        TestReaderPositionPostRead(EitherReader, json);
     }
 
     [Theory]
@@ -625,6 +626,20 @@ public class JsonReaderTests
     public void Either_With_Invalid_Input(string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(EitherReader, json, "Invalid JSON value.", expectedErrorToken, expectedErrorOffset);
+    }
+
+    [Theory]
+    [InlineData(new[] { "foo", "bar", "baz" }, "['foo', 'bar', 'baz']")]
+    [InlineData(new[] { true, false }, "[true, false]")]
+    [InlineData(new[] { 123, 456, 789 }, "[123, 456, 789]")]
+    public void Array_Either_With_Valid_Input(object expected, string json)
+    {
+        var reader =
+            JsonReader.Array(JsonReader.Either(JsonReader.Int32().AsObject(),
+                                               JsonReader.Boolean().AsObject())
+                                       .Or(JsonReader.String().AsObject()));
+        var result = reader.Read(Strictify(json));
+        Assert.Equal(expected, result);
     }
 
 #pragma warning disable CA1008 // Enums should have zero value (by-design)
@@ -661,7 +676,7 @@ public class JsonReaderTests
     [Fact]
     public void Number_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), "125");
+        TestReaderPositionPostRead(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), "125");
     }
 
     [Theory]
@@ -719,14 +734,14 @@ public class JsonReaderTests
     [Fact]
     public void String_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), "'Null'");
+        TestReaderPositionPostRead(JsonReader.String().AsEnum<JsonValueKind>(), "'Null'");
     }
 
     [Fact]
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        TestMovesReaderPastReadValue(reader, "[123, 'foobar']");
+        TestReaderPositionPostRead(reader, "[123, 'foobar']");
     }
 
     [Fact]
@@ -762,7 +777,7 @@ public class JsonReaderTests
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        TestMovesReaderPastReadValue(reader, "[123, 'foobar', 456]");
+        TestReaderPositionPostRead(reader, "[123, 'foobar', 456]");
     }
 
     [Fact]
@@ -823,13 +838,13 @@ public class JsonReaderTests
     [Fact]
     public void Validate_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
+        TestReaderPositionPostRead(JsonReader.String().Validate(_ => true), "'foobar'");
     }
 
     [Fact]
     public void Guid_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Guid(), $"'{Guid.NewGuid()}'");
+        TestReaderPositionPostRead(JsonReader.Guid(), $"'{Guid.NewGuid()}'");
     }
 
     [Theory]

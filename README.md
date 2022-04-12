@@ -247,15 +247,37 @@ Once more, `JsonReader.Object` builds on top of readers for each property for
 a combined effect of creating an object from the constituent parts.
 
 
+## Partial JSON Reading
+
+Reading partial JSON is supported by most readers. It enables large JSON text
+data to be read and processed in chunks without committing it entirely to
+memory.
+
+All readers support `TryRead`, which returns a `JsonReadResult<T>` that either
+represents the read value or an error with reading the value. When JSON data
+is partially loaded in a buffer such that a reader cannot complete its reading
+then the `Incomplete` property of the returned `JsonReadResult<T>` will be
+`true`. This is a signal to the caller that it must load the buffer with more
+of the JSON source text to resume reading.
+
+Presently, the following readers do not support partial reading:
+
+- `JsonReader.Object`
+- `JsonReader.Either`
+- `JsonReader.Tuple`
+
+Nevertheless, they can be composed with `JsonReader.Buffer` to load enough
+data into the buffer that neither can fail due to partial JSON.
+`JsonReader.Buffer` ensures that at least one complete JSON value (be that a
+scalar like a string or a structure like an array or an object) is buffered.
+
+
 ## Limitations
 
 - There is no API at this time for writing JSON data.
 
 - When using `JsonReader.Object` with `JsonReader.Property`, a maximum of 16
   properties of a JSON object can be read.
-
-- No support for asynchronous reading, since `Utf8JsonReader` doesn't support it
-  either.
 
 
 [`Utf8JsonReader`]: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-use-dom-utf8jsonreader-utf8jsonwriter?pivots=dotnet-6-0#use-utf8jsonreader
