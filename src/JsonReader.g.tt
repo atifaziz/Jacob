@@ -37,7 +37,7 @@ partial class JsonReader
 
     public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
         <#= e.Native #>Reader ??=
-            CreatePure(static (ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 !rdr.Read()
                     ? JsonReadError.Incomplete
                     : rdr.TokenType == JsonTokenType.Number && rdr.TryGet<#= e.Api #>(out var value)
@@ -93,10 +93,10 @@ partial class JsonReader
         Tuple<<#= ts #>>(
             <#= string.Join(@",
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader rdr) =>
         {
             if (!rdr.Read())
-                throw IncompleteReadNotSupportedException();
+                throw PartialJsonNotSupportedException();
 
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
@@ -107,15 +107,15 @@ partial class JsonReader
             T<#= n #> item<#= n #>;
             switch(item<#= n #>Reader.TryRead(ref rdr))
             {
-                case { Incomplete: true }: throw IncompleteReadNotSupportedException();
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
                 case (_, { } error<#= n #>): return Error(error<#= n #>);
-                case (var item, _): item<#= n #> = item; break;
+                case var (item, _): item<#= n #> = item; break;
             }
 <#
         } #>
 
             if (!rdr.Read())
-                throw IncompleteReadNotSupportedException();
+                throw PartialJsonNotSupportedException();
 
             if (rdr.TokenType != JsonTokenType.EndArray)
                 return Error("Invalid JSON value; JSON array has too many values.");
