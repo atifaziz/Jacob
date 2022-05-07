@@ -4,6 +4,7 @@
 
 using System;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -55,22 +56,24 @@ public class GithubApiBenchmark
             JsonReader.Property("commit", CommitJsonReader),
             (url, sha, commit) => new MergeBranchResponse(url, sha, commit));
 
+    [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
+
     byte[] jsonDataBytes = Array.Empty<byte>();
 
     [GlobalSetup]
     public void Setup()
     {
-        var json = JsonSerializer.Serialize(TestData);
+        var json = JsonSerializer.Serialize(Enumerable.Repeat(TestData, ObjectCount));
         this.jsonDataBytes = Encoding.UTF8.GetBytes(json);
     }
 
     [Benchmark]
-    public MergeBranchResponse JsonReaderBenchmark() =>
-        MergeBranchResponseJsonReader.Read(this.jsonDataBytes);
+    public MergeBranchResponse[] JsonReaderBenchmark() =>
+        JsonReader.Array(MergeBranchResponseJsonReader).Read(this.jsonDataBytes);
 
     [Benchmark(Baseline = true)]
-    public MergeBranchResponse SystemTextJsonBenchmark() =>
-        JsonSerializer.Deserialize<MergeBranchResponse>(this.jsonDataBytes)!;
+    public MergeBranchResponse[] SystemTextJsonBenchmark() =>
+        JsonSerializer.Deserialize<MergeBranchResponse[]>(this.jsonDataBytes)!;
 }
 
 public sealed record MergeBranchResponse(
