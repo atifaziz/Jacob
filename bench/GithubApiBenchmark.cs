@@ -162,12 +162,9 @@ public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri
 
 public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("author")] Author Author,
-                            [property: JsonPropertyName("committer")]
-                            Author Committer,
-                            [property: JsonPropertyName("message")]
-                            string Message,
-                            [property: JsonPropertyName("comment_count")]
-                            int CommentCount);
+                            [property: JsonPropertyName("committer")] Author Committer,
+                            [property: JsonPropertyName("message")] string Message,
+                            [property: JsonPropertyName("comment_count")] int CommentCount);
 
 public sealed record Author([property: JsonPropertyName("name")] string Name,
                             [property: JsonPropertyName("email")] string Email,
