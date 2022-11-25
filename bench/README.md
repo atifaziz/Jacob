@@ -82,7 +82,10 @@ In another configuration, we benchmark the worst-case scenario performance of
 | JsonReaderBenchmark     | NativeAOT 7.0 | 10000       | MultiPolygon | 123,240.28 μs | 2,443.043 μs | 2,508.826 μs |  0.97 |    0.04 | 3600.0000 | 1400.0000 |  400.0000 | 19945.28 KB |        0.53 |
 | SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | MultiPolygon | 127,045.45 μs | 2,512.918 μs | 3,761.218 μs |  1.00 |    0.00 | 6500.0000 | 3000.0000 |  750.0000 | 37510.46 KB |        1.00 |
 
-When benchmarking deserialization a subset of an example payload from the [GitHub REST API](https://docs.github.com/en/rest/branches/branches#merge-a-branch), we measure the following:
+When benchmarking deserialization a subset of an example payload from the
+[GitHub REST
+API](https://docs.github.com/en/rest/branches/branches#merge-a-branch), we
+measure the following:
 
     BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.819)
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
