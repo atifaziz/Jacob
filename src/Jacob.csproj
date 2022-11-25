@@ -3,14 +3,34 @@
   <PropertyGroup>
     <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
     <VersionPrefix>0.5</VersionPrefix>
+    <Description>A succinct and compositional .NET API for reading JSON.</Description>
+    <Authors>Atif Aziz</Authors>
+    <Copyright>
+      Copyright (c) 2021 Atif Aziz.
+      Portions Copyright (c) Microsoft Corporation.
+      All rights reserved.
+    </Copyright>
+    <PackageTags>json</PackageTags>
     <PackageOutputPath>..\dist</PackageOutputPath>
+    <IncludeSymbols>true</IncludeSymbols>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
+  </ItemGroup>
 
   <ItemGroup>
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\README.md" Pack="true" PackagePath="" />
     <None Update="JsonReader.g.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>JsonReader.g.cs</LastGenOutput>
