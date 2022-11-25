@@ -10,27 +10,13 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Xunit;
-using JToken = Newtonsoft.Json.Linq.JToken;
-using Formatting = Newtonsoft.Json.Formatting;
 
 public class JsonReaderTests
 {
-    /// <summary>
-    /// Takes somewhat non-conforming JSON
-    /// (<a href="https://github.com/JamesNK/Newtonsoft.Json/issues/646#issuecomment-356194475">as accepted by Json.NET</a>)
-    /// text and re-formats it to be strictly conforming to RFC 7159.
-    /// </summary>
-    /// <remarks>
-    /// This is a helper primarily designed to make it easier to express JSON as C# literals in
-    /// inline data for theory tests, where the double quotes don't have to be escaped.
-    /// </remarks>
-    public static string Strictify(string json) =>
-        JToken.Parse(json).ToString(Formatting.None);
-
     static void TestMovesReaderPastReadValue<T>(IJsonReader<T> reader, string json)
     {
         var sentinel = $"END-{Guid.NewGuid()}";
-        var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify($"[{json}, '{sentinel}']")));
+        var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes($"""[{json}, "{sentinel}"]"""));
         Assert.True(rdr.Read()); // start
         Assert.True(rdr.Read()); // "["
         _ = reader.Read(ref rdr);
@@ -41,8 +27,6 @@ public class JsonReaderTests
     static void TestInvalidInput<T>(IJsonReader<T> reader, string json,
                                     string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
     {
-        json = Strictify(json);
-
         var (value, error) = reader.TryRead(json);
         Assert.Equal(default, value);
         Assert.Equal(expectedError, error);
@@ -54,7 +38,7 @@ public class JsonReaderTests
     [Fact]
     public void String_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String(), "'foobar'");
+        TestMovesReaderPastReadValue(JsonReader.String(), /*lang=json*/ @"""foobar""");
     }
 
     [Fact]
@@ -71,22 +55,22 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData("", "''")]
-    [InlineData("foobar", "'foobar'")]
-    [InlineData("foo bar", "'foo bar'")]
+    [InlineData("", /*lang=json*/ @"""""")]
+    [InlineData("foobar", /*lang=json*/ @"""foobar""")]
+    [InlineData("foo bar", /*lang=json*/ @"""foo bar""")]
     public void String_With_Valid_Input(string expected, string json)
     {
-        var result = JsonReader.String().Read(Strictify(json));
+        var result = JsonReader.String().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "42")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void String_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.String(), json,
@@ -97,27 +81,27 @@ public class JsonReaderTests
     [Fact]
     public void Byte_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Byte(), "42");
+        TestMovesReaderPastReadValue(JsonReader.Byte(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void Byte_With_Valid_Input(ulong expected, string json)
     {
-        var result = JsonReader.Byte().Read(Strictify(json));
+        var result = JsonReader.Byte().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "-42")]
-    [InlineData("Number", "-4.2")]
-    [InlineData("Number", "256")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "-42")]
+    [InlineData("Number", /*lang=json*/ "-4.2")]
+    [InlineData("Number", /*lang=json*/ "256")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Byte_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Byte(), json,
@@ -127,23 +111,23 @@ public class JsonReaderTests
     [Fact]
     public void Null_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Null((object?)null), "null");
+        TestMovesReaderPastReadValue(JsonReader.Null((object?)null), /*lang=json*/ "null");
     }
 
     [Fact]
     public void Null_With_Valid_Input()
     {
-        var result = JsonReader.Null((object?)null).Read("null");
+        var result = JsonReader.Null((object?)null).Read(/*lang=json*/ "null");
         Assert.Null(result);
     }
 
     [Theory]
-    [InlineData("True", "true")]
-    [InlineData("False", "false")]
-    [InlineData("Number", "42")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Null_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Null((object?)null), json,
@@ -153,24 +137,24 @@ public class JsonReaderTests
     [Fact]
     public void Boolean_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Boolean(), "true");
+        TestMovesReaderPastReadValue(JsonReader.Boolean(), /*lang=json*/ "true");
     }
 
     [Theory]
-    [InlineData(true, "true")]
-    [InlineData(false, "false")]
+    [InlineData(true, /*lang=json*/ "true")]
+    [InlineData(false, /*lang=json*/ "false")]
     public void Boolean_With_Valid_Input(bool expected, string json)
     {
-        var result = JsonReader.Boolean().Read(Strictify(json));
+        var result = JsonReader.Boolean().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("Number", "42")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Boolean_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Boolean(), json,
@@ -180,29 +164,29 @@ public class JsonReaderTests
     [Fact]
     public void DateTime_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.DateTime(), "'2022-02-02T12:34:56'");
+        TestMovesReaderPastReadValue(JsonReader.DateTime(), /*lang=json*/ @"""2022-02-02T12:34:56""");
     }
 
     [Theory]
-    [InlineData(2022, 2, 2, 0, 0, 0, 0, "'2022-02-02'")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 0, "'2022-02-02T12:34:56'")]
+    [InlineData(2022, 2, 2, 0, 0, 0, 0, /*lang=json*/ @"""2022-02-02""")]
+    [InlineData(2022, 2, 2, 12, 34, 56, 0, /*lang=json*/ @"""2022-02-02T12:34:56""")]
     public void DateTime_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, string json)
     {
-        var result = JsonReader.DateTime().Read(Strictify(json));
+        var result = JsonReader.DateTime().Read(json);
         var expected = new DateTime(year, month, day, hour, minute, second, millisecond);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "42")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
-    [InlineData("String", "'20220202'")]
-    [InlineData("String", "'02/02/2022'")]
-    [InlineData("String", "'2022-02-02 12:34:56'")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    [InlineData("String", /*lang=json*/ @"""20220202""")]
+    [InlineData("String", /*lang=json*/ @"""02/02/2022""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02 12:34:56""")]
     public void DateTime_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.DateTime(), json,
@@ -213,24 +197,24 @@ public class JsonReaderTests
     [Fact]
     public void Int32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32(), "42");
+        TestMovesReaderPastReadValue(JsonReader.Int32(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void Int32_With_Valid_Input(int expected, string json)
     {
-        var result = JsonReader.Int32().Read(Strictify(json));
+        var result = JsonReader.Int32().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Single_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Single(), json,
@@ -240,25 +224,25 @@ public class JsonReaderTests
     [Fact]
     public void Single_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Single(), "4.2");
+        TestMovesReaderPastReadValue(JsonReader.Single(), /*lang=json*/ "4.2");
     }
 
     [Theory]
-    [InlineData(4.2, "4.2")]
+    [InlineData(4.2, /*lang=json*/ "4.2")]
     public void Single_With_Valid_Input(float expected, string json)
     {
-        var result = JsonReader.Single().Read(Strictify(json));
+        var result = JsonReader.Single().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "-4.2")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "-4.2")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Int32_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Int32(), json,
@@ -268,27 +252,27 @@ public class JsonReaderTests
     [Fact]
     public void UInt16_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt16(), "42");
+        TestMovesReaderPastReadValue(JsonReader.UInt16(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void UInt16_With_Valid_Input(ulong expected, string json)
     {
-        var result = JsonReader.UInt16().Read(Strictify(json));
+        var result = JsonReader.UInt16().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "-42")]
-    [InlineData("Number", "-4.2")]
-    [InlineData("Number", "65536")] // ushort.MaxValue + 1
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "-42")]
+    [InlineData("Number", /*lang=json*/ "-4.2")]
+    [InlineData("Number", /*lang=json*/ "65536")] // ushort.MaxValue + 1
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void UInt16_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.UInt16(), json,
@@ -299,27 +283,27 @@ public class JsonReaderTests
     [Fact]
     public void UInt32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt32(), "42");
+        TestMovesReaderPastReadValue(JsonReader.UInt32(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void UInt32_With_Valid_Input(ulong expected, string json)
     {
-        var result = JsonReader.UInt32().Read(Strictify(json));
+        var result = JsonReader.UInt32().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "-42")]
-    [InlineData("Number", "-4.2")]
-    [InlineData("Number", "4294967296")] // uint.MaxValue + 1
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "-42")]
+    [InlineData("Number", /*lang=json*/ "-4.2")]
+    [InlineData("Number", /*lang=json*/ "4294967296")] // uint.MaxValue + 1
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void UInt32_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.UInt32(), json,
@@ -330,26 +314,26 @@ public class JsonReaderTests
     [Fact]
     public void UInt64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt64(), "42");
+        TestMovesReaderPastReadValue(JsonReader.UInt64(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void UInt64_With_Valid_Input(ulong expected, string json)
     {
-        var result = JsonReader.UInt64().Read(Strictify(json));
+        var result = JsonReader.UInt64().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "-42")]
-    [InlineData("Number", "-4.2")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "-42")]
+    [InlineData("Number", /*lang=json*/ "-4.2")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void UInt64_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.UInt64(), json,
@@ -360,25 +344,25 @@ public class JsonReaderTests
     [Fact]
     public void Int64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int64(), "42");
+        TestMovesReaderPastReadValue(JsonReader.Int64(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
+    [InlineData(42, /*lang=json*/ "42")]
     public void Int64_With_Valid_Input(long expected, string json)
     {
-        var result = JsonReader.Int64().Read(Strictify(json));
+        var result = JsonReader.Int64().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "9223372036854775808")] // long.MaxValue + 1
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "9223372036854775808")] // long.MaxValue + 1
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Int64_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Int64(), json,
@@ -388,27 +372,27 @@ public class JsonReaderTests
     [Fact]
     public void Double_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Double(), "42");
+        TestMovesReaderPastReadValue(JsonReader.Double(), /*lang=json*/ "42");
     }
 
     [Theory]
-    [InlineData(42, "42")]
-    [InlineData(-42, "-42")]
-    [InlineData(-4.2, "-4.2")]
-    [InlineData(400, "4e2")]
+    [InlineData(42, /*lang=json*/ "42")]
+    [InlineData(-42, /*lang=json*/ "-42")]
+    [InlineData(-4.2, /*lang=json*/ "-4.2")]
+    [InlineData(400, /*lang=json*/ "4e2")]
     public void Double_With_Valid_Input(double expected, string json)
     {
-        var result = JsonReader.Double().Read(Strictify(json));
+        var result = JsonReader.Double().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Double_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Double(), json,
@@ -418,30 +402,49 @@ public class JsonReaderTests
     [Fact]
     public void Array_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.Int32()), "[42]");
+        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.Int32()),
+                                     /*lang=json*/ "[42]");
     }
 
     [Theory]
-    [InlineData(new[] { 42 }, "[42]")]
-    [InlineData(new[] { 1, 2, 3 }, "[1, 2, 3]")]
+    [InlineData(new[] { 42 }, /*lang=json*/ "[42]")]
+    [InlineData(new[] { 1, 2, 3 }, /*lang=json*/ "[1, 2, 3]")]
     public void Array_With_Valid_Input(int[] expected, string json)
     {
-        var result = JsonReader.Array(JsonReader.Int32()).Read(Strictify(json));
+        var result = JsonReader.Array(JsonReader.Int32()).Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, "null")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, "false")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, "true")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, "'foobar'")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, "{}")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "Null", 4, "[42, null, 42]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "False", 4, "[42, false, 42]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "True", 4, "[42, true, 42]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 4, "[42, 'foobar', 42]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartArray", 4, "[42, [], 42]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartObject", 4, "[42, {}, 42]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, /*lang=json*/ "null")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, /*lang=json*/ "false")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, /*lang=json*/ "true")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, /*lang=json*/ @"""foobar""")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, /*lang=json*/ "{}")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "Null", 5,
+                /*lang=json*/ """
+                [42, null, 42]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "False", 5,
+                /*lang=json*/ """
+                [42, false, 42]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "True", 5,
+                /*lang=json*/ """
+                [42, true, 42]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 5,
+                /*lang=json*/ """
+                [42, "foobar", 42]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartArray", 5,
+                /*lang=json*/ """
+                [42, [], 42]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartObject", 5,
+                /*lang=json*/ """
+                [42, {}, 42]
+                """)]
     public void Array_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(JsonReader.Array(JsonReader.Int32()), json, expectedError, expectedErrorToken, expectedErrorOffset);
@@ -454,7 +457,9 @@ public class JsonReaderTests
             from words in JsonReader.Array(JsonReader.String())
             select string.Join("-", from w in words select w.ToUpperInvariant());
 
-        var result = reader.Read(Strictify("['foo', 'bar', 'baz']"));
+        var result = reader.Read(/*lang=json*/ """
+            ["foo", "bar", "baz"]
+            """);
 
         Assert.Equal("FOO-BAR-BAZ", result);
     }
@@ -462,7 +467,7 @@ public class JsonReaderTests
     [Fact]
     public void Select_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(from s in JsonReader.String() select s, "'foobar'");
+        TestMovesReaderPastReadValue(from s in JsonReader.String() select s, /*lang=json*/ @"""foobar""");
     }
 
     [Fact]
@@ -472,7 +477,12 @@ public class JsonReaderTests
         var valueReader = JsonReader.String();
         var property = JsonReader.Property(name, valueReader);
 
-        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify("{ foobar: 42 }")));
+        const string json = /*lang=json*/ """
+            { "foobar": 42 }
+            """;
+
+        var reader =
+            new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
         _ = reader.Read(); // "{"
         _ = reader.Read(); // property
 
@@ -490,7 +500,11 @@ public class JsonReaderTests
         const string defaultValue = "baz";
         var property = JsonReader.Property(name, valueReader, (true, defaultValue));
 
-        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify("{ foobar: 42 }")));
+        const string json = /*lang=json*/ """
+            { "foobar": 42 }
+            """;
+
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
         _ = reader.Read(); // "{"
         _ = reader.Read(); // property
 
@@ -508,7 +522,11 @@ public class JsonReaderTests
 
         var ex = Assert.Throws<ArgumentException>(() =>
         {
-            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(Strictify("{ foobar: 42 }")));
+            const string json = /*lang=json*/ """
+                { "foobar": 42 }
+                """;
+
+            var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
             _ = reader.Read(); // "{"
             return _ = property.IsMatch(ref reader);
         });
@@ -522,36 +540,57 @@ public class JsonReaderTests
                           ValueTuple.Create);
 
     [Theory]
-    [InlineData(0, "foobar", "{ str: 'foobar' }")]
-    [InlineData(42, "foobar", "{ num: 42, str: 'foobar' }")]
-    [InlineData(42, "foobar", "{ str: 'foobar', num: 42 }")]
-    [InlineData(42, "foobar", "{ str: 'FOOBAR', num: -42, str: 'foobar', num: 42 }")]
-    [InlineData(42, "foobar", "{ nums: [1, 2, 3], str: 'foobar', num: 42, obj: {} }")]
+    [InlineData(  0, "foobar", /*lang=json*/ """
+                               { "str": "foobar" }
+                               """)]
+    [InlineData( 42, "foobar", /*lang=json*/ """
+                               { "num": 42, "str": "foobar" }
+                               """)]
+    [InlineData( 42, "foobar", /*lang=json*/ """
+                               { "str": "foobar", "num": 42 }
+                               """)]
+    [InlineData(-42, "FOOBAR", /*lang=json*/ """
+                               { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
+                               """)]
+    [InlineData( 42, "foobar", /*lang=json*/ """
+                               { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
+                               """)]
     public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
-        var (num, str) = ObjectReader.Read(Strictify(json));
+        var (num, str) = ObjectReader.Read(json);
 
         Assert.Equal(expectedNum, num);
         Assert.Equal(expectedStr, str);
     }
 
     [Theory]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "Null", 0, "null")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "False", 0, "false")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "True", 0, "true")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "String", 0, "'foobar'")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "StartArray", 0, "[]")]
-    [InlineData("Invalid JSON object.", "EndObject", 1, "{}")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 7, "{ num: '42', str: 'foobar' }")]
-    [InlineData("Invalid JSON object.", "EndObject", 24, "{ NUM: 42, STR: 'foobar' }")]
-    [InlineData("Invalid JSON object.", "EndObject", 9, "{ num: 42 }")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "Null", 0, /*lang=json*/ "null")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "False", 0, /*lang=json*/ "false")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "True", 0, /*lang=json*/ "true")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "String", 0, /*lang=json*/ @"""foobar""")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "StartArray", 0, /*lang=json*/ "[]")]
+    [InlineData("Invalid JSON object.", "EndObject", 1, /*lang=json*/ "{}")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 9,
+                /*lang=json*/ """
+                { "num": "42", "str": "foobar" }
+                """)]
+    [InlineData("Invalid JSON object.", "EndObject", 29,
+                /*lang=json*/ """
+                { "NUM": 42, "STR": "foobar" }
+                """)]
+    [InlineData("Invalid JSON object.", "EndObject", 12,
+                /*lang=json*/ """
+                { "num": 42 }
+                """)]
     public void Object_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(ObjectReader, json, expectedError, expectedErrorToken, expectedErrorOffset);
     }
 
     [Theory]
-    [InlineData("{ str: 'foobar', num: 42 }")]
+    [InlineData(/*lang=json*/ """
+                { "str": "foobar", "num": 42 }
+                """)]
     public void Object_Does_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(ObjectReader, json);
@@ -563,9 +602,11 @@ public class JsonReaderTests
     [Fact]
     public void Object_General_With_Valid_Input()
     {
-        const string json = @"{ foo: 123, bar: 456, baz: 789 }";
+        const string json = /*lang=json*/ """
+            { "foo": 123, "bar": 456, "baz": 789 }
+            """;
 
-        var obj = KeyIntMapReader.Read(Strictify(json));
+        var obj = KeyIntMapReader.Read(json);
 
         Assert.Equal(3, obj.Count);
         Assert.Equal(123, obj["foo"]);
@@ -574,18 +615,20 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "Null", "null")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "False", "false")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "True", "true")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "String", "'foobar'")]
-    [InlineData("Invalid JSON value where a JSON object was expected.", "StartArray", "[]")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "Null", /*lang=json*/ "null")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "False", /*lang=json*/ "false")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "True", /*lang=json*/ "true")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "String", /*lang=json*/ @"""foobar""")]
+    [InlineData("Invalid JSON value where a JSON object was expected.", "StartArray", /*lang=json*/ "[]")]
     public void Object_General_With_Invalid_Input(string expectedError, string expectedErrorToken, string json)
     {
         TestInvalidInput(KeyIntMapReader, json, expectedError, expectedErrorToken);
     }
 
     [Theory]
-    [InlineData("{ foo: 123, bar: 456, baz: 789 }")]
+    [InlineData(/*lang=json*/ """
+                { "foo": 123, "bar": 456, "baz": 789 }
+                """)]
     public void Object_General_Doesnt_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(KeyIntMapReader, json);
@@ -597,31 +640,31 @@ public class JsonReaderTests
                                             JsonReader.Array(JsonReader.Boolean()).AsObject()));
 
     [Theory]
-    [InlineData("'foobar'")]
-    [InlineData("[123, 456, 789]")]
-    [InlineData("[true, false]")]
+    [InlineData(/*lang=json*/ @"""foobar""")]
+    [InlineData(/*lang=json*/ "[123, 456, 789]")]
+    [InlineData(/*lang=json*/ "[true, false]")]
     public void Either_Doesnt_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(EitherReader, json);
     }
 
     [Theory]
-    [InlineData("foobar", "'foobar'")]
-    [InlineData(new[] { 123, 456, 789 }, "[123, 456, 789]")]
-    [InlineData(new int[0], "[]")]
-    [InlineData(new[] { true, false }, "[true, false]")]
+    [InlineData("foobar", /*lang=json*/ @"""foobar""")]
+    [InlineData(new[] { 123, 456, 789 }, /*lang=json*/ "[123, 456, 789]")]
+    [InlineData(new int[0], /*lang=json*/ "[]")]
+    [InlineData(new[] { true, false }, /*lang=json*/ "[true, false]")]
     public void Either_With_Valid_Input(object expected, string json)
     {
-        var result = EitherReader.Read(Strictify(json));
+        var result = EitherReader.Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", 0, "null")]
-    [InlineData("False", 0, "false")]
-    [InlineData("True", 0, "true")]
-    [InlineData("Number", 1, "[12.3, 45.6, 78.9]")]
-    [InlineData("StartObject", 0, "{}")]
+    [InlineData("Null", 0, /*lang=json*/ "null")]
+    [InlineData("False", 0, /*lang=json*/ "false")]
+    [InlineData("True", 0, /*lang=json*/ "true")]
+    [InlineData("Number", 1, /*lang=json*/ "[12.3, 45.6, 78.9]")]
+    [InlineData("StartObject", 0, /*lang=json*/ "{}")]
     public void Either_With_Invalid_Input(string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(EitherReader, json, "Invalid JSON value.", expectedErrorToken, expectedErrorOffset);
@@ -637,21 +680,21 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData(LoRaBandwidth.BW125, "125")]
-    [InlineData(LoRaBandwidth.BW250, "250")]
-    [InlineData(LoRaBandwidth.BW500, "500")]
+    [InlineData(LoRaBandwidth.BW125, /*lang=json*/ "125")]
+    [InlineData(LoRaBandwidth.BW250, /*lang=json*/ "250")]
+    [InlineData(LoRaBandwidth.BW500, /*lang=json*/ "500")]
     public void Number_AsEnum_With_Valid_Input(LoRaBandwidth expected, string json)
     {
         var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
-        var result = reader.Read(Strictify(json));
+        var result = reader.Read(json);
 
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("225")]
-    [InlineData("350")]
-    [InlineData("600")]
+    [InlineData(/*lang=json*/ "225")]
+    [InlineData(/*lang=json*/ "350")]
+    [InlineData(/*lang=json*/ "600")]
     public void Number_AsEnum_With_Invalid_Input(string json)
     {
         TestInvalidInput(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), json,
@@ -661,55 +704,56 @@ public class JsonReaderTests
     [Fact]
     public void Number_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), "125");
+        TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n),
+                                     /*lang=json*/ "125");
     }
 
     [Theory]
-    [InlineData(JsonValueKind.Undefined, "'Undefined'")]
-    [InlineData(JsonValueKind.Object, "'Object'")]
-    [InlineData(JsonValueKind.Array, "'Array'")]
-    [InlineData(JsonValueKind.String, "'String'")]
-    [InlineData(JsonValueKind.Number, "'Number'")]
-    [InlineData(JsonValueKind.True, "'True'")]
-    [InlineData(JsonValueKind.False, "'False'")]
-    [InlineData(JsonValueKind.Null, "'Null'")]
+    [InlineData(JsonValueKind.Undefined, /*lang=json*/ @"""Undefined""")]
+    [InlineData(JsonValueKind.Object, /*lang=json*/ @"""Object""")]
+    [InlineData(JsonValueKind.Array, /*lang=json*/ @"""Array""")]
+    [InlineData(JsonValueKind.String, /*lang=json*/ @"""String""")]
+    [InlineData(JsonValueKind.Number, /*lang=json*/ @"""Number""")]
+    [InlineData(JsonValueKind.True, /*lang=json*/ @"""True""")]
+    [InlineData(JsonValueKind.False, /*lang=json*/ @"""False""")]
+    [InlineData(JsonValueKind.Null, /*lang=json*/ @"""Null""")]
     public void String_AsEnum_With_Valid_Input(JsonValueKind expected, string json)
     {
         var reader = JsonReader.String().AsEnum<JsonValueKind>();
-        var result = reader.Read(Strictify(json));
+        var result = reader.Read(json);
 
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData(JsonValueKind.Undefined, true, "'undefined'")]
-    [InlineData(JsonValueKind.Object, true, "'object'")]
-    [InlineData(JsonValueKind.Array, true, "'array'")]
-    [InlineData(JsonValueKind.String, true, "'string'")]
-    [InlineData(JsonValueKind.Number, true, "'number'")]
-    [InlineData(JsonValueKind.True, true, "'true'")]
-    [InlineData(JsonValueKind.False, true, "'false'")]
-    [InlineData(JsonValueKind.Null, true, "'null'")]
-    [InlineData(JsonValueKind.Undefined, false, "'Undefined'")]
-    [InlineData(JsonValueKind.Object, false, "'Object'")]
-    [InlineData(JsonValueKind.Array, false, "'Array'")]
-    [InlineData(JsonValueKind.String, false, "'String'")]
-    [InlineData(JsonValueKind.Number, false, "'Number'")]
-    [InlineData(JsonValueKind.True, false, "'True'")]
-    [InlineData(JsonValueKind.False, false, "'False'")]
-    [InlineData(JsonValueKind.Null, false, "'Null'")]
+    [InlineData(JsonValueKind.Undefined, true, /*lang=json*/ @"""undefined""")]
+    [InlineData(JsonValueKind.Object, true, /*lang=json*/ @"""object""")]
+    [InlineData(JsonValueKind.Array, true, /*lang=json*/ @"""array""")]
+    [InlineData(JsonValueKind.String, true, /*lang=json*/ @"""string""")]
+    [InlineData(JsonValueKind.Number, true, /*lang=json*/ @"""number""")]
+    [InlineData(JsonValueKind.True, true, /*lang=json*/ @"""true""")]
+    [InlineData(JsonValueKind.False, true, /*lang=json*/ @"""false""")]
+    [InlineData(JsonValueKind.Null, true, /*lang=json*/ @"""null""")]
+    [InlineData(JsonValueKind.Undefined, false, /*lang=json*/ @"""Undefined""")]
+    [InlineData(JsonValueKind.Object, false, /*lang=json*/ @"""Object""")]
+    [InlineData(JsonValueKind.Array, false, /*lang=json*/ @"""Array""")]
+    [InlineData(JsonValueKind.String, false, /*lang=json*/ @"""String""")]
+    [InlineData(JsonValueKind.Number, false, /*lang=json*/ @"""Number""")]
+    [InlineData(JsonValueKind.True, false, /*lang=json*/ @"""True""")]
+    [InlineData(JsonValueKind.False, false, /*lang=json*/ @"""False""")]
+    [InlineData(JsonValueKind.Null, false, /*lang=json*/ @"""Null""")]
     public void String_AsEnum_With_Ignore_Case_Option_With_Valid_Input(JsonValueKind expected, bool ignoreCase, string json)
     {
         var reader = JsonReader.String().AsEnum<JsonValueKind>(ignoreCase);
-        var result = reader.Read(Strictify(json));
+        var result = reader.Read(json);
 
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("'foo'")]
-    [InlineData("'bar'")]
-    [InlineData("'baz'")]
+    [InlineData(/*lang=json*/ @"""foo""")]
+    [InlineData(/*lang=json*/ @"""bar""")]
+    [InlineData(/*lang=json*/ @"""baz""")]
     public void String_AsEnum_With_Invalid_Input(string json)
     {
         TestInvalidInput(JsonReader.String().AsEnum<JsonValueKind>(), json,
@@ -719,39 +763,49 @@ public class JsonReaderTests
     [Fact]
     public void String_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), "'Null'");
+        TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), /*lang=json*/ @"""Null""");
     }
 
     [Fact]
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        TestMovesReaderPastReadValue(reader, "[123, 'foobar']");
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ """
+                                             [123, "foobar"]
+                                             """);
     }
 
     [Fact]
     public void Tuple2_With_Valid_Input()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        var result = reader.Read(Strictify("[123, 'foobar']"));
+        var result = reader.Read(/*lang=json*/ """
+                                 [123, "foobar"]
+                                 """);
         Assert.Equal((123, "foobar"), result);
     }
 
     [Theory]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, "null")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, "false")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, "true")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, "'foobar'")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 1, "[]")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, "{}")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "EndArray", 4, "[123]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 1, "['foobar', 123]")]
-    [InlineData("Invalid JSON value; JSON array has too many values.", "Number", 14, "[123, 'foobar', 456]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 5, "[123, null]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 5, "[123, false]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 5, "[123, true]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 5, "[123, []]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 5, "[123, {}]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, /*lang=json*/ "null")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, /*lang=json*/ "false")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, /*lang=json*/ "true")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, /*lang=json*/ @"""foobar""")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 1, /*lang=json*/ "[]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, /*lang=json*/ "{}")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "EndArray", 4, /*lang=json*/ "[123]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 6, /*lang=json*/ "[123, null]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 6, /*lang=json*/ "[123, false]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 6, /*lang=json*/ "[123, true]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 6, /*lang=json*/ "[123, []]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 6, /*lang=json*/ "[123, {}]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 1,
+                /*lang=json*/ """
+                ["foobar", 123]
+                """)]
+    [InlineData("Invalid JSON value; JSON array has too many values.", "Number", 16,
+                /*lang=json*/ """
+                [123, "foobar", 456]
+                """)]
     public void Tuple2_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
@@ -762,34 +816,65 @@ public class JsonReaderTests
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        TestMovesReaderPastReadValue(reader, "[123, 'foobar', 456]");
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ """
+                                             [123, "foobar", 456]
+                                             """);
     }
 
     [Fact]
     public void Tuple3_With_Valid_Input()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        var result = reader.Read(Strictify("[123, 'foobar', 456]"));
+        var result = reader.Read(/*lang=json*/ """
+                                 [123, "foobar", 456]
+                                 """);
         Assert.Equal((123, "foobar", 456), result);
     }
 
     [Theory]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, "null")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, "false")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, "true")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, "'foobar'")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 1, "[]")]
-    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, "{}")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "EndArray", 4, "[123]")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 13, "[123, 'foobar']")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 11, "[123, 'foo', 'bar']")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 1, "['foobar', 123, 456]")]
-    [InlineData("Invalid JSON value; JSON array has too many values.", "Number", 18, "[123, 'foobar', 456, 789]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 5, "[123, null, 456]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 5, "[123, false, 456]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 5, "[123, true, 456]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 5, "[123, [], 456]")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 5, "[123, {}, 456]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "Null", 0, /*lang=json*/ "null")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "False", 0, /*lang=json*/ "false")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, /*lang=json*/ "true")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, /*lang=json*/ @"""foobar""")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 1, /*lang=json*/ "[]")]
+    [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, /*lang=json*/ "{}")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "EndArray", 4, /*lang=json*/ "[123]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "EndArray", 14,
+                /*lang=json*/"""
+                [123, "foobar"]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 13,
+                /*lang=json*/"""
+                [123, "foo", "bar"]
+                """)]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 1,
+                /*lang=json*/"""
+                ["foobar", 123, 456]
+                """)]
+    [InlineData("Invalid JSON value; JSON array has too many values.", "Number", 21,
+                /*lang=json*/"""
+                [123, "foobar", 456, 789]
+                """)]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 6,
+                /*lang=json*/ """
+                [123, null, 456]
+                """)]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 6,
+                /*lang=json*/ """
+                [123, false, 456]
+                """)]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 6,
+                /*lang=json*/ """
+                [123, true, 456]
+                """)]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 6,
+                /*lang=json*/ """
+                [123, [], 456]
+                """)]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 6,
+                /*lang=json*/ """
+                [123, {}, 456]
+                """)]
     public void Tuple3_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
@@ -797,12 +882,11 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData("'foobar'")]
-    [InlineData("'FOOBAR'")]
-    [InlineData("'FooBar'")]
+    [InlineData(/*lang=json*/ @"""foobar""")]
+    [InlineData(/*lang=json*/ @"""FOOBAR""")]
+    [InlineData(/*lang=json*/ @"""FooBar""")]
     public void Validate_With_Valid_Input(string json)
     {
-        json = Strictify(json);
         var reader = JsonReader.String().Validate(s => "foobar".Equals(s, StringComparison.OrdinalIgnoreCase));
         var expected = JsonSerializer.Deserialize<string>(json);
         var result = reader.Read(json);
@@ -811,9 +895,9 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData("123")]
-    [InlineData("468")]
-    [InlineData("789")]
+    [InlineData(/*lang=json*/ "123")]
+    [InlineData(/*lang=json*/ "468")]
+    [InlineData(/*lang=json*/ "789")]
     public void Validate_With_Invalid_Input(string json)
     {
         TestInvalidInput(JsonReader.Int32().Validate(n => n >= 1_000), json,
@@ -823,37 +907,37 @@ public class JsonReaderTests
     [Fact]
     public void Validate_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), "'foobar'");
+        TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), /*lang=json*/ @"""foobar""");
     }
 
     [Fact]
     public void Guid_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Guid(), $"'{Guid.NewGuid()}'");
+        TestMovesReaderPastReadValue(JsonReader.Guid(), /*lang=json*/ @"""fe58502d-1da1-456d-960c-314e09c2dcd1""");
     }
 
     [Theory]
-    [InlineData("fe58502d-1da1-456d-960c-314e09c2dcd1", "'fe58502d-1da1-456d-960c-314e09c2dcd1'")]
+    [InlineData("fe58502d-1da1-456d-960c-314e09c2dcd1", /*lang=json*/ @"""fe58502d-1da1-456d-960c-314e09c2dcd1""")]
     public void Guid_With_Valid_Input(Guid expected, string json)
     {
-        var result = JsonReader.Guid().Read(Strictify(json));
+        var result = JsonReader.Guid().Read(json);
         Assert.Equal(expected, result);
     }
 
     [Theory]
-    [InlineData("Null", "null")]
-    [InlineData("False", "false")]
-    [InlineData("True", "true")]
-    [InlineData("Number", "42")]
-    [InlineData("String", "'foobar'")]
-    [InlineData("StartArray", "[]")]
-    [InlineData("StartObject", "{}")]
-    [InlineData("String", "'000-000'")]
-    [InlineData("String", "'this0000-is00-not0-very-valid0000000'")]
-    [InlineData("String", "'00000000000000000000000000000000'")]
-    [InlineData("String", "'{00000000-0000-0000-0000-000000000000}'")]
-    [InlineData("String", "'(00000000-0000-0000-0000-000000000000)'")]
-    [InlineData("String", "'{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}'")]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    [InlineData("String", /*lang=json*/ @"""000-000""")]
+    [InlineData("String", /*lang=json*/ @"""this0000-is00-not0-very-valid0000000""")]
+    [InlineData("String", /*lang=json*/ @"""00000000000000000000000000000000""")]
+    [InlineData("String", /*lang=json*/ @"""{00000000-0000-0000-0000-000000000000}""")]
+    [InlineData("String", /*lang=json*/ @"""(00000000-0000-0000-0000-000000000000)""")]
+    [InlineData("String", /*lang=json*/ @"""{0x00000000,0x0000,0x0000,{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}}""")]
     public void Guid_With_Invalid_Input(string expectedErrorToken, string json)
     {
         TestInvalidInput(JsonReader.Guid(), json,
@@ -875,7 +959,9 @@ public class JsonReaderTests
             JsonReader.Recursive<object>(it => JsonReader.Either(JsonReader.String().AsObject(),
                                                                  JsonReader.Array(it).AsObject()));
 
-        var result = reader.Read(Strictify(@"['foo', 'bar', ['baz', [['qux']]]]"));
+        var result = reader.Read(/*lang=json*/ """
+                                 ["foo", "bar", ["baz", [["qux"]]]]
+                                 """);
         Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } } },
                      result);
     }

@@ -20,80 +20,27 @@ using System.Collections.Generic;
 [MemoryDiagnoser]
 public class GeoJsonBenchmarks
 {
-    const string PointJson = @"
-    {
-        type: 'Point',
-        coordinates: [100.0, 0.0]
-    }";
+    const string PointJson = /*lang=json*/ """
+        {
+            "type": "Point",
+            "coordinates": [100.0, 0.0]
+        }
+        """;
 
-    const string LineStringJson = @"
-    {
-        type: 'LineString',
-        coordinates: [
-            [100.0, 0.0],
-            [101.0, 1.0]
-        ]
-    }";
-
-    const string PolygonJson = @"
-    {
-        type: 'Polygon',
-        coordinates: [
-            [
-                [100.0, 0.0],
-                [101.0, 0.0],
-                [101.0, 1.0],
-                [100.0, 1.0],
-                [100.0, 0.0]
-            ],
-            [
-                [100.8, 0.8],
-                [100.8, 0.2],
-                [100.2, 0.2],
-                [100.2, 0.8],
-                [100.8, 0.8]
-            ]
-        ]
-    }";
-
-    const string MultiPointJson = @"
-    {
-        type: 'MultiPoint',
-        coordinates: [
-            [100.0, 0.0],
-            [101.0, 1.0]
-        ]
-    }";
-
-    const string MultiLineStringJson = @"
-    {
-        type: 'MultiLineString',
-        coordinates: [
-            [
+    const string LineStringJson = /*lang=json*/ """
+        {
+            "type": "LineString",
+            "coordinates": [
                 [100.0, 0.0],
                 [101.0, 1.0]
-            ],
-            [
-                [102.0, 2.0],
-                [103.0, 3.0]
             ]
-        ]
-    }";
+        }
+        """;
 
-    const string MultiPolygonJson = @"
-    {
-        type: 'MultiPolygon',
-        coordinates: [
-            [
-                [
-                    [102.0, 2.0],
-                    [103.0, 2.0],
-                    [103.0, 3.0],
-                    [102.0, 3.0],
-                    [102.0, 2.0]
-                ]
-            ],
-            [
+    const string PolygonJson = /*lang=json*/ """
+        {
+            "type": "Polygon",
+            "coordinates": [
                 [
                     [100.0, 0.0],
                     [101.0, 0.0],
@@ -102,30 +49,90 @@ public class GeoJsonBenchmarks
                     [100.0, 0.0]
                 ],
                 [
-                    [100.2, 0.2],
-                    [100.2, 0.8],
                     [100.8, 0.8],
                     [100.8, 0.2],
-                    [100.2, 0.2]
+                    [100.2, 0.2],
+                    [100.2, 0.8],
+                    [100.8, 0.8]
                 ]
             ]
-        ]
-    }";
+        }
+        """;
 
-    const string GeometryCollectionJson = @"
-    {
-        type: 'GeometryCollection',
-        geometries: [{
-            type: 'Point',
-            coordinates: [100.0, 0.0]
-        }, {
-            type: 'LineString',
-            coordinates: [
-                [101.0, 0.0],
-                [102.0, 1.0]
+    const string MultiPointJson = /*lang=json*/ """
+        {
+            "type": "MultiPoint",
+            "coordinates": [
+                [100.0, 0.0],
+                [101.0, 1.0]
             ]
-        }]
-    }";
+        }
+        """;
+
+    const string MultiLineStringJson = /*lang=json*/ """
+        {
+            "type": "MultiLineString",
+            "coordinates": [
+                [
+                    [100.0, 0.0],
+                    [101.0, 1.0]
+                ],
+                [
+                    [102.0, 2.0],
+                    [103.0, 3.0]
+                ]
+            ]
+        }
+        """;
+
+    const string MultiPolygonJson = /*lang=json*/ """
+        {
+            "type": "MultiPolygon",
+            "coordinates": [
+                [
+                    [
+                        [102.0, 2.0],
+                        [103.0, 2.0],
+                        [103.0, 3.0],
+                        [102.0, 3.0],
+                        [102.0, 2.0]
+                    ]
+                ],
+                [
+                    [
+                        [100.0, 0.0],
+                        [101.0, 0.0],
+                        [101.0, 1.0],
+                        [100.0, 1.0],
+                        [100.0, 0.0]
+                    ],
+                    [
+                        [100.2, 0.2],
+                        [100.2, 0.8],
+                        [100.8, 0.8],
+                        [100.8, 0.2],
+                        [100.2, 0.2]
+                    ]
+                ]
+            ]
+        }
+        """;
+
+    const string GeometryCollectionJson = /*lang=json*/ """
+        {
+            "type": "GeometryCollection",
+            "geometries": [{
+                "type": "Point",
+                "coordinates": [100.0, 0.0]
+            }, {
+                "type": "LineString",
+                "coordinates": [
+                    [101.0, 0.0],
+                    [102.0, 1.0]
+                ]
+            }]
+        }
+        """;
 
     public enum SampleSetId
     {
@@ -157,7 +164,7 @@ public class GeoJsonBenchmarks
         _ = json.Append(string.Join(',', Jsons[SampleSet].Repeat().Take(ObjectCount)));
         _ = json.Append(']');
 
-        this.jsonDataBytes = Encoding.UTF8.GetBytes(Strictify(json.ToString()));
+        this.jsonDataBytes = Encoding.UTF8.GetBytes(json.ToString());
     }
 
     [Benchmark]
@@ -171,9 +178,6 @@ public class GeoJsonBenchmarks
     {
         return SystemTextGeoJsonReader.Read(this.jsonDataBytes);
     }
-
-    static string Strictify(string json) =>
-        Newtonsoft.Json.Linq.JToken.Parse(json).ToString(Newtonsoft.Json.Formatting.None);
 
     static class SystemTextGeoJsonReader
     {
