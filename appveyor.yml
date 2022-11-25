@@ -21,10 +21,16 @@ environment:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
 install:
 - cmd: curl -OsSL https://dot.net/v1/dotnet-install.ps1
-- ps: if ($isWindows) { ./dotnet-install.ps1 -JsonFile global.json }
+- ps: |
+    if ($isWindows) {
+      ./dotnet-install.ps1 -JsonFile global.json
+      ./dotnet-install.ps1 -Version 6.0.11 -Runtime dotnet
+      ./dotnet-install.ps1 -Version 3.1.22 -Runtime dotnet
+    }
 - sh: curl -OsSL https://dot.net/v1/dotnet-install.sh
 - sh: chmod +x dotnet-install.sh
 - sh: ./dotnet-install.sh --jsonfile global.json
+- sh: ./dotnet-install.sh --version 6.0.11 --runtime dotnet
 - sh: ./dotnet-install.sh --version 3.1.22 --runtime dotnet
 - sh: export PATH="$HOME/.dotnet:$PATH"
 before_build:
