@@ -540,21 +540,21 @@ public class JsonReaderTests
                           ValueTuple.Create);
 
     [Theory]
-    [InlineData(  0, "foobar", /*lang=json*/ """
-                               { "str": "foobar" }
-                               """)]
-    [InlineData( 42, "foobar", /*lang=json*/ """
-                               { "num": 42, "str": "foobar" }
-                               """)]
-    [InlineData( 42, "foobar", /*lang=json*/ """
-                               { "str": "foobar", "num": 42 }
-                               """)]
-    [InlineData(-42, "FOOBAR", /*lang=json*/ """
-                               { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
-                               """)]
-    [InlineData( 42, "foobar", /*lang=json*/ """
-                               { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
-                               """)]
+    [InlineData( 0, "foobar", /*lang=json*/ """
+                              { "str": "foobar" }
+                              """)]
+    [InlineData(42, "foobar", /*lang=json*/ """
+                              { "num": 42, "str": "foobar" }
+                              """)]
+    [InlineData(42, "foobar", /*lang=json*/ """
+                              { "str": "foobar", "num": 42 }
+                              """)]
+    [InlineData(42, "foobar", /*lang=json*/ """
+                              { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
+                              """)]
+    [InlineData(42, "foobar", /*lang=json*/ """
+                              { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
+                              """)]
     public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
         var (num, str) = ObjectReader.Read(json);
