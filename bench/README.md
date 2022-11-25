@@ -83,9 +83,7 @@ In another configuration, we benchmark the worst-case scenario performance of
 | SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | MultiPolygon | 127,045.45 μs | 2,512.918 μs | 3,761.218 μs |  1.00 |    0.00 | 6500.0000 | 3000.0000 |  750.0000 | 37510.46 KB |        1.00 |
 
 When benchmarking deserialization a subset of an example payload from the
-[GitHub REST
-API](https://docs.github.com/en/rest/branches/branches#merge-a-branch), we
-measure the following:
+[GitHub REST API (Merge a branch)], we measure the following:
 
     BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.819)
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
@@ -125,3 +123,5 @@ measure the following:
 | SystemTextJsonBenchmark | .NET 7.0      | 10000       | 138,900.25 us | 5,720.888 us | 16,778.376 us | 133,623.48 us |  0.99 |    0.17 | 2500.0000 | 1250.0000 | 250.0000 | 16359.59 KB |        1.00 |
 | JsonReaderBenchmark     | NativeAOT 7.0 | 10000       | 130,683.21 us | 4,577.537 us | 13,207.241 us | 126,413.93 us |  0.93 |    0.15 | 2000.0000 | 1000.0000 | 250.0000 | 11194.13 KB |        0.68 |
 | SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | 142,635.96 us | 6,687.071 us | 18,970.107 us | 135,900.80 us |  1.00 |    0.00 | 2500.0000 | 1250.0000 | 250.0000 |  16360.5 KB |        1.00 |
+
+  [GitHub REST API]: https://docs.github.com/en/rest/branches/branches#merge-a-branch
