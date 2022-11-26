@@ -115,6 +115,10 @@ public class GithubApiBenchmark
         }
         """;
 
+    private static readonly IJsonReader<Uri> UriReader =
+        from s in JsonReader.String()
+        select new Uri(s);
+
     private static readonly IJsonReader<Author> AuthorJsonReader =
         JsonReader.Object(JsonReader.Property("name", JsonReader.String()),
                           JsonReader.Property("email", JsonReader.String()),
@@ -122,7 +126,7 @@ public class GithubApiBenchmark
                           (name, email, date) => new Author(name, email, date));
 
     private static readonly IJsonReader<Commit> CommitJsonReader =
-        JsonReader.Object(JsonReader.Property("url", from s in JsonReader.String() select new Uri(s)),
+        JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("author", AuthorJsonReader),
                           JsonReader.Property("committer", AuthorJsonReader),
                           JsonReader.Property("message", JsonReader.String()),
@@ -131,7 +135,7 @@ public class GithubApiBenchmark
                               new Commit(url, author, committer, message, commentCount));
 
     static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseJsonReader =
-        JsonReader.Object(JsonReader.Property("url", from s in JsonReader.String() select new Uri(s)),
+        JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
                           JsonReader.Property("commit", CommitJsonReader),
                           (url, sha, commit) => new MergeBranchResponse(url, sha, commit));
