@@ -125,14 +125,20 @@ public class GithubApiBenchmark
                           JsonReader.Property("date", JsonReader.DateTime()),
                           (name, email, date) => new Author(name, email, date));
 
+    private static readonly IJsonReader<Tree> TreeReader =
+        JsonReader.Object(JsonReader.Property("url", UriReader),
+                          JsonReader.Property("sha", JsonReader.String()),
+                          (url, sha) => new Tree(url, sha));
+
     private static readonly IJsonReader<Commit> CommitJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("author", AuthorJsonReader),
                           JsonReader.Property("committer", AuthorJsonReader),
                           JsonReader.Property("message", JsonReader.String()),
+                          JsonReader.Property("tree", TreeReader),
                           JsonReader.Property("comment_count", JsonReader.Int32()),
-                          (url, author, committer, message, commentCount) =>
-                              new Commit(url, author, committer, message, commentCount));
+                          (url, author, committer, message, tree, commentCount) =>
+                              new Commit(url, author, committer, message, tree, commentCount));
 
     static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
@@ -168,8 +174,12 @@ public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("author")] Author Author,
                             [property: JsonPropertyName("committer")] Author Committer,
                             [property: JsonPropertyName("message")] string Message,
+                            [property: JsonPropertyName("tree")] Tree Tree,
                             [property: JsonPropertyName("comment_count")] int CommentCount);
 
 public sealed record Author([property: JsonPropertyName("name")] string Name,
                             [property: JsonPropertyName("email")] string Email,
                             [property: JsonPropertyName("date")] DateTime Date);
+
+public sealed record Tree([property: JsonPropertyName("url")] Uri Url,
+                          [property: JsonPropertyName("sha")] string Sha);
