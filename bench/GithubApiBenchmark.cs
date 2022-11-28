@@ -120,7 +120,7 @@ public class GithubApiBenchmark
         from s in JsonReader.String()
         select new Uri(s);
 
-    static readonly IJsonReader<CommitAuthor> CommitAuthorJsonReader =
+    static readonly IJsonReader<CommitAuthor> CommitAuthorReader =
         JsonReader.Object(JsonReader.Property("name", JsonReader.String()),
                           JsonReader.Property("email", JsonReader.String()),
                           JsonReader.Property("date", JsonReader.DateTime()),
@@ -138,10 +138,10 @@ public class GithubApiBenchmark
                           JsonReader.Property("payload", JsonReader.String()),
                           (p1, p2, p3, p4) => new Verification(p1, p2, p3, p4));
 
-    static readonly IJsonReader<Commit> CommitJsonReader =
+    static readonly IJsonReader<Commit> CommitReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
-                          JsonReader.Property("author", CommitAuthorJsonReader),
-                          JsonReader.Property("committer", CommitAuthorJsonReader),
+                          JsonReader.Property("author", CommitAuthorReader),
+                          JsonReader.Property("committer", CommitAuthorReader),
                           JsonReader.Property("message", JsonReader.String()),
                           JsonReader.Property("tree", TreeReader),
                           JsonReader.Property("comment_count", JsonReader.Int32()),
@@ -149,7 +149,7 @@ public class GithubApiBenchmark
                           (p1, p2, p3, p4, p5, p6, p7) =>
                               new Commit(p1, p2, p3, p4, p5, p6, p7));
 
-    static readonly IJsonReader<Author> AuthorJsonReader =
+    static readonly IJsonReader<Author> AuthorReader =
         JsonReader.Object(JsonReader.Property("login", JsonReader.String()),
                           JsonReader.Property("id", JsonReader.Int32()),
                           JsonReader.Property("node_id", JsonReader.String()),
@@ -192,15 +192,15 @@ public class GithubApiBenchmark
                           (p1, p2, p3, p4, p5, p6, p7, p8) =>
                               new File(p1, p2, p3, p4, p5, p6, p7, p8));
 
-    static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseJsonReader =
+    static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
                           JsonReader.Property("node_id", JsonReader.String()),
                           JsonReader.Property("html_url", UriReader),
                           JsonReader.Property("comments_url", UriReader),
-                          JsonReader.Property("commit", CommitJsonReader),
-                          JsonReader.Property("author", AuthorJsonReader),
-                          JsonReader.Property("committer", AuthorJsonReader),
+                          JsonReader.Property("commit", CommitReader),
+                          JsonReader.Property("author", AuthorReader),
+                          JsonReader.Property("committer", AuthorReader),
                           JsonReader.Property("parents", TreeReader),
                           JsonReader.Property("stats", StatsReader),
                           JsonReader.Property("files", JsonReader.Array(FileReader)),
@@ -220,7 +220,7 @@ public class GithubApiBenchmark
 
     [Benchmark]
     public MergeBranchResponse[] JsonReaderBenchmark() =>
-        JsonReader.Array(MergeBranchResponseJsonReader).Read(this.jsonDataBytes);
+        JsonReader.Array(MergeBranchResponseReader).Read(this.jsonDataBytes);
 
     [Benchmark(Baseline = true)]
     public MergeBranchResponse[] SystemTextJsonBenchmark() =>
