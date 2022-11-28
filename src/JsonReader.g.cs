@@ -18,7 +18,7 @@ partial class JsonReader
 
     public static IJsonReader<byte> Byte() =>
         byteReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
@@ -27,7 +27,7 @@ partial class JsonReader
 
     public static IJsonReader<int> Int32() =>
         intReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
@@ -36,7 +36,7 @@ partial class JsonReader
 
     public static IJsonReader<long> Int64() =>
         longReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt64(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Int64."));
@@ -45,7 +45,7 @@ partial class JsonReader
 
     public static IJsonReader<ushort> UInt16() =>
         ushortReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
@@ -54,7 +54,7 @@ partial class JsonReader
 
     public static IJsonReader<uint> UInt32() =>
         uintReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
@@ -63,7 +63,7 @@ partial class JsonReader
 
     public static IJsonReader<ulong> UInt64() =>
         ulongReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
@@ -72,7 +72,7 @@ partial class JsonReader
 
     public static IJsonReader<double> Double() =>
         doubleReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
@@ -81,7 +81,7 @@ partial class JsonReader
 
     public static IJsonReader<float> Single() =>
         floatReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
