@@ -124,20 +124,19 @@ public class GithubApiBenchmark
         JsonReader.Object(JsonReader.Property("name", JsonReader.String()),
                           JsonReader.Property("email", JsonReader.String()),
                           JsonReader.Property("date", JsonReader.DateTime()),
-                          (name, email, date) => new CommitAuthor(name, email, date));
+                          (p1, p2, p3) => new CommitAuthor(p1, p2, p3));
 
     private static readonly IJsonReader<Tree> TreeReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
-                          (url, sha) => new Tree(url, sha));
+                          (p1, p2) => new Tree(p1, p2));
 
     private static readonly IJsonReader<Verification> VerificationReader =
         JsonReader.Object(JsonReader.Property("verified", JsonReader.Boolean()),
                           JsonReader.Property("reason", JsonReader.String()),
                           JsonReader.Property("signature", JsonReader.String()),
                           JsonReader.Property("payload", JsonReader.String()),
-                          (verified, reason, signature, payload) =>
-                              new Verification(verified, reason, signature, payload));
+                          (p1, p2, p3, p4) => new Verification(p1, p2, p3, p4));
 
     private static readonly IJsonReader<Commit> CommitJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
@@ -147,8 +146,8 @@ public class GithubApiBenchmark
                           JsonReader.Property("tree", TreeReader),
                           JsonReader.Property("comment_count", JsonReader.Int32()),
                           JsonReader.Property("verification", VerificationReader),
-                          (url, author, committer, message, tree, commentCount, verification) =>
-                              new Commit(url, author, committer, message, tree, commentCount, verification));
+                          (p1, p2, p3, p4, p5, p6, p7) =>
+                              new Commit(p1, p2, p3, p4, p5, p6, p7));
 
     private static readonly IJsonReader<Author> AuthorJsonReader =
         JsonReader.Object(JsonReader.Property("login", JsonReader.String()),
@@ -179,7 +178,7 @@ public class GithubApiBenchmark
         JsonReader.Object(JsonReader.Property("additions", JsonReader.Int32()),
                           JsonReader.Property("deletions", JsonReader.Int32()),
                           JsonReader.Property("total", JsonReader.Int32()),
-                          (additions, deletions, total) => new Stats(additions, deletions, total));
+                          (p1, p2, p3) => new Stats(p1, p2, p3));
 
     static readonly IJsonReader<File> FileReader =
         JsonReader.Object(JsonReader.Property("filename", JsonReader.String()),
@@ -205,8 +204,8 @@ public class GithubApiBenchmark
                           JsonReader.Property("parents", TreeReader),
                           JsonReader.Property("stats", StatsReader),
                           JsonReader.Property("files", JsonReader.Array(FileReader)),
-                          (url, sha, nodeId, htmlUrl, commentsUrl, commit, author, committer, parents, stats, files) =>
-                              new MergeBranchResponse(url, sha, nodeId, htmlUrl, commentsUrl, commit, author, committer, parents, stats, files.ToImmutableArray()));
+                          (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11) =>
+                              new MergeBranchResponse(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11.ToImmutableArray()));
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
