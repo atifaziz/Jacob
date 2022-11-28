@@ -89,39 +89,38 @@ When benchmarking deserialization a subset of an example payload from the
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
     .NET SDK=7.0.100
       [Host]     : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
-      Job-QOSTER : .NET 6.0.11 (6.0.1122.52304), X64 RyuJIT AVX2
-      Job-NCTTVP : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
-      Job-YSQJJI : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-FRBYQO : .NET 6.0.11 (6.0.1122.52304), X64 RyuJIT AVX2
+      Job-FPUDIR : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-MSXFTZ : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
 
-
-| Method                  | Runtime       | ObjectCount |          Mean |        Error |        StdDev |        Median | Ratio | RatioSD |      Gen0 |      Gen1 |     Gen2 |   Allocated | Alloc Ratio |
-| ----------------------- | ------------- | ----------- | ------------: | -----------: | ------------: | ------------: | ----: | ------: | --------: | --------: | -------: | ----------: | ----------: |
-| JsonReaderBenchmark     | .NET 6.0      | 10          |     202.34 us |    20.552 us |     60.598 us |     190.91 us |  1.99 |    0.64 |    2.4414 |         - |        - |    11.41 KB |        0.67 |
-| SystemTextJsonBenchmark | .NET 6.0      | 10          |     117.39 us |     4.646 us |     13.553 us |     113.90 us |  1.13 |    0.17 |    4.1504 |    0.2441 |        - |    17.25 KB |        1.02 |
-| JsonReaderBenchmark     | .NET 7.0      | 10          |     112.36 us |     3.832 us |     11.118 us |     110.38 us |  1.08 |    0.17 |    2.6855 |         - |        - |    11.41 KB |        0.67 |
-| SystemTextJsonBenchmark | .NET 7.0      | 10          |      98.76 us |     2.991 us |      8.773 us |      96.94 us |  0.95 |    0.14 |    4.1504 |         - |        - |    16.97 KB |        1.00 |
-| JsonReaderBenchmark     | NativeAOT 7.0 | 10          |     168.08 us |    25.396 us |     74.880 us |     132.77 us |  1.63 |    0.68 |    2.4414 |         - |        - |    11.41 KB |        0.67 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 | 10          |     105.50 us |     4.485 us |     12.797 us |     104.44 us |  1.00 |    0.00 |    4.1504 |         - |        - |    16.97 KB |        1.00 |
-|                         |               |             |               |              |               |               |       |         |           |           |          |             |             |
-| JsonReaderBenchmark     | .NET 6.0      | 100         |   1,240.36 us |    36.970 us |    106.667 us |   1,196.85 us |  1.08 |    0.15 |   25.3906 |    7.8125 |        - |   111.67 KB |        0.69 |
-| SystemTextJsonBenchmark | .NET 6.0      | 100         |   1,144.78 us |    37.520 us |    108.255 us |   1,109.01 us |  1.00 |    0.13 |   37.1094 |   11.7188 |        - |   164.66 KB |        1.02 |
-| JsonReaderBenchmark     | .NET 7.0      | 100         |   1,185.21 us |    40.298 us |    114.973 us |   1,145.08 us |  1.04 |    0.17 |   25.3906 |    7.8125 |        - |   111.67 KB |        0.69 |
-| SystemTextJsonBenchmark | .NET 7.0      | 100         |   1,109.15 us |    35.183 us |    102.073 us |   1,068.34 us |  0.97 |    0.14 |   35.1563 |    9.7656 |        - |   161.56 KB |        1.00 |
-| JsonReaderBenchmark     | NativeAOT 7.0 | 100         |   1,114.53 us |    29.102 us |     80.156 us |   1,083.46 us |  0.97 |    0.13 |   23.4375 |    7.8125 |        - |   111.67 KB |        0.69 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 | 100         |   1,159.15 us |    52.550 us |    153.290 us |   1,103.81 us |  1.00 |    0.00 |   33.2031 |    9.7656 |        - |   161.56 KB |        1.00 |
-|                         |               |             |               |              |               |               |       |         |           |           |          |             |             |
-| JsonReaderBenchmark     | .NET 6.0      | 1000        |  13,449.47 us |   462.489 us |  1,341.763 us |  13,214.85 us |  0.95 |    0.15 |  171.8750 |   78.1250 |        - |  1110.12 KB |        0.70 |
-| SystemTextJsonBenchmark | .NET 6.0      | 1000        |  15,895.95 us |   942.387 us |  2,748.988 us |  15,849.49 us |  1.13 |    0.27 |  250.0000 |  125.0000 |        - |  1619.96 KB |        1.02 |
-| JsonReaderBenchmark     | .NET 7.0      | 1000        |  15,377.16 us |   479.259 us |  1,320.019 us |  15,327.51 us |  1.08 |    0.17 |  171.8750 |  156.2500 |        - |  1110.12 KB |        0.70 |
-| SystemTextJsonBenchmark | .NET 7.0      | 1000        |  14,739.72 us |   508.641 us |  1,459.387 us |  14,526.50 us |  1.04 |    0.15 |  250.0000 |  234.3750 |        - |  1588.75 KB |        1.00 |
-| JsonReaderBenchmark     | NativeAOT 7.0 | 1000        |  18,554.27 us | 1,701.470 us |  4,963.269 us |  16,851.99 us |  1.32 |    0.40 |  171.8750 |  156.2500 |        - |  1110.12 KB |        0.70 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 | 1000        |  14,366.94 us |   629.301 us |  1,835.700 us |  13,511.67 us |  1.00 |    0.00 |  250.0000 |  218.7500 |        - |  1588.76 KB |        1.00 |
-|                         |               |             |               |              |               |               |       |         |           |           |          |             |             |
-| JsonReaderBenchmark     | .NET 6.0      | 10000       | 168,778.99 us | 6,104.380 us | 17,903.090 us | 160,740.15 us |  1.20 |    0.19 | 2000.0000 | 1000.0000 | 250.0000 | 11194.13 KB |        0.68 |
-| SystemTextJsonBenchmark | .NET 6.0      | 10000       | 168,772.76 us | 6,891.284 us | 20,102.200 us | 159,809.92 us |  1.19 |    0.21 | 2500.0000 | 1000.0000 |        - | 16672.09 KB |        1.02 |
-| JsonReaderBenchmark     | .NET 7.0      | 10000       | 131,258.49 us | 3,662.383 us | 10,148.446 us | 129,675.98 us |  0.93 |    0.12 | 2000.0000 | 1000.0000 | 250.0000 | 11194.13 KB |        0.68 |
-| SystemTextJsonBenchmark | .NET 7.0      | 10000       | 138,900.25 us | 5,720.888 us | 16,778.376 us | 133,623.48 us |  0.99 |    0.17 | 2500.0000 | 1250.0000 | 250.0000 | 16359.59 KB |        1.00 |
-| JsonReaderBenchmark     | NativeAOT 7.0 | 10000       | 130,683.21 us | 4,577.537 us | 13,207.241 us | 126,413.93 us |  0.93 |    0.15 | 2000.0000 | 1000.0000 | 250.0000 | 11194.13 KB |        0.68 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | 142,635.96 us | 6,687.071 us | 18,970.107 us | 135,900.80 us |  1.00 |    0.00 | 2500.0000 | 1250.0000 | 250.0000 |  16360.5 KB |        1.00 |
+|                  Method |       Runtime | ObjectCount |         Mean |        Error |        StdDev |       Median | Ratio | RatioSD |       Gen0 |      Gen1 |      Gen2 |   Allocated | Alloc Ratio |
+|------------------------ |-------------- |------------ |-------------:|-------------:|--------------:|-------------:|------:|--------:|-----------:|----------:|----------:|------------:|------------:|
+|     JsonReaderBenchmark |      .NET 6.0 |          10 |     430.4 us |     28.69 us |      83.68 us |     399.1 us |  1.47 |    0.35 |    20.5078 |    6.8359 |         - |     84.3 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 6.0 |          10 |     342.9 us |     21.17 us |      60.41 us |     324.5 us |  1.16 |    0.23 |    23.9258 |    7.8125 |         - |     98.9 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |          10 |     408.1 us |     18.34 us |      52.33 us |     394.3 us |  1.39 |    0.24 |    20.5078 |    6.8359 |         - |     84.3 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 7.0 |          10 |     314.7 us |     14.64 us |      43.18 us |     306.6 us |  1.08 |    0.21 |    23.9258 |    7.8125 |         - |    98.07 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |          10 |     398.1 us |     17.66 us |      49.82 us |     387.5 us |  1.35 |    0.24 |    20.5078 |    6.8359 |         - |     84.3 KB |        0.86 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |          10 |     296.6 us |     12.51 us |      36.50 us |     286.7 us |  1.00 |    0.00 |    23.9258 |    7.8125 |         - |    98.07 KB |        1.00 |
+|                         |               |             |              |              |               |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |         100 |   6,259.1 us |    533.00 us |   1,546.33 us |   5,817.0 us |  1.48 |    0.51 |   125.0000 |   62.5000 |         - |   840.58 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 6.0 |         100 |   3,492.2 us |    136.55 us |     400.47 us |   3,368.7 us |  0.83 |    0.25 |   156.2500 |   78.1250 |         - |   994.96 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |         100 |   4,276.0 us |    154.20 us |     442.41 us |   4,196.1 us |  1.02 |    0.30 |   136.7188 |  132.8125 |         - |   840.57 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 7.0 |         100 |   3,223.2 us |    122.33 us |     352.94 us |   3,149.5 us |  0.78 |    0.26 |   160.1563 |  156.2500 |         - |   986.39 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |         100 |   4,150.3 us |    174.82 us |     509.97 us |   4,048.6 us |  0.98 |    0.29 |   132.8125 |  125.0000 |         - |   840.57 KB |        0.85 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |         100 |   4,558.2 us |    472.24 us |   1,362.52 us |   4,660.4 us |  1.00 |    0.00 |   160.1563 |  156.2500 |         - |   986.39 KB |        1.00 |
+|                         |               |             |              |              |               |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |        1000 |  78,578.1 us |  2,843.35 us |   8,066.12 us |  77,615.7 us |  1.01 |    0.15 |  1428.5714 |  571.4286 |  142.8571 |  8400.03 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 6.0 |        1000 |  69,825.7 us |  2,688.92 us |   7,801.03 us |  68,575.6 us |  0.89 |    0.13 |  1625.0000 |  625.0000 |  125.0000 |  9875.27 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |        1000 |  82,837.1 us |  3,608.50 us |  10,236.71 us |  79,817.6 us |  1.06 |    0.18 |  1428.5714 |  714.2857 |  142.8571 |  8399.49 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 7.0 |        1000 |  75,251.8 us |  2,680.40 us |   7,733.57 us |  73,726.0 us |  0.96 |    0.13 |  1750.0000 | 1000.0000 |  250.0000 |   9789.3 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |        1000 |  86,595.5 us |  3,068.95 us |   8,755.89 us |  85,300.8 us |  1.11 |    0.16 |  1428.5714 |  714.2857 |  142.8571 |  8399.27 KB |        0.86 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |        1000 |  79,225.8 us |  3,401.67 us |   9,538.64 us |  79,016.5 us |  1.00 |    0.00 |  1750.0000 | 1000.0000 |  250.0000 |  9789.97 KB |        1.00 |
+|                         |               |             |              |              |               |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |       10000 | 884,528.8 us | 35,333.94 us | 103,628.32 us | 869,597.0 us |  1.29 |    0.22 | 13000.0000 | 5000.0000 |         - | 84084.95 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 6.0 |       10000 | 768,371.6 us | 38,170.42 us | 110,130.39 us | 753,314.5 us |  1.13 |    0.23 | 15000.0000 | 5000.0000 |         - | 98321.43 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |       10000 | 818,645.8 us | 28,842.23 us |  82,753.76 us | 811,705.2 us |  1.19 |    0.16 | 14000.0000 | 7000.0000 | 1000.0000 |  84089.4 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 7.0 |       10000 | 704,268.1 us | 23,270.90 us |  68,614.77 us | 700,178.7 us |  1.03 |    0.16 | 16000.0000 | 8000.0000 | 1000.0000 |  97463.8 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |       10000 | 822,064.3 us | 31,849.32 us |  92,400.64 us | 821,875.3 us |  1.20 |    0.18 | 14000.0000 | 7000.0000 | 1000.0000 | 84088.01 KB |        0.86 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |       10000 | 693,208.3 us | 26,231.06 us |  74,838.70 us | 692,791.7 us |  1.00 |    0.00 | 16000.0000 | 8000.0000 | 1000.0000 | 97469.13 KB |        1.00 |
 
   [GitHub REST API]: https://docs.github.com/en/rest/branches/branches#merge-a-branch
