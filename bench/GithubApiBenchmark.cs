@@ -120,11 +120,11 @@ public class GithubApiBenchmark
         from s in JsonReader.String()
         select new Uri(s);
 
-    static readonly IJsonReader<CommitAuthor> CommitAuthorJsonReader =
+    static readonly IJsonReader<CommitUser> CommitUserJsonReader =
         JsonReader.Object(JsonReader.Property("name", JsonReader.String()),
                           JsonReader.Property("email", JsonReader.String()),
                           JsonReader.Property("date", JsonReader.DateTime()),
-                          (p1, p2, p3) => new CommitAuthor(p1, p2, p3));
+                          (p1, p2, p3) => new CommitUser(p1, p2, p3));
 
     static readonly IJsonReader<Tree> TreeJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
@@ -140,8 +140,8 @@ public class GithubApiBenchmark
 
     static readonly IJsonReader<Commit> CommitJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
-                          JsonReader.Property("author", CommitAuthorJsonReader),
-                          JsonReader.Property("committer", CommitAuthorJsonReader),
+                          JsonReader.Property("author", CommitUserJsonReader),
+                          JsonReader.Property("committer", CommitUserJsonReader),
                           JsonReader.Property("message", JsonReader.String()),
                           JsonReader.Property("tree", TreeJsonReader),
                           JsonReader.Property("comment_count", JsonReader.Int32()),
@@ -149,7 +149,7 @@ public class GithubApiBenchmark
                           (p1, p2, p3, p4, p5, p6, p7) =>
                               new Commit(p1, p2, p3, p4, p5, p6, p7));
 
-    static readonly IJsonReader<Author> AuthorJsonReader =
+    static readonly IJsonReader<GitHubUser> GitHubUserJsonReader =
         JsonReader.Object(JsonReader.Property("login", JsonReader.String()),
                           JsonReader.Property("id", JsonReader.Int32()),
                           JsonReader.Property("node_id", JsonReader.String()),
@@ -172,7 +172,7 @@ public class GithubApiBenchmark
                            * JsonReader.Property("site_admin", JsonReader.Boolean()
                            */
                           (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16) =>
-                              new Author(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16));
+                              new GitHubUser(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16));
 
     static readonly IJsonReader<Stats> StatsJsonReader =
         JsonReader.Object(JsonReader.Property("additions", JsonReader.Int32()),
@@ -199,8 +199,8 @@ public class GithubApiBenchmark
                           JsonReader.Property("html_url", UriReader),
                           JsonReader.Property("comments_url", UriReader),
                           JsonReader.Property("commit", CommitJsonReader),
-                          JsonReader.Property("author", AuthorJsonReader),
-                          JsonReader.Property("committer", AuthorJsonReader),
+                          JsonReader.Property("author", GitHubUserJsonReader),
+                          JsonReader.Property("committer", GitHubUserJsonReader),
                           JsonReader.Property("parents", ImmutableArrayReader(TreeJsonReader)),
                           JsonReader.Property("stats", StatsJsonReader),
                           JsonReader.Property("files", ImmutableArrayReader(FileJsonReader)),
@@ -239,23 +239,23 @@ public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri
                                          [property: JsonPropertyName("html_url")] Uri HtmlUrl,
                                          [property: JsonPropertyName("comments_url")] Uri CommentsUrl,
                                          [property: JsonPropertyName("commit")] Commit Commit,
-                                         [property: JsonPropertyName("author")] Author Author,
-                                         [property: JsonPropertyName("committer")] Author Committer,
+                                         [property: JsonPropertyName("author")] GitHubUser Author,
+                                         [property: JsonPropertyName("committer")] GitHubUser Committer,
                                          [property: JsonPropertyName("parents")] ImmutableArray<Tree> Parents,
                                          [property: JsonPropertyName("stats")] Stats Stats,
                                          [property: JsonPropertyName("files")] ImmutableArray<File> Files);
 
 public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
-                            [property: JsonPropertyName("author")] CommitAuthor Author,
-                            [property: JsonPropertyName("committer")] CommitAuthor Committer,
+                            [property: JsonPropertyName("author")] CommitUser Author,
+                            [property: JsonPropertyName("committer")] CommitUser Committer,
                             [property: JsonPropertyName("message")] string Message,
                             [property: JsonPropertyName("tree")] Tree Tree,
                             [property: JsonPropertyName("comment_count")] int CommentCount,
                             [property: JsonPropertyName("verification")] Verification Verification);
-
-public sealed record CommitAuthor([property: JsonPropertyName("name")] string Name,
-                                  [property: JsonPropertyName("email")] string Email,
-                                  [property: JsonPropertyName("date")] DateTime Date);
+    
+public sealed record CommitUser([property: JsonPropertyName("name")] string Name,
+                                [property: JsonPropertyName("email")] string Email,
+                                [property: JsonPropertyName("date")] DateTime Date);
 
 public sealed record Tree([property: JsonPropertyName("url")] Uri Url,
                           [property: JsonPropertyName("sha")] string Sha);
@@ -265,27 +265,27 @@ public sealed record Verification([property: JsonPropertyName("verified")] bool 
                                   [property: JsonPropertyName("signature")] string? Signature,
                                   [property: JsonPropertyName("payload")] string? Payload);
 
-public sealed record Author([property: JsonPropertyName("login")] string Login,
-                            [property: JsonPropertyName("id")] int Id,
-                            [property: JsonPropertyName("node_id")] string NodeId,
-                            [property: JsonPropertyName("avatar_url")] Uri AvatarUrl,
-                            [property: JsonPropertyName("gravatar_id")] string GravatarId,
-                            [property: JsonPropertyName("url")] Uri Url,
-                            [property: JsonPropertyName("html_url")] Uri HtmlUrl,
-                            [property: JsonPropertyName("followers_url")] Uri FollowersUrl,
-                            [property: JsonPropertyName("following_url")] Uri FollowingUrl,
-                            [property: JsonPropertyName("gists_url")] Uri GistsUrl,
-                            [property: JsonPropertyName("starred_url")] Uri StarredUrl,
-                            [property: JsonPropertyName("subscriptions_url")] Uri SubscriptionsUrl,
-                            [property: JsonPropertyName("organizations_url")] Uri OrganizationsUrl,
-                            [property: JsonPropertyName("repos_url")] Uri ReposUrl,
-                            [property: JsonPropertyName("events_url")] Uri EventsUrl,
-                            [property: JsonPropertyName("received_events_url")] Uri ReceivedEventsUrl
-                            /*
-                             * Omitted because JsonReader.Object supports 16 properties.
-                             * [property: JsonPropertyName("type")] string Type,
-                             * [property: JsonPropertyName("site_admin")] bool SiteAdmin
-                             */);
+public sealed record GitHubUser([property: JsonPropertyName("login")] string Login,
+                                [property: JsonPropertyName("id")] int Id,
+                                [property: JsonPropertyName("node_id")] string NodeId,
+                                [property: JsonPropertyName("avatar_url")] Uri AvatarUrl,
+                                [property: JsonPropertyName("gravatar_id")] string GravatarId,
+                                [property: JsonPropertyName("url")] Uri Url,
+                                [property: JsonPropertyName("html_url")] Uri HtmlUrl,
+                                [property: JsonPropertyName("followers_url")] Uri FollowersUrl,
+                                [property: JsonPropertyName("following_url")] Uri FollowingUrl,
+                                [property: JsonPropertyName("gists_url")] Uri GistsUrl,
+                                [property: JsonPropertyName("starred_url")] Uri StarredUrl,
+                                [property: JsonPropertyName("subscriptions_url")] Uri SubscriptionsUrl,
+                                [property: JsonPropertyName("organizations_url")] Uri OrganizationsUrl,
+                                [property: JsonPropertyName("repos_url")] Uri ReposUrl,
+                                [property: JsonPropertyName("events_url")] Uri EventsUrl,
+                                [property: JsonPropertyName("received_events_url")] Uri ReceivedEventsUrl
+                                /*
+                                 * Omitted because JsonReader.Object supports 16 properties.
+                                 * [property: JsonPropertyName("type")] string Type,
+                                 * [property: JsonPropertyName("site_admin")] bool SiteAdmin
+                                 */);
 
 public sealed record Stats([property: JsonPropertyName("additions")] int Additions,
                            [property: JsonPropertyName("deletions")] int Deletions,
