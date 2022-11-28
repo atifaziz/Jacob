@@ -134,8 +134,8 @@ public class GithubApiBenchmark
     static readonly IJsonReader<Verification> VerificationReader =
         JsonReader.Object(JsonReader.Property("verified", JsonReader.Boolean()),
                           JsonReader.Property("reason", JsonReader.String()),
-                          JsonReader.Property("signature", JsonReader.String()),
-                          JsonReader.Property("payload", JsonReader.String()),
+                          JsonReader.Property("signature", Nullable(JsonReader.String(), null)),
+                          JsonReader.Property("payload", Nullable(JsonReader.String(), null)),
                           (p1, p2, p3, p4) => new Verification(p1, p2, p3, p4));
 
     static readonly IJsonReader<Commit> CommitReader =
@@ -201,11 +201,17 @@ public class GithubApiBenchmark
                           JsonReader.Property("commit", CommitReader),
                           JsonReader.Property("author", AuthorReader),
                           JsonReader.Property("committer", AuthorReader),
-                          JsonReader.Property("parents", TreeReader),
+                          JsonReader.Property("parents", ImmutableArrayReader(TreeReader)),
                           JsonReader.Property("stats", StatsReader),
-                          JsonReader.Property("files", JsonReader.Array(FileReader)),
+                          JsonReader.Property("files", ImmutableArrayReader(FileReader)),
                           (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11) =>
-                              new MergeBranchResponse(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11.ToImmutableArray()));
+                              new MergeBranchResponse(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
+
+    static IJsonReader<T?> Nullable<T>(IJsonReader<T> reader, T? @null) =>
+        JsonReader.Either(from v in JsonReader.Null(@null) select v, from v in reader select v);
+
+    static IJsonReader<ImmutableArray<T>> ImmutableArrayReader<T>(IJsonReader<T> reader) =>
+        from v in JsonReader.Array(reader) select v.ToImmutableArray();
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
@@ -235,7 +241,7 @@ public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri
                                          [property: JsonPropertyName("commit")] Commit Commit,
                                          [property: JsonPropertyName("author")] Author Author,
                                          [property: JsonPropertyName("committer")] Author Committer,
-                                         [property: JsonPropertyName("parents")] Tree Parents,
+                                         [property: JsonPropertyName("parents")] ImmutableArray<Tree> Parents,
                                          [property: JsonPropertyName("stats")] Stats Stats,
                                          [property: JsonPropertyName("files")] ImmutableArray<File> Files);
 
@@ -256,8 +262,8 @@ public sealed record Tree([property: JsonPropertyName("url")] Uri Url,
 
 public sealed record Verification([property: JsonPropertyName("verified")] bool Verified,
                                   [property: JsonPropertyName("reason")] string Reason,
-                                  [property: JsonPropertyName("signature")] string Signature,
-                                  [property: JsonPropertyName("payload")] string Payload);
+                                  [property: JsonPropertyName("signature")] string? Signature,
+                                  [property: JsonPropertyName("payload")] string? Payload);
 
 public sealed record Author([property: JsonPropertyName("login")] string Login,
                             [property: JsonPropertyName("id")] int Id,
