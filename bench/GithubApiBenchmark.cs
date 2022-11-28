@@ -208,10 +208,10 @@ public class GithubApiBenchmark
                               new MergeBranchResponse(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11));
 
     static IJsonReader<T?> Nullable<T>(IJsonReader<T> reader, T? @null) =>
-        JsonReader.Either(JsonReader.Null(@null), from v in reader select v);
+        JsonReader.Either(JsonReader.Null(@null), from v in reader select (T?)v);
 
     static IJsonReader<ImmutableArray<T>> ImmutableArrayReader<T>(IJsonReader<T> reader) =>
-        from v in JsonReader.Array(reader) select v.ToImmutableArray();
+        JsonReader.Array(reader, list => list.ToImmutableArray());
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
