@@ -182,8 +182,9 @@ public class GithubApiBenchmark
                           JsonReader.Property("comments_url", UriReader),
                           JsonReader.Property("commit", CommitJsonReader),
                           JsonReader.Property("author", AuthorJsonReader),
-                          (url, sha, node_id, htmlUrl, commentsUrl, commit, author) =>
-                              new MergeBranchResponse(url, sha, node_id, htmlUrl, commentsUrl, commit, author));
+                          JsonReader.Property("committer", AuthorJsonReader),
+                          (url, sha, node_id, htmlUrl, commentsUrl, commit, author, committer) =>
+                              new MergeBranchResponse(url, sha, node_id, htmlUrl, commentsUrl, commit, author, committer));
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
@@ -211,7 +212,8 @@ public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri
                                          [property: JsonPropertyName("html_url")] Uri HtmlUrl,
                                          [property: JsonPropertyName("comments_url")] Uri CommentsUrl,
                                          [property: JsonPropertyName("commit")] Commit Commit,
-                                         [property: JsonPropertyName("author")] Author Author);
+                                         [property: JsonPropertyName("author")] Author Author,
+                                         [property: JsonPropertyName("committer")] Author Committer);
 
 public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("author")] CommitAuthor Author,
