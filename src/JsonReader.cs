@@ -448,7 +448,7 @@ public static partial class JsonReader
                                                       ref (bool, TValue) value,
                                                       ref string? error)
                 {
-                    if (value is (true, _) || !property.IsMatch(ref reader))
+                    if (!property.IsMatch(ref reader))
                         return false;
 
                     switch (property.Reader.TryRead(ref reader))

@@ -12,7 +12,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-public struct JsonReaderState
+public readonly struct JsonReaderState
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal JsonReaderState(System.Text.Json.JsonReaderState state, Stack<object>? stack, bool isTokenRead)
