@@ -116,29 +116,29 @@ public class GithubApiBenchmark
         }
         """;
 
-    private static readonly IJsonReader<Uri> UriReader =
+    static readonly IJsonReader<Uri> UriReader =
         from s in JsonReader.String()
         select new Uri(s);
 
-    private static readonly IJsonReader<CommitAuthor> CommitAuthorJsonReader =
+    static readonly IJsonReader<CommitAuthor> CommitAuthorJsonReader =
         JsonReader.Object(JsonReader.Property("name", JsonReader.String()),
                           JsonReader.Property("email", JsonReader.String()),
                           JsonReader.Property("date", JsonReader.DateTime()),
                           (p1, p2, p3) => new CommitAuthor(p1, p2, p3));
 
-    private static readonly IJsonReader<Tree> TreeReader =
+    static readonly IJsonReader<Tree> TreeReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
                           (p1, p2) => new Tree(p1, p2));
 
-    private static readonly IJsonReader<Verification> VerificationReader =
+    static readonly IJsonReader<Verification> VerificationReader =
         JsonReader.Object(JsonReader.Property("verified", JsonReader.Boolean()),
                           JsonReader.Property("reason", JsonReader.String()),
                           JsonReader.Property("signature", JsonReader.String()),
                           JsonReader.Property("payload", JsonReader.String()),
                           (p1, p2, p3, p4) => new Verification(p1, p2, p3, p4));
 
-    private static readonly IJsonReader<Commit> CommitJsonReader =
+    static readonly IJsonReader<Commit> CommitJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("author", CommitAuthorJsonReader),
                           JsonReader.Property("committer", CommitAuthorJsonReader),
@@ -149,7 +149,7 @@ public class GithubApiBenchmark
                           (p1, p2, p3, p4, p5, p6, p7) =>
                               new Commit(p1, p2, p3, p4, p5, p6, p7));
 
-    private static readonly IJsonReader<Author> AuthorJsonReader =
+    static readonly IJsonReader<Author> AuthorJsonReader =
         JsonReader.Object(JsonReader.Property("login", JsonReader.String()),
                           JsonReader.Property("id", JsonReader.Int32()),
                           JsonReader.Property("node_id", JsonReader.String()),
