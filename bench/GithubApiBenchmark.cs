@@ -130,6 +130,14 @@ public class GithubApiBenchmark
                           JsonReader.Property("sha", JsonReader.String()),
                           (url, sha) => new Tree(url, sha));
 
+    private static readonly IJsonReader<Verification> VerificationReader =
+        JsonReader.Object(JsonReader.Property("verified", JsonReader.Boolean()),
+                          JsonReader.Property("reason", JsonReader.String()),
+                          JsonReader.Property("signature", JsonReader.String()),
+                          JsonReader.Property("payload", JsonReader.String()),
+                          (verified, reason, signature, payload) =>
+                              new Verification(verified, reason, signature, payload));
+
     private static readonly IJsonReader<Commit> CommitJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("author", AuthorJsonReader),
@@ -137,14 +145,18 @@ public class GithubApiBenchmark
                           JsonReader.Property("message", JsonReader.String()),
                           JsonReader.Property("tree", TreeReader),
                           JsonReader.Property("comment_count", JsonReader.Int32()),
-                          (url, author, committer, message, tree, commentCount) =>
-                              new Commit(url, author, committer, message, tree, commentCount));
+                          JsonReader.Property("verification", VerificationReader),
+                          (url, author, committer, message, tree, commentCount, verification) =>
+                              new Commit(url, author, committer, message, tree, commentCount, verification));
 
     static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
+                          JsonReader.Property("node_id", JsonReader.String()),
+                          JsonReader.Property("html_url", UriReader),
+                          JsonReader.Property("comments_url", UriReader),
                           JsonReader.Property("commit", CommitJsonReader),
-                          (url, sha, commit) => new MergeBranchResponse(url, sha, commit));
+                          (url, sha, node_id, htmlUrl, commentsUrl, commit) => new MergeBranchResponse(url, sha, node_id, htmlUrl, commentsUrl, commit));
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
@@ -168,6 +180,9 @@ public class GithubApiBenchmark
 
 public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri Url,
                                          [property: JsonPropertyName("sha")] string Sha,
+                                         [property: JsonPropertyName("node_id")] string NodeId,
+                                         [property: JsonPropertyName("html_url")] Uri HtmlUrl,
+                                         [property: JsonPropertyName("comments_url")] Uri CommentsUrl,
                                          [property: JsonPropertyName("commit")] Commit Commit);
 
 public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
@@ -175,7 +190,8 @@ public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("committer")] Author Committer,
                             [property: JsonPropertyName("message")] string Message,
                             [property: JsonPropertyName("tree")] Tree Tree,
-                            [property: JsonPropertyName("comment_count")] int CommentCount);
+                            [property: JsonPropertyName("comment_count")] int CommentCount,
+                            [property: JsonPropertyName("verification")] Verification Verification);
 
 public sealed record Author([property: JsonPropertyName("name")] string Name,
                             [property: JsonPropertyName("email")] string Email,
@@ -183,3 +199,8 @@ public sealed record Author([property: JsonPropertyName("name")] string Name,
 
 public sealed record Tree([property: JsonPropertyName("url")] Uri Url,
                           [property: JsonPropertyName("sha")] string Sha);
+
+public sealed record Verification([property: JsonPropertyName("verified")] bool Verified,
+                                  [property: JsonPropertyName("reason")] string Reason,
+                                  [property: JsonPropertyName("signature")] string Signature,
+                                  [property: JsonPropertyName("payload")] string Payload);
