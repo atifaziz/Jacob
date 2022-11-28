@@ -3,6 +3,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -174,6 +175,24 @@ public class GithubApiBenchmark
                           (p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16) =>
                               new Author(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16));
 
+    static readonly IJsonReader<Stats> StatsReader =
+        JsonReader.Object(JsonReader.Property("additions", JsonReader.Int32()),
+                          JsonReader.Property("deletions", JsonReader.Int32()),
+                          JsonReader.Property("total", JsonReader.Int32()),
+                          (additions, deletions, total) => new Stats(additions, deletions, total));
+
+    static readonly IJsonReader<File> FileReader =
+        JsonReader.Object(JsonReader.Property("filename", JsonReader.String()),
+                          JsonReader.Property("additions", JsonReader.Int32()),
+                          JsonReader.Property("deletions", JsonReader.Int32()),
+                          JsonReader.Property("changes", JsonReader.Int32()),
+                          JsonReader.Property("status", JsonReader.String()),
+                          JsonReader.Property("raw_url", UriReader),
+                          JsonReader.Property("blob_url", UriReader),
+                          JsonReader.Property("patch", JsonReader.String()),
+                          (p1, p2, p3, p4, p5, p6, p7, p8) =>
+                              new File(p1, p2, p3, p4, p5, p6, p7, p8));
+
     static readonly IJsonReader<MergeBranchResponse> MergeBranchResponseJsonReader =
         JsonReader.Object(JsonReader.Property("url", UriReader),
                           JsonReader.Property("sha", JsonReader.String()),
@@ -183,8 +202,11 @@ public class GithubApiBenchmark
                           JsonReader.Property("commit", CommitJsonReader),
                           JsonReader.Property("author", AuthorJsonReader),
                           JsonReader.Property("committer", AuthorJsonReader),
-                          (url, sha, node_id, htmlUrl, commentsUrl, commit, author, committer) =>
-                              new MergeBranchResponse(url, sha, node_id, htmlUrl, commentsUrl, commit, author, committer));
+                          JsonReader.Property("parents", TreeReader),
+                          JsonReader.Property("stats", StatsReader),
+                          JsonReader.Property("files", JsonReader.Array(FileReader)),
+                          (url, sha, nodeId, htmlUrl, commentsUrl, commit, author, committer, parents, stats, files) =>
+                              new MergeBranchResponse(url, sha, nodeId, htmlUrl, commentsUrl, commit, author, committer, parents, stats, files.ToImmutableArray()));
 
     [Params(10, 100, 1000, 10000)] public int ObjectCount { get; set; }
 
@@ -213,7 +235,10 @@ public sealed record MergeBranchResponse([property: JsonPropertyName("url")] Uri
                                          [property: JsonPropertyName("comments_url")] Uri CommentsUrl,
                                          [property: JsonPropertyName("commit")] Commit Commit,
                                          [property: JsonPropertyName("author")] Author Author,
-                                         [property: JsonPropertyName("committer")] Author Committer);
+                                         [property: JsonPropertyName("committer")] Author Committer,
+                                         [property: JsonPropertyName("parents")] Tree Parents,
+                                         [property: JsonPropertyName("stats")] Stats Stats,
+                                         [property: JsonPropertyName("files")] ImmutableArray<File> Files);
 
 public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("author")] CommitAuthor Author,
@@ -256,3 +281,16 @@ public sealed record Author([property: JsonPropertyName("login")] string Login,
                              * [property: JsonPropertyName("type")] string Type,
                              * [property: JsonPropertyName("site_admin")] bool SiteAdmin
                              */);
+
+public sealed record Stats([property: JsonPropertyName("additions")] int Additions,
+                           [property: JsonPropertyName("deletions")] int Deletions,
+                           [property: JsonPropertyName("total")] int Total);
+
+public sealed record File([property: JsonPropertyName("filename")] string Filename,
+                          [property: JsonPropertyName("additions")] int Additions,
+                          [property: JsonPropertyName("deletions")] int Deletions,
+                          [property: JsonPropertyName("changes")] int Changes,
+                          [property: JsonPropertyName("status")] string Status,
+                          [property: JsonPropertyName("raw_url")] Uri RawUrl,
+                          [property: JsonPropertyName("blob_url")] Uri BlobUrl,
+                          [property: JsonPropertyName("patch")] string Patch);
