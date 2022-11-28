@@ -33,7 +33,7 @@ partial class JsonReader
     })
     { #>
 
-    private static IJsonReader<<#= e.Native #>> <#= e.Native #>Reader;
+    static IJsonReader<<#= e.Native #>> <#= e.Native #>Reader;
 
     public static IJsonReader<<#= e.Native #>> <#= e.Api #>() =>
         <#= e.Native #>Reader ??=

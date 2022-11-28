@@ -14,7 +14,7 @@ using System.Text.Json;
 
 partial class JsonReader
 {
-    private static IJsonReader<byte> byteReader;
+    static IJsonReader<byte> byteReader;
 
     public static IJsonReader<byte> Byte() =>
         byteReader ??=
@@ -23,7 +23,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
 
-    private static IJsonReader<int> intReader;
+    static IJsonReader<int> intReader;
 
     public static IJsonReader<int> Int32() =>
         intReader ??=
@@ -32,7 +32,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
 
-    private static IJsonReader<long> longReader;
+    static IJsonReader<long> longReader;
 
     public static IJsonReader<long> Int64() =>
         longReader ??=
@@ -41,7 +41,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Int64."));
 
-    private static IJsonReader<ushort> ushortReader;
+    static IJsonReader<ushort> ushortReader;
 
     public static IJsonReader<ushort> UInt16() =>
         ushortReader ??=
@@ -50,7 +50,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
 
-    private static IJsonReader<uint> uintReader;
+    static IJsonReader<uint> uintReader;
 
     public static IJsonReader<uint> UInt32() =>
         uintReader ??=
@@ -59,7 +59,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
 
-    private static IJsonReader<ulong> ulongReader;
+    static IJsonReader<ulong> ulongReader;
 
     public static IJsonReader<ulong> UInt64() =>
         ulongReader ??=
@@ -68,7 +68,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
 
-    private static IJsonReader<double> doubleReader;
+    static IJsonReader<double> doubleReader;
 
     public static IJsonReader<double> Double() =>
         doubleReader ??=
@@ -77,7 +77,7 @@ partial class JsonReader
                 ? Value(value)
                 : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
 
-    private static IJsonReader<float> floatReader;
+    static IJsonReader<float> floatReader;
 
     public static IJsonReader<float> Single() =>
         floatReader ??=
