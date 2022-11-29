@@ -777,6 +777,13 @@ public class JsonReaderTests
         Assert.Equal(expected, result);
     }
 
+    [Fact]
+    public void String_Nullable_With_Invalid_Input()
+    {
+        TestInvalidInput(JsonReader.String().Nullable(null), /*lang=json*/ "1",
+                         "Invalid JSON value.", "Number");
+    }
+
     [Theory]
     [InlineData(1, /*lang=json*/ "1")]
     [InlineData(null, /*lang=json*/ "null")]
@@ -786,6 +793,13 @@ public class JsonReaderTests
         var result = reader.Read(json);
 
         Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Number_Nullable_With_Invalid_Input()
+    {
+        TestInvalidInput(JsonReader.Int32().Nullable(null), /*lang=json*/ @"""foobar""",
+                         "Invalid JSON value.", "String");
     }
 
     [Fact]
