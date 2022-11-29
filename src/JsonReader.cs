@@ -189,11 +189,13 @@ public static partial class JsonReader
         where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
-    public static IJsonReader<T?> Nullable<T>(this IJsonReader<T> reader, T? @null) where T : struct =>
-        Either(Null(@null), from v in reader select new T?(v));
+    public static IJsonReader<T?> Nullable<T>(this IJsonReader<T> reader, T? @null = default)
+        where T : struct =>
+        Null(@null).Or(from v in reader select (T?)v);
 
-    public static IJsonReader<T?> Nullable<T>(this IJsonReader<T> reader, T? @null) where T : class =>
-        Either(Null(@null), from v in reader select v);
+    public static IJsonReader<T?> Nullable<T>(this IJsonReader<T> reader, T? @null = default)
+        where T : class =>
+        Null(@null).Or(from v in reader select (T?)v);
 
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, Func<T, bool> predicate) =>
         reader.Validate(errorMessage: null, predicate);
