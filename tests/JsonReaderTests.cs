@@ -785,7 +785,7 @@ public class JsonReaderTests
     [InlineData("StartObject", /*lang=json*/ "{}")]
     public void String_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
     {
-        TestInvalidInput(JsonReader.String().OrNull(), /*lang=json*/ json,
+        TestInvalidInput(JsonReader.String().OrNull(), json,
                          "Invalid JSON value.", expectedErrorToken);
     }
 
@@ -808,7 +808,7 @@ public class JsonReaderTests
     [InlineData("StartObject", /*lang=json*/ "{}")]
     public void Number_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
     {
-        TestInvalidInput(JsonReader.Int32().OrNull(), /*lang=json*/ json,
+        TestInvalidInput(JsonReader.Int32().OrNull(), json,
                          "Invalid JSON value.", expectedErrorToken);
     }
 
