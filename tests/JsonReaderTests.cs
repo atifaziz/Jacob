@@ -769,50 +769,50 @@ public class JsonReaderTests
     [Theory]
     [InlineData("foobar", /*lang=json*/ @"""foobar""")]
     [InlineData(null, /*lang=json*/ "null")]
-    public void String_Nullable_With_Valid_Input(string? expected, string json)
+    public void String_OrNull_With_Valid_Input(string? expected, string json)
     {
-        var reader = JsonReader.String().Nullable(null);
+        var reader = JsonReader.String().OrNull(null);
         var result = reader.Read(json);
 
         Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void String_Nullable_With_Invalid_Input()
+    public void String_OrNull_With_Invalid_Input()
     {
-        TestInvalidInput(JsonReader.String().Nullable(null), /*lang=json*/ "1",
+        TestInvalidInput(JsonReader.String().OrNull(null), /*lang=json*/ "1",
                          "Invalid JSON value.", "Number");
     }
 
     [Theory]
     [InlineData(1, /*lang=json*/ "1")]
     [InlineData(null, /*lang=json*/ "null")]
-    public void Number_Nullable_With_Valid_Input(int? expected, string json)
+    public void Number_OrNull_With_Valid_Input(int? expected, string json)
     {
-        var reader = JsonReader.Int32().Nullable(null);
+        var reader = JsonReader.Int32().OrNull(null);
         var result = reader.Read(json);
 
         Assert.Equal(expected, result);
     }
 
     [Fact]
-    public void Number_Nullable_With_Invalid_Input()
+    public void Number_OrNull_With_Invalid_Input()
     {
-        TestInvalidInput(JsonReader.Int32().Nullable(null), /*lang=json*/ @"""foobar""",
+        TestInvalidInput(JsonReader.Int32().OrNull(null), /*lang=json*/ @"""foobar""",
                          "Invalid JSON value.", "String");
     }
 
     [Fact]
-    public void Number_Nullable_Moves_Reader()
+    public void Number_OrNull_Moves_Reader()
     {
-        var reader = JsonReader.Int32().Nullable(null);
+        var reader = JsonReader.Int32().OrNull(null);
         TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
     }
 
     [Fact]
-    public void String_Nullable_Moves_Reader()
+    public void String_OrNull_Moves_Reader()
     {
-        var reader = JsonReader.String().Nullable(null);
+        var reader = JsonReader.String().OrNull(null);
         TestMovesReaderPastReadValue(reader, /*lang=json*/ @"""foobar""");
     }
 
