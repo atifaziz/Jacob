@@ -819,7 +819,7 @@ public class JsonReaderTests
     public void Number_Nullable_Moves_Reader()
     {
         var reader = JsonReader.Int32().Nullable(null);
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ @"1");
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
     }
 
     [Fact]
