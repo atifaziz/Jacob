@@ -777,11 +777,16 @@ public class JsonReaderTests
         Assert.Equal(expected, result);
     }
 
-    [Fact]
-    public void String_OrNull_With_Invalid_Input()
+    [Theory]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "12")]
+    [InlineData("StartArray", /*lang=json*/ "[12.3, 45.6]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    public void String_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
     {
-        TestInvalidInput(JsonReader.String().OrNull(), /*lang=json*/ "1",
-                         "Invalid JSON value.", "Number");
+        TestInvalidInput(JsonReader.String().OrNull(), /*lang=json*/ json,
+                         "Invalid JSON value.", expectedErrorToken);
     }
 
     [Theory]
@@ -795,11 +800,16 @@ public class JsonReaderTests
         Assert.Equal(expected, result);
     }
 
-    [Fact]
-    public void Number_OrNull_With_Invalid_Input()
+    [Theory]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[12.3, 45.6]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    public void Number_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
     {
-        TestInvalidInput(JsonReader.Int32().OrNull(), /*lang=json*/ @"""foobar""",
-                         "Invalid JSON value.", "String");
+        TestInvalidInput(JsonReader.Int32().OrNull(), /*lang=json*/ json,
+                         "Invalid JSON value.", expectedErrorToken);
     }
 
     [Fact]
