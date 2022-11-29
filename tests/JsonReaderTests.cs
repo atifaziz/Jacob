@@ -787,6 +787,66 @@ public class JsonReaderTests
         TestReaderPositionPostRead(JsonReader.String().AsEnum<JsonValueKind>(), /*lang=json*/ @"""Null""");
     }
 
+    [Theory]
+    [InlineData("foobar", /*lang=json*/ @"""foobar""")]
+    [InlineData(null, /*lang=json*/ "null")]
+    public void String_OrNull_With_Valid_Input(string? expected, string json)
+    {
+        var reader = JsonReader.String().OrNull();
+        var result = reader.Read(json);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "12")]
+    [InlineData("StartArray", /*lang=json*/ "[12.3, 45.6]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    public void String_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
+    {
+        TestInvalidInput(JsonReader.String().OrNull(), json,
+                         "Invalid JSON value.", expectedErrorToken);
+    }
+
+    [Theory]
+    [InlineData(1, /*lang=json*/ "1")]
+    [InlineData(null, /*lang=json*/ "null")]
+    public void Number_OrNull_With_Valid_Input(int? expected, string json)
+    {
+        var reader = JsonReader.Int32().OrNull();
+        var result = reader.Read(json);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("String", /*lang=json*/ @"""foobar""")]
+    [InlineData("StartArray", /*lang=json*/ "[12.3, 45.6]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    public void Number_OrNull_With_Invalid_Input(string expectedErrorToken, string json)
+    {
+        TestInvalidInput(JsonReader.Int32().OrNull(), json,
+                         "Invalid JSON value.", expectedErrorToken);
+    }
+
+    [Fact]
+    public void Number_OrNull_Moves_Reader()
+    {
+        var reader = JsonReader.Int32().OrNull();
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
+    }
+
+    [Fact]
+    public void String_OrNull_Moves_Reader()
+    {
+        var reader = JsonReader.String().OrNull();
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ @"""foobar""");
+    }
+
     [Fact]
     public void Tuple2_Moves_Reader()
     {
