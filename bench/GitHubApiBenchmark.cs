@@ -16,7 +16,7 @@ using BenchmarkDotNet.Attributes;
 /// The benchmark is based on the response of merging a branch via the API.
 /// https://docs.github.com/en/rest/branches/branches#merge-a-branch.
 [MemoryDiagnoser]
-public class GithubApiBenchmark
+public class GitHubApiBenchmark
 {
     const string TestData = /*lang=json,strict*/ """
         {
