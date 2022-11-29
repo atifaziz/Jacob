@@ -766,6 +766,42 @@ public class JsonReaderTests
         TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), /*lang=json*/ @"""Null""");
     }
 
+    [Theory]
+    [InlineData("foobar", /*lang=json*/ @"""foobar""")]
+    [InlineData(null, /*lang=json*/ "null")]
+    public void String_Nullable_With_Valid_Input(string? expected, string json)
+    {
+        var reader = JsonReader.String().Nullable(null);
+        var result = reader.Read(json);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(1, /*lang=json*/ "1")]
+    [InlineData(null, /*lang=json*/ "null")]
+    public void Number_Nullable_With_Valid_Input(int? expected, string json)
+    {
+        var reader = JsonReader.Int32().Nullable(null);
+        var result = reader.Read(json);
+
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void Number_Nullable_Moves_Reader()
+    {
+        var reader = JsonReader.Int32().Nullable(null);
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ @"1");
+    }
+
+    [Fact]
+    public void String_Nullable_Moves_Reader()
+    {
+        var reader = JsonReader.String().Nullable(null);
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ @"""foobar""");
+    }
+
     [Fact]
     public void Tuple2_Moves_Reader()
     {
