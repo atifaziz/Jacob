@@ -252,7 +252,7 @@ public sealed record Commit([property: JsonPropertyName("url")] Uri Url,
                             [property: JsonPropertyName("tree")] Tree Tree,
                             [property: JsonPropertyName("comment_count")] int CommentCount,
                             [property: JsonPropertyName("verification")] Verification Verification);
-    
+
 public sealed record CommitUser([property: JsonPropertyName("name")] string Name,
                                 [property: JsonPropertyName("email")] string Email,
                                 [property: JsonPropertyName("date")] DateTime Date);
