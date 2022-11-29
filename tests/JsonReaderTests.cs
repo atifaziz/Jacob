@@ -777,19 +777,6 @@ public class JsonReaderTests
         Assert.Equal(expected, result);
     }
 
-#nullable disable
-    [Theory]
-    [InlineData("foobar", /*lang=json*/ @"""foobar""")]
-    [InlineData(null, /*lang=json*/ "null")]
-    public void String_Nullable_With_Valid_Input_NullableContextDisabled(string expected, string json)
-    {
-        var reader = JsonReader.String().Nullable(null);
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
-    }
-#nullable enable
-
     [Fact]
     public void String_Nullable_With_Invalid_Input()
     {
