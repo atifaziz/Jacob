@@ -771,7 +771,7 @@ public class JsonReaderTests
     [InlineData(null, /*lang=json*/ "null")]
     public void String_OrNull_With_Valid_Input(string? expected, string json)
     {
-        var reader = JsonReader.String().OrNull(null);
+        var reader = JsonReader.String().OrNull();
         var result = reader.Read(json);
 
         Assert.Equal(expected, result);
@@ -780,7 +780,7 @@ public class JsonReaderTests
     [Fact]
     public void String_OrNull_With_Invalid_Input()
     {
-        TestInvalidInput(JsonReader.String().OrNull(null), /*lang=json*/ "1",
+        TestInvalidInput(JsonReader.String().OrNull(), /*lang=json*/ "1",
                          "Invalid JSON value.", "Number");
     }
 
@@ -789,7 +789,7 @@ public class JsonReaderTests
     [InlineData(null, /*lang=json*/ "null")]
     public void Number_OrNull_With_Valid_Input(int? expected, string json)
     {
-        var reader = JsonReader.Int32().OrNull(null);
+        var reader = JsonReader.Int32().OrNull();
         var result = reader.Read(json);
 
         Assert.Equal(expected, result);
@@ -798,21 +798,21 @@ public class JsonReaderTests
     [Fact]
     public void Number_OrNull_With_Invalid_Input()
     {
-        TestInvalidInput(JsonReader.Int32().OrNull(null), /*lang=json*/ @"""foobar""",
+        TestInvalidInput(JsonReader.Int32().OrNull(), /*lang=json*/ @"""foobar""",
                          "Invalid JSON value.", "String");
     }
 
     [Fact]
     public void Number_OrNull_Moves_Reader()
     {
-        var reader = JsonReader.Int32().OrNull(null);
+        var reader = JsonReader.Int32().OrNull();
         TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
     }
 
     [Fact]
     public void String_OrNull_Moves_Reader()
     {
-        var reader = JsonReader.String().OrNull(null);
+        var reader = JsonReader.String().OrNull();
         TestMovesReaderPastReadValue(reader, /*lang=json*/ @"""foobar""");
     }
 
