@@ -206,6 +206,15 @@ public static partial class JsonReader
     public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
         from v in reader select (object)v;
 
+    public static IJsonReader<TResult> Let<T, TResult>(this IJsonReader<T> reader,
+                                                       Func<IJsonReader<T>, IJsonReader<TResult>> selector)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+        if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+        return selector(reader);
+    }
+
     public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
 

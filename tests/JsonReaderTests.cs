@@ -1025,4 +1025,37 @@ public class JsonReaderTests
         Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } } },
                      result);
     }
+
+    [Fact]
+    public void Let_Throws_When_Reader_Is_Null()
+    {
+        var e = Assert.Throws<ArgumentNullException>(() =>
+            JsonReader.Let<int, object>(null!, delegate { throw new NotImplementedException(); }));
+
+        Assert.Equal("reader", e.ParamName);
+    }
+
+    [Fact]
+    public void Let_Throws_When_Selector_Is_Null()
+    {
+        var e = Assert.Throws<ArgumentNullException>(() =>
+            JsonReader.Int32().Let<int, object>(null!));
+
+        Assert.Equal("selector", e.ParamName);
+    }
+
+    [Fact]
+    public void Let_Returns_Select_That_Receives_Reader_Return()
+    {
+        var reader = JsonReader.Int32();
+
+        IJsonReader<int>? inputReader = null;
+        IJsonReader<object>? outputReader = null;
+
+        var result = reader.Let(it => outputReader = (inputReader = it).AsObject());
+
+        Assert.Same(reader, inputReader);
+        Assert.NotNull(result);
+        Assert.Same(outputReader, result);
+    }
 }
