@@ -216,8 +216,10 @@ public class JsonReaderTests
                                                 string json)
     {
         var actual = JsonReader.DateTimeOffset().Read(json);
-        var expectedOffset = hourOffset is { } h && minuteOffset is { } m ? new TimeSpan(h, m, 0) : DateTimeOffset.Now.Offset;
-        var expected = new DateTimeOffset(year, month, day, hour, minute, second, millisecond, expectedOffset);
+        var dateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
+        var expected = hourOffset is { } h && minuteOffset is { } m
+                     ? new DateTimeOffset(dateTime, new TimeSpan(h, m, 0))
+                     : dateTime;
         Assert.Equal(expected, actual);
     }
 
