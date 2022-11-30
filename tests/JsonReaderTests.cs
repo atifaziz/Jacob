@@ -730,14 +730,14 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData(new[] { "foo", "bar", "baz" }, /*lang=json*/ """
-                                               ["foo", "bar", "baz"]
-                                               """)]
+                ["foo", "bar", "baz"]
+                """)]
     [InlineData(new[] { true, false }, /*lang=json*/ """
-                                               [true, false]
-                                               """)]
+                [true, false]
+                """)]
     [InlineData(new[] { 123, 456, 789 }, /*lang=json*/ """
-                                               [123, 456, 789]
-                                               """)]
+                [123, 456, 789]
+                """)]
     public void Array_Either_With_Valid_Input(object expected, string json)
     {
         var reader =
@@ -955,8 +955,8 @@ public class JsonReaderTests
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
         TestReaderPositionPostRead(reader, /*lang=json*/ """
-                                             [123, "foobar", 456]
-                                             """);
+                                           [123, "foobar", 456]
+                                           """);
     }
 
     [Fact]
