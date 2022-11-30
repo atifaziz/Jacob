@@ -837,14 +837,14 @@ public class JsonReaderTests
     public void Number_OrNull_Moves_Reader()
     {
         var reader = JsonReader.Int32().OrNull();
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
+        TestReaderPositionPostRead(reader, /*lang=json*/ "1");
     }
 
     [Fact]
     public void String_OrNull_Moves_Reader()
     {
         var reader = JsonReader.String().OrNull();
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ @"""foobar""");
+        TestReaderPositionPostRead(reader, /*lang=json*/ @"""foobar""");
     }
 
     [Fact]
