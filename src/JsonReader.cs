@@ -262,17 +262,22 @@ public static partial class JsonReader
             }
         });
 
+    static readonly object BufferFrame = new();
+
     public static IJsonReader<T> Buffer<T>(this IJsonReader<T> reader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
             if (rdr.IsResuming)
-                _ = rdr.Pop();
+            {
+                var frame = rdr.Pop();
+                Debug.Assert(frame == BufferFrame);
+            }
 
             var bookmark = rdr;
             var read = rdr.Read();
 
             if (!read)
-                return rdr.Suspend(new());
+                return rdr.Suspend(BufferFrame);
 
             switch (rdr.TokenType)
             {
@@ -291,7 +296,7 @@ public static partial class JsonReader
                     }
                     while (read && depth < rdr.CurrentDepth);
                     rdr = bookmark;
-                    return read ? reader.TryRead(ref rdr) : rdr.Suspend(new());
+                    return read ? reader.TryRead(ref rdr) : rdr.Suspend(BufferFrame);
                 }
                 case var tokenType:
                     throw new
