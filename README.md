@@ -264,6 +264,7 @@ Presently, the following readers do not support partial reading:
 
 - `JsonReader.Object`
 - `JsonReader.Either`
+- `JsonReader.Tuple`
 
 Nevertheless, they can be composed with `JsonReader.Buffer` to load enough
 data into the buffer that neither can fail due to partial JSON.
