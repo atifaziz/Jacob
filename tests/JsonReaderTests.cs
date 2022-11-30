@@ -227,7 +227,9 @@ public class JsonReaderTests
     [InlineData(2022, 2, 2, 12, 34, 0, 0, 1, 0, "'2022-02-02T12:34:00+01:00'")]
     [InlineData(2022, 2, 2, 12, 34, 56, 0, 2, 0, "'2022-02-02T12:34:56+02:00'")]
     [InlineData(2022, 2, 2, 12, 34, 56, 78, 0, -5, "'2022-02-02T12:34:56.078-00:05'")]
-    public void DateTimeOffset_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, int? hourOffset, int? minuteOffset, string json)
+    public void DateTimeOffset_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond,
+                                                int? hourOffset, int? minuteOffset,
+                                                string json)
     {
         var actual = JsonReader.DateTimeOffset().Read(Strictify(json));
         var expectedOffset = hourOffset is { } h && minuteOffset is { } m ? new TimeSpan(h, m, 0) : DateTimeOffset.Now.Offset;
