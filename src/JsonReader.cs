@@ -163,6 +163,15 @@ public static partial class JsonReader
                         ? Value(value)
                         : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
 
+    static IJsonReader<DateTimeOffset>? dateTimeOffsetReader;
+
+    public static IJsonReader<DateTimeOffset> DateTimeOffset() =>
+        dateTimeOffsetReader ??=
+            Create(static (ref Utf8JsonReader rdr) =>
+                rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTimeOffset(out var value)
+                ? Value(value)
+                : Error("JSON value cannot be interpreted as a date and time offset in ISO 8601-1 extended format."));
+
     public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider) =>
         DateTime(format, provider, DateTimeStyles.None);
 
@@ -230,6 +239,15 @@ public static partial class JsonReader
 
     public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
         from v in reader select (object)v;
+
+    public static IJsonReader<TResult> Let<T, TResult>(this IJsonReader<T> reader,
+                                                       Func<IJsonReader<T>, IJsonReader<TResult>> selector)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+        if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+        return selector(reader);
+    }
 
     public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
