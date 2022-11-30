@@ -163,6 +163,12 @@ public static partial class JsonReader
                         ? Value(value)
                         : Error("JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format."));
 
+    public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider) =>
+        DateTime(format, provider, DateTimeStyles.None);
+
+    public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider, DateTimeStyles styles) =>
+        String().TryMap(s => System.DateTime.TryParseExact(s, format, provider, styles, out var value) ? Value(value) : Error(""));
+
     static IJsonReader<DateTimeOffset>? dateTimeOffsetReader;
 
     public static IJsonReader<DateTimeOffset> DateTimeOffset() =>
@@ -173,12 +179,6 @@ public static partial class JsonReader
                     : rdr.TokenType == JsonTokenType.String && rdr.TryGetDateTimeOffset(out var value)
                         ? Value(value)
                         : Error("JSON value cannot be interpreted as a date and time offset in ISO 8601-1 extended format."));
-
-    public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider) =>
-        DateTime(format, provider, DateTimeStyles.None);
-
-    public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider, DateTimeStyles styles) =>
-        String().TryMap(s => System.DateTime.TryParseExact(s, format, provider, styles, out var value) ? Value(value) : Error(""));
 
     public static IJsonReader<T> Null<T>(T @null) =>
         Create((ref Utf8JsonReader rdr) =>
