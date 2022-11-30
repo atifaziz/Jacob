@@ -6,6 +6,7 @@ namespace Jacob.Tests;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -201,25 +202,31 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData(2022, 2, 2, 0, 0, 0, 0, null, null, /*lang=json*/ @"""2022-02-02""")]
-    [InlineData(2022, 2, 2, 12, 34, 0, 0, null, null, /*lang=json*/ @"""2022-02-02T12:34""")]
-    [InlineData(2022, 2, 2, 12, 34, 0, 0, 0, 0, /*lang=json*/ @"""2022-02-02T12:34Z""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 0, null, null, /*lang=json*/ @"""2022-02-02T12:34:56""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 0, 0, 0, /*lang=json*/ @"""2022-02-02T12:34:56Z""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 78, null, null, /*lang=json*/ @"""2022-02-02T12:34:56.078""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 78, 0, 0, /*lang=json*/ @"""2022-02-02T12:34:56.078Z""")]
-    [InlineData(2022, 2, 2, 12, 34, 0, 0, 1, 0, /*lang=json*/ @"""2022-02-02T12:34:00+01:00""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 0, 2, 0, /*lang=json*/ @"""2022-02-02T12:34:56+02:00""")]
-    [InlineData(2022, 2, 2, 12, 34, 56, 78, 0, -5, /*lang=json*/ @"""2022-02-02T12:34:56.078-00:05""")]
-    public void DateTimeOffset_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond,
-                                                int? hourOffset, int? minuteOffset,
-                                                string json)
+    [InlineData(/*lang=json*/ @"""2022-02-02""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:00+01:00""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56+02:00""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078-00:05""")]
+    public void DateTimeOffset_With_Valid_Input(string json)
     {
+        var formats = new[]
+        {
+            "yyyy-MM-dd",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ss.fff",
+            "yyyy-MM-dd'T'HH:mmK",
+            "yyyy-MM-dd'T'HH:mm:ssK",
+            "yyyy-MM-dd'T'HH:mm:ss.fffK",
+        };
+        var unquoted = json[1..^1];
+        var expected = DateTimeOffset.ParseExact(unquoted, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
         var actual = JsonReader.DateTimeOffset().Read(json);
-        var dateTime = new DateTime(year, month, day, hour, minute, second, millisecond);
-        var expected = hourOffset is { } h && minuteOffset is { } m
-                     ? new DateTimeOffset(dateTime, new TimeSpan(h, m, 0))
-                     : dateTime;
         Assert.Equal(expected, actual);
     }
 
