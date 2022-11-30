@@ -198,6 +198,14 @@ public static partial class JsonReader
         where TEnum : struct, Enum =>
         reader.Select(selector).Validate($"Invalid member for {typeof(TEnum)}.", IsEnumDefined);
 
+    public static IJsonReader<T?> OrNull<T>(this IJsonReader<T> reader, T? @null = default)
+        where T : struct =>
+        Null(@null).Or(from v in reader select (T?)v);
+
+    public static IJsonReader<T?> OrNull<T>(this IJsonReader<T> reader, T? @null = default)
+        where T : class =>
+        Null(@null).Or(from v in reader select (T?)v);
+
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, Func<T, bool> predicate) =>
         reader.Validate(errorMessage: null, predicate);
 
@@ -206,6 +214,15 @@ public static partial class JsonReader
 
     public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
         from v in reader select (object)v;
+
+    public static IJsonReader<TResult> Let<T, TResult>(this IJsonReader<T> reader,
+                                                       Func<IJsonReader<T>, IJsonReader<TResult>> selector)
+    {
+        if (reader == null) throw new ArgumentNullException(nameof(reader));
+        if (selector == null) throw new ArgumentNullException(nameof(selector));
+
+        return selector(reader);
+    }
 
     public static IJsonReader<T> Or<T>(this IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
@@ -383,7 +400,7 @@ public static partial class JsonReader
                                                       ref (bool, TValue) value,
                                                       ref string? error)
                 {
-                    if (value is (true, _) || !property.IsMatch(ref reader))
+                    if (!property.IsMatch(ref reader))
                         return false;
 
                     _ = reader.Read();
@@ -532,4 +549,16 @@ public static partial class JsonReader
             return JsonReadResult.Value(value);
         }
     }
+}
+
+public sealed class JsonReaderRef<T> : IJsonReader<T>
+{
+    IJsonReader<T>? reader;
+
+#pragma warning disable CA1044 // Properties should not be write only
+    public IJsonReader<T> Reader { set => this.reader = value; }
+#pragma warning restore CA1044 // Properties should not be write only
+
+    public JsonReadResult<T> TryRead(ref Utf8JsonReader reader) =>
+        this.reader is { } someReader ? someReader.TryRead(ref reader) : throw new InvalidOperationException();
 }
