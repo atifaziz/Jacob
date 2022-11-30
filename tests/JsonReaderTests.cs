@@ -6,6 +6,7 @@ namespace Jacob.Tests;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -191,6 +192,62 @@ public class JsonReaderTests
     {
         TestInvalidInput(JsonReader.DateTime(), json,
                          "JSON value cannot be interpreted as a date and time in ISO 8601-1 extended format.",
+                         expectedErrorToken);
+    }
+
+    [Fact]
+    public void DateTimeOffset_Moves_Reader()
+    {
+        TestMovesReaderPastReadValue(JsonReader.DateTimeOffset(), @"""2022-02-02T12:34:56-01:00""");
+    }
+
+    [Theory]
+    [InlineData(/*lang=json*/ @"""2022-02-02""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078Z""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:00+01:00""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56+02:00""")]
+    [InlineData(/*lang=json*/ @"""2022-02-02T12:34:56.078-00:05""")]
+    public void DateTimeOffset_With_Valid_Input(string json)
+    {
+        var formats = new[]
+        {
+            "yyyy-MM-dd",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ss.fff",
+            "yyyy-MM-dd'T'HH:mmK",
+            "yyyy-MM-dd'T'HH:mm:ssK",
+            "yyyy-MM-dd'T'HH:mm:ss.fffK",
+        };
+        var unquoted = json[1..^1];
+        var expected = DateTimeOffset.ParseExact(unquoted, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
+        var actual = JsonReader.DateTimeOffset().Read(json);
+        Assert.Equal(expected, actual);
+    }
+
+    [Theory]
+    [InlineData("Null", /*lang=json*/ "null")]
+    [InlineData("False", /*lang=json*/ "false")]
+    [InlineData("True", /*lang=json*/ "true")]
+    [InlineData("Number", /*lang=json*/ "42")]
+    [InlineData("StartArray", /*lang=json*/ "[]")]
+    [InlineData("StartObject", /*lang=json*/ "{}")]
+    [InlineData("String", /*lang=json*/ @"""20220202""")]
+    [InlineData("String", /*lang=json*/ @"""02/02/2022""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02 12:34:56""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02t12:34:56""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02T12 34 56""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02T12:34:56 01""")]
+    [InlineData("String", /*lang=json*/ @"""2022-02-02T12:34:56+01 00""")]
+    public void DateTimeOffset_With_Invalid_Input(string expectedErrorToken, string json)
+    {
+        TestInvalidInput(JsonReader.DateTimeOffset(), json,
+                         "JSON value cannot be interpreted as a date and time offset in ISO 8601-1 extended format.",
                          expectedErrorToken);
     }
 
