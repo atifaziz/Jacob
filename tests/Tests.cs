@@ -11,8 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
-using JToken = Newtonsoft.Json.Linq.JToken;
-using Formatting = Newtonsoft.Json.Formatting;
 
 public class PartialReadTests
 {
@@ -23,12 +21,13 @@ public class PartialReadTests
     void WriteLine(object? value) => this.testOutputHelper.WriteLine(value?.ToString());
 
     [Theory]
-    [InlineData(10, "[true, false, true]")]
-    [InlineData(5, "[true, false, true]")]
-    [InlineData(2, "[true, false, true]")]
-    public void TestArrayOfBoolean(int bufferSize, string json)
+    [InlineData(10)]
+    [InlineData(5)]
+    [InlineData(2)]
+    public void TestArrayOfBoolean(int bufferSize)
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(Strictify(json)));
+        const string json = /*lang=json*/ "[true, false, true]";
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         JsonReadResult<bool[]> array;
         var buffer = new byte[bufferSize];
         var span = buffer.AsSpan();
@@ -50,12 +49,16 @@ public class PartialReadTests
     }
 
     [Theory]
-    [InlineData(10, "[ 'foo', 'bar', 'baz' ]")]
-    [InlineData(5, "[ 'foo', 'bar', 'baz' ]")]
-    [InlineData(2, "[ 'foo', 'bar', 'baz' ]")]
-    public void TestStringArray(int bufferSize, string json)
+    [InlineData(10)]
+    [InlineData(5)]
+    [InlineData(2)]
+    public void TestStringArray(int bufferSize)
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(Strictify(json)));
+        const string json = /*lang=json*/ """
+                            [ "foo", "bar", "baz" ]
+                            """;
+
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         JsonReadResult<string[]> array;
         var buffer = new byte[bufferSize];
         var span = buffer.AsSpan();
@@ -76,12 +79,20 @@ public class PartialReadTests
     }
 
     [Theory]
-    [InlineData(10, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    [InlineData(5, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    [InlineData(2, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    public void TestArrayOfStringArray(int bufferSize, string json)
+    [InlineData(10)]
+    [InlineData(5)]
+    [InlineData(2)]
+    public void TestArrayOfStringArray(int bufferSize)
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(Strictify(json)));
+        const string json = /*lang=json*/ """
+            [
+                [ "123", "456", "789"],
+                [ "foo", "bar", "baz" ],
+                ["big", "fan", "run"]
+            ]
+            """;
+
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         JsonReadResult<string[][]> array;
         var buffer = new byte[bufferSize];
         var span = buffer.AsSpan();
@@ -103,15 +114,15 @@ public class PartialReadTests
     }
 
     [Theory]
-    [InlineData(10, "['123', '456', '789']", new[] { "123", "456", "789" })]
-    [InlineData(5, "['123', '456', '789']", new[] { "123", "456", "789" })]
-    [InlineData(2, "['123', '456', '789']", new[] { "123", "456", "789" })]
-    [InlineData(10, "[true, false]", new[] { true, false })]
-    [InlineData(5, "[true, false]", new[] { true, false })]
-    [InlineData(2, "[true, false]", new[] { true, false })]
+    [InlineData(10, /*lang=json*/ @"[""123"", ""456"", ""789""]", new[] { "123", "456", "789" })]
+    [InlineData(5, /*lang=json*/ @"[""123"", ""456"", ""789""]", new[] { "123", "456", "789" })]
+    [InlineData(2, /*lang=json*/ @"[""123"", ""456"", ""789""]", new[] { "123", "456", "789" })]
+    [InlineData(10, /*lang=json*/ "[true, false]", new[] { true, false })]
+    [InlineData(5, /*lang=json*/ "[true, false]", new[] { true, false })]
+    [InlineData(2, /*lang=json*/ "[true, false]", new[] { true, false })]
     public void TestArrayOfEitherStringOrBoolean(int bufferSize, string json, object expected)
     {
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(Strictify(json)));
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         JsonReadResult<object[]> array;
         var buffer = new byte[bufferSize];
         var span = buffer.AsSpan();
@@ -160,13 +171,21 @@ public class PartialReadTests
     }
 
     [Theory]
-    [InlineData(10, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    [InlineData(5, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    [InlineData(2, "[ [ '123', '456', '789'], [ 'foo', 'bar', 'baz' ], ['big', 'fan', 'run'] ]")]
-    public async Task TestArrayOfStringArrayAsync(int bufferSize, string json)
+    [InlineData(10)]
+    [InlineData(5)]
+    [InlineData(2)]
+    public async Task TestArrayOfStringArrayAsync(int bufferSize)
     {
+        const string json = /*lang=json*/ """
+            [
+                [ "123", "456", "789"],
+                [ "foo", "bar", "baz" ],
+                ["big", "fan", "run"]
+            ]
+            """;
+
         var jsonReader = JsonReader.Array(JsonReader.Array(JsonReader.String()));
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(Strictify(json)));
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         using var r = new StreamChunkReader(ms, bufferSize);
         var bytesConsumed = 0;
         var state = new JsonReaderState();
@@ -193,18 +212,6 @@ public class PartialReadTests
             }
         }
     }
-
-    /// <summary>
-    /// Takes somewhat non-conforming JSON
-    /// (<a href="https://github.com/JamesNK/Newtonsoft.Json/issues/646#issuecomment-356194475">as accepted by Json.NET</a>)
-    /// text and re-formats it to be strictly conforming to RFC 7159.
-    /// </summary>
-    /// <remarks>
-    /// This is a helper primarily designed to make it easier to express JSON as C# literals in
-    /// inline data for theory tests, where the double quotes don't have to be escaped.
-    /// </remarks>
-    public static string Strictify(string json) =>
-        JToken.Parse(json).ToString(Formatting.None);
 }
 
 public sealed class StreamChunkReader : IDisposable
