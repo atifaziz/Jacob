@@ -55,7 +55,7 @@ public class PartialReadTests
     public void TestStringArray(int bufferSize)
     {
         const string json = /*lang=json*/ """
-                            [ "foo", "bar", "baz" ]
+                            ["foo", "bar", "baz"]
                             """;
 
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
@@ -86,10 +86,10 @@ public class PartialReadTests
     {
         const string json = /*lang=json*/ """
             [
-                [ "123", "456", "789"],
-                [ "foo", "bar", "baz" ],
+                ["123", "456", "789"],
+                ["foo", "bar", "baz"],
                 ["big", "fan", "run"]
-            ]
+                        ]
             """;
 
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
@@ -178,8 +178,8 @@ public class PartialReadTests
     {
         const string json = /*lang=json*/ """
             [
-                [ "123", "456", "789"],
-                [ "foo", "bar", "baz" ],
+                ["123", "456", "789"],
+                ["foo", "bar", "baz"],
                 ["big", "fan", "run"]
             ]
             """;
