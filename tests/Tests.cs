@@ -89,7 +89,7 @@ public class PartialReadTests
                 ["123", "456", "789"],
                 ["foo", "bar", "baz"],
                 ["big", "fan", "run"]
-                        ]
+            ]
             """;
 
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
