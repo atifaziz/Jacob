@@ -104,13 +104,13 @@ public ref struct Utf8JsonReader
 
         var bookmark = this;
 
-        switch (TokenType)
+        re: switch (TokenType)
         {
             case JsonTokenType.PropertyName:
             {
                 if (!Read())
                     goto restore;
-                break;
+                goto re;
             }
             case JsonTokenType.StartObject or JsonTokenType.StartArray:
             {
