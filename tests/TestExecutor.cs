@@ -10,6 +10,8 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Xunit.Abstractions;
+using JsonTokenType = System.Text.Json.JsonTokenType;
+using JsonException = System.Text.Json.JsonException;
 
 interface ITestExecutor
 {
@@ -30,25 +32,21 @@ sealed class StreamingTestExecutor : ITestExecutor
     readonly int bufferSize;
     readonly ITestOutputHelper testOutputHelper;
 
-    record struct TokenState(System.Text.Json.JsonTokenType TokenType, long TokenStartIndex);
-
     public StreamingTestExecutor(int bufferSize, ITestOutputHelper testOutputHelper) =>
         (this.bufferSize, this.testOutputHelper) = (bufferSize, testOutputHelper);
 
-    public JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json)
-    {
-        var (result, _) = TryReadInner(jsonReader, json);
-        return result;
-    }
+    public JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json) =>
+        TryReadCore(jsonReader, json).Result;
 
     public T Read<T>(IJsonReader<T> jsonReader, string json) =>
-        TryReadInner(jsonReader, json) switch
+        TryReadCore(jsonReader, json) switch
         {
-            ((_, { } message), var tokenState) => throw new System.Text.Json.JsonException($@"{message} See token ""{tokenState.TokenType}"" at offset {tokenState.TokenStartIndex}."),
-            var ((value, _), _) => value,
+            ({ Error: { } error }, _, _) r => throw new JsonException($@"{error} See token ""{r.TokenType}"" at offset {r.TokenStartIndex}."),
+            ({ Value: var value, Error: null }, _, _) => value,
         };
 
-    (JsonReadResult<T>, TokenState) TryReadInner<T>(IJsonReader<T> jsonReader, string json)
+    (JsonReadResult<T> Result, JsonTokenType TokenType, long TokenStartIndex)
+        TryReadCore<T>(IJsonReader<T> jsonReader, string json)
     {
         try
         {
@@ -65,27 +63,25 @@ sealed class StreamingTestExecutor : ITestExecutor
                 Debug.Assert(readTask.IsCompleted);
                 var memory = readTask.Result;
 
-                var (jsonReadResult, tokenState) = Read();
+                if (Read() is ({ Incomplete: false }, _, _) result)
+                    return result;
 
-                if (!jsonReadResult.Incomplete)
-                    return (jsonReadResult, tokenState);
-
-                (JsonReadResult<T>, TokenState) Read()
+                (JsonReadResult<T>, JsonTokenType, long) Read()
                 {
                     var reader = new Utf8JsonReader(memory.Span, r.Eof, state);
                     var chunk = Encoding.UTF8.GetString(memory.Span);
                     WriteLine(new { Buffer = $"<{chunk}>", memory.Length });
-                    jsonReadResult = jsonReader.TryRead(ref reader);
+                    var readResult = jsonReader.TryRead(ref reader);
                     WriteLine($"BytesConsumed = {reader.BytesConsumed}");
                     bytesConsumed = (int)reader.BytesConsumed;
                     state = reader.CurrentState;
-                    return (jsonReadResult, new TokenState(reader.TokenType, totalBytesConsumed + reader.TokenStartIndex));
+                    return (readResult, reader.TokenType, totalBytesConsumed + reader.TokenStartIndex);
                 }
             }
         }
         catch (NotSupportedException)
         {
-            return TryReadInner(jsonReader.Buffer(), json);
+            return TryReadCore(jsonReader.Buffer(), json);
         }
     }
 
