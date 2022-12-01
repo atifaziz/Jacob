@@ -26,26 +26,9 @@ public class PartialReadTests
     [InlineData(2)]
     public void TestArrayOfBoolean(int bufferSize)
     {
-        const string json = /*lang=json*/ "[true, false, true]";
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        JsonReadResult<bool[]> array;
-        var buffer = new byte[bufferSize];
-        var span = buffer.AsSpan();
-        _ = ms.Read(span);
-        var reader = new Utf8JsonReader(span, isFinalBlock: false, default);
-        var jsonReader = JsonReader.Array(JsonReader.Boolean());
-        while (true)
-        {
-            var chunk = Encoding.UTF8.GetString(buffer);
-            WriteLine(new { Buffer = $"<{chunk}>", buffer.Length });
-            array = jsonReader.TryRead(ref reader);
-            WriteLine($"BytesConsumed = {reader.BytesConsumed}");
-            if (!array.Incomplete)
-                break;
-            GetMoreBytesFromStream(ms, ref buffer, ref span, ref reader);
-        }
-        Assert.Null(array.Error);
-        Assert.Equal(new[] { true, false, true }, array.Value);
+        AssertChunkedReading(bufferSize, /*lang=json*/ """[true, false, true]""",
+                             JsonReader.Array(JsonReader.Boolean()),
+                             new[] { true, false, true });
     }
 
     [Theory]
@@ -54,28 +37,9 @@ public class PartialReadTests
     [InlineData(2)]
     public void TestStringArray(int bufferSize)
     {
-        const string json = /*lang=json*/ """
-                            ["foo", "bar", "baz"]
-                            """;
-
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        JsonReadResult<string[]> array;
-        var buffer = new byte[bufferSize];
-        var span = buffer.AsSpan();
-        _ = ms.Read(span);
-        var reader = new Utf8JsonReader(span, isFinalBlock: false, default);
-        var jsonReader = JsonReader.Array(JsonReader.String());
-        while (true)
-        {
-            WriteLine(new { Buffer = $"<{Encoding.UTF8.GetString(buffer)}>", buffer.Length });
-            array = jsonReader.TryRead(ref reader);
-            WriteLine($"BytesConsumed = {reader.BytesConsumed}");
-            if (!array.Incomplete)
-                break;
-            GetMoreBytesFromStream(ms, ref buffer, ref span, ref reader);
-        }
-        Assert.Null(array.Error);
-        Assert.Equal(new[] { "foo", "bar", "baz" }, array.Value);
+        AssertChunkedReading(bufferSize, /*lang=json*/ """["foo", "bar", "baz"]""",
+                             JsonReader.Array(JsonReader.String()),
+                             new[] { "foo", "bar", "baz" });
     }
 
     [Theory]
@@ -92,25 +56,9 @@ public class PartialReadTests
             ]
             """;
 
-        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        JsonReadResult<string[][]> array;
-        var buffer = new byte[bufferSize];
-        var span = buffer.AsSpan();
-        _ = ms.Read(span);
-        var reader = new Utf8JsonReader(span, isFinalBlock: false, default);
-        var jsonReader = JsonReader.Array(JsonReader.Array(JsonReader.String()));
-        while (true)
-        {
-            var chunk = Encoding.UTF8.GetString(buffer);
-            WriteLine(new { Buffer = $"<{chunk}>", buffer.Length });
-            array = jsonReader.TryRead(ref reader);
-            WriteLine($"BytesConsumed = {reader.BytesConsumed}");
-            if (!array.Incomplete)
-                break;
-            GetMoreBytesFromStream(ms, ref buffer, ref span, ref reader);
-        }
-        Assert.Null(array.Error);
-        Assert.Equal(new[] { new[] { "123", "456", "789" }, new[] { "foo", "bar", "baz" }, new[] { "big", "fan", "run" } }, array.Value);
+        AssertChunkedReading(bufferSize, json,
+                             JsonReader.Array(JsonReader.Array(JsonReader.String())),
+                             new[] { new[] { "123", "456", "789" }, new[] { "foo", "bar", "baz" }, new[] { "big", "fan", "run" } });
     }
 
     [Theory]
@@ -122,28 +70,34 @@ public class PartialReadTests
     [InlineData(2, /*lang=json*/ "[true, false]", new[] { true, false })]
     public void TestArrayOfEitherStringOrBoolean(int bufferSize, string json, object expected)
     {
+        AssertChunkedReading(bufferSize, json,
+                             JsonReader.Array(JsonReader.Either(JsonReader.String().AsObject(),
+                                                                JsonReader.Boolean().AsObject(),
+                                                                null).Buffer()).AsObject(),
+                             expected);
+    }
+
+    void AssertChunkedReading<T>(int bufferSize, string json, IJsonReader<T> jsonReader, T expected)
+    {
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-        JsonReadResult<object[]> array;
+        JsonReadResult<T> jsonReadResult;
         var buffer = new byte[bufferSize];
         var span = buffer.AsSpan();
         _ = ms.Read(span);
-        var reader = new Utf8JsonReader(span, false, default);
-        var jsonReader = JsonReader.Array(JsonReader.Either(JsonReader.String().AsObject(),
-                                                            JsonReader.Boolean().AsObject(),
-                                                            null)
-                                                    .Buffer());
+        var reader = new Utf8JsonReader(span, isFinalBlock: false, default);
+
         while (true)
         {
-            var chunk = Encoding.UTF8.GetString(buffer);
-            WriteLine(new { Buffer = $"<{chunk}>", buffer.Length });
-            array = jsonReader.TryRead(ref reader);
+            WriteLine(new { Buffer = $"<{Encoding.UTF8.GetString(buffer)}>", buffer.Length });
+            jsonReadResult = jsonReader.TryRead(ref reader);
             WriteLine($"BytesConsumed = {reader.BytesConsumed}");
-            if (!array.Incomplete)
+            if (!jsonReadResult.Incomplete)
                 break;
             GetMoreBytesFromStream(ms, ref buffer, ref span, ref reader);
         }
-        Assert.Null(array.Error);
-        Assert.Equal(expected, array.Value);
+
+        Assert.Null(jsonReadResult.Error);
+        Assert.Equal(expected, jsonReadResult.Value);
     }
 
     static void GetMoreBytesFromStream(Stream stream, ref byte[] buffer, ref Span<byte> span, ref Utf8JsonReader reader)
