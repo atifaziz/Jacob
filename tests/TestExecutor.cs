@@ -54,11 +54,13 @@ sealed class StreamingTestExecutor : ITestExecutor
         {
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
             using var r = new StreamChunkReader(ms, this.bufferSize);
+            var totalBytesConsumed = 0;
             var bytesConsumed = 0;
             var state = new JsonReaderState();
 
             while (true)
             {
+                totalBytesConsumed += bytesConsumed;
                 var readTask = r.ReadAsync(bytesConsumed, CancellationToken.None);
                 Debug.Assert(readTask.IsCompleted);
                 var memory = readTask.Result;
@@ -77,7 +79,7 @@ sealed class StreamingTestExecutor : ITestExecutor
                     WriteLine($"BytesConsumed = {reader.BytesConsumed}");
                     bytesConsumed = (int)reader.BytesConsumed;
                     state = reader.CurrentState;
-                    return (jsonReadResult, new TokenState(reader.TokenType, reader.TokenStartIndex));
+                    return (jsonReadResult, new TokenState(reader.TokenType, totalBytesConsumed + reader.TokenStartIndex));
                 }
             }
         }
