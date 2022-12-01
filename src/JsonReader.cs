@@ -98,8 +98,8 @@ public static partial class JsonReader
 
         return reader.TryRead(ref utf8Reader) switch
         {
-            (_, { } message) => throw new JsonException($@"{message} See token ""{utf8Reader.TokenType}"" at offset {utf8Reader.TokenStartIndex}."),
-            var (value, _) => value,
+            { Error: { } message } => throw new JsonException($@"{message} See token ""{utf8Reader.TokenType}"" at offset {utf8Reader.TokenStartIndex}."),
+            { Value: var value } => value,
         };
     }
 
@@ -270,11 +270,11 @@ public static partial class JsonReader
             {
                 case { Incomplete: true }:
                     throw PartialJsonNotSupportedException();
-                case (_, { }):
+                case { Error: not null }:
                     return reader2.TryRead(ref rdr) switch
                     {
                         { Incomplete: true } => throw PartialJsonNotSupportedException(),
-                        (_, { }) => Error(errorMessage ?? "Invalid JSON value."),
+                        { Error: not null } => Error(errorMessage ?? "Invalid JSON value."),
                         var some => some
                     };
                 case var some:
@@ -384,9 +384,9 @@ public static partial class JsonReader
                 {
                     case { Incomplete: true }:
                         throw PartialJsonNotSupportedException();
-                    case (_, { } error):
+                    case { Error: { } error }:
                         return Error(error);
-                    case var (value, _):
+                    case { Value: var value }:
                         properties.Add(KeyValuePair.Create(name, value));
                         break;
                 }
@@ -492,10 +492,10 @@ public static partial class JsonReader
                     {
                         case { Incomplete: true }:
                             throw PartialJsonNotSupportedException();
-                        case (_, { } err):
+                        case { Error: { } err }:
                             error = err;
                             return false;
-                        case var (val, _):
+                        case { Value: var val }:
                             value = (true, val);
                             return true;
                     }
@@ -600,9 +600,9 @@ public static partial class JsonReader
                         {
                             case var r when r.IsIncomplete():
                                 return rdr.Suspend(new ArrayReadStateData<T>(state, list));
-                            case (_, { } error):
+                            case { Error: { } error }:
                                 return Error(error);
-                            case var (item, _):
+                            case { Value: var item }:
                                 Debug.Assert(list is not null);
                                 list.Add(item);
                                 break;
@@ -620,16 +620,16 @@ public static partial class JsonReader
         Create((ref Utf8JsonReader rdr) =>
             reader.TryRead(ref rdr) switch
             {
-                (_, { } error) => Error(error),
-                var (value, _) => Value(selector(value)),
+                { Error: { } error } => Error(error),
+                { Value: var value } => Value(selector(value)),
             });
 
     public static IJsonReader<TResult> TryMap<T, TResult>(this IJsonReader<T> reader, Func<T, JsonReadResult<TResult>> selector) =>
         Create((ref Utf8JsonReader rdr) =>
             reader.TryRead(ref rdr) switch
             {
-                (_, { } error) => Error(error),
-                var (value, _) => selector(value)
+                { Error: { } error } => Error(error),
+                { Value: var value } => selector(value)
             });
 
     public static IJsonReader<T> Recursive<T>(Func<IJsonReader<T>, IJsonReader<T>> readerFunction)
