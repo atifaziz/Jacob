@@ -45,7 +45,7 @@ sealed class StreamingTestExecutor : ITestExecutor
         TryReadInner(jsonReader, json) switch
         {
             ((_, { } message), var tokenState) => throw new System.Text.Json.JsonException($@"{message} See token ""{tokenState.TokenType}"" at offset {tokenState.TokenStartIndex}."),
-            (var (value, _), _) => value,
+            var ((value, _), _) => value,
         };
 
     (JsonReadResult<T>, TokenState) TryReadInner<T>(IJsonReader<T> jsonReader, string json)
