@@ -26,25 +26,66 @@ sealed class StreamChunkReader : IDisposable
 
     public async ValueTask<ReadOnlyMemory<byte>> ReadAsync(int bytesConsumed, CancellationToken cancellationToken)
     {
+        // |-- buffer ----------------------------------------|
+        // |-- memory --------------------------|
+        // |<- bytesConsumed ->|<- restLength ->|
+
         Memory<byte> readMemory;
         var restLength = this.memory.Length - bytesConsumed;
         if (restLength > 0)
         {
+            // |-- buffer ----------------------------------------|
+            // |-- memory --------------------------|
+            // |<- bytesConsumed ->|<- restLength ->|
+            //                     |-- rest --------|
+
             ReadOnlyMemory<byte> rest = this.buffer.AsMemory(bytesConsumed, restLength);
 
             if (rest.Length == this.buffer.Length)
                 Array.Resize(ref this.buffer, this.buffer.Length * 2);
 
+            // |-- buffer ----------------------------------------|
+            // |-- memory --------------------------|
+            // |<- bytesConsumed ->|<- restLength ->|
+            //                     |-- rest --------|
+            //                           |
+            // |-- (rest) ------| <<- (CopyTo)
+
             rest.CopyTo(this.buffer);
+
+            // |-- buffer ----------------------------------------|
+            // |-- memory --------------------------|
+            // |<- bytesConsumed ->|<- restLength ->|
+            //                     |-- rest --------|
+            // |-- rest --------|
+            // |<- restLength ->|
+            //                  |-- readMemory -------------------|
+
             readMemory = this.buffer.AsMemory(rest.Length);
+
+            // (cont'd)...
         }
         else
         {
+            // |-- buffer ----------------------------------------|
+            // |-- readMemory ------------------------------------|
+
             readMemory = this.buffer;
         }
 
         var actualReadLength = await this.stream.ReadAsync(readMemory, cancellationToken).ConfigureAwait(false);
         Eof = !Eof && actualReadLength == 0;
+
+        // ...(cont'd)
+        //
+        // |-- buffer ----------------------------------------|
+        // |-- memory --------------------------|
+        // |<- bytesConsumed ->|<- restLength ->|
+        // |-- rest --------|
+        //                  |-- readMemory -------------------|
+        // |<- restLength ->|<-- actualReadLength -->|
+        // |-- memory -------------------------------|
+
         return this.memory = this.buffer.AsMemory(0, restLength + actualReadLength);
     }
 
