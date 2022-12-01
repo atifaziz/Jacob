@@ -24,8 +24,7 @@ sealed class StreamChunkReader : IDisposable
 
     public async ValueTask<ReadOnlyMemory<byte>> ReadAsync(int bytesConsumed, CancellationToken cancellationToken)
     {
-        int bytesRead;
-
+        Memory<byte> readMemory;
         var restLength = this.memory.Length - bytesConsumed;
         if (restLength > 0)
         {
@@ -35,13 +34,14 @@ sealed class StreamChunkReader : IDisposable
                 Array.Resize(ref this.buffer, this.buffer.Length * 2);
 
             rest.CopyTo(this.buffer);
-            bytesRead = await this.stream.ReadAsync(this.buffer.AsMemory(rest.Length), cancellationToken).ConfigureAwait(false);
+            readMemory = this.buffer.AsMemory(rest.Length);
         }
         else
         {
-            bytesRead = await this.stream.ReadAsync(this.buffer, cancellationToken).ConfigureAwait(false);
+            readMemory = this.buffer;
         }
 
+        var bytesRead = await this.stream.ReadAsync(readMemory, cancellationToken).ConfigureAwait(false);
         return this.memory = this.buffer.AsMemory(..(restLength + bytesRead));
     }
 
