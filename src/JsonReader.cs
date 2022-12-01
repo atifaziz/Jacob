@@ -474,7 +474,10 @@ public static partial class JsonReader
                 if (ReadPropertyValue(property15, ref reader, ref value15, ref error)) continue; if (error is not null) return Error(error);
                 if (ReadPropertyValue(property16, ref reader, ref value16, ref error)) continue; if (error is not null) return Error(error);
 
-                reader.Skip();
+                if (reader.IsFinalBlock)
+                    reader.Skip();
+                else if (!reader.TrySkip())
+                    throw PartialJsonNotSupportedException();
 
                 static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
                                                       ref Utf8JsonReader reader,
