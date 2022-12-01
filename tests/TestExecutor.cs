@@ -12,6 +12,7 @@ using System.Threading;
 using Xunit.Abstractions;
 using JsonTokenType = System.Text.Json.JsonTokenType;
 using JsonException = System.Text.Json.JsonException;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 interface ITestExecutor
 {
@@ -63,17 +64,15 @@ sealed class StreamingTestExecutor : ITestExecutor
                 Debug.Assert(readTask.IsCompleted);
                 var memory = readTask.Result;
 
-                if (Read() is ({ Incomplete: false }, _, _) result)
+                if (Read(memory.Span) is ({ Incomplete: false }, _, _) result)
                     return result;
 
-                (JsonReadResult<T>, JsonTokenType, long) Read()
+                (JsonReadResult<T>, JsonTokenType, long) Read(ReadOnlySpan<byte> span)
                 {
-                    var reader = new Utf8JsonReader(memory.Span, r.Eof, state);
-                    var chunk = Encoding.UTF8.GetString(memory.Span);
-                    WriteLine(new { Buffer = $"<{chunk}>", memory.Length });
+                    var reader = new Utf8JsonReader(span, r.Eof, state);
                     var readResult = jsonReader.TryRead(ref reader);
-                    WriteLine($"BytesConsumed = {reader.BytesConsumed}");
                     bytesConsumed = (int)reader.BytesConsumed;
+                    WriteLine($"Buffer[{span.Length}] = <{Printable(span)}>, Consumed[{bytesConsumed}] = <{Printable(span[..bytesConsumed])}>");
                     state = reader.CurrentState;
                     return (readResult, reader.TokenType, totalBytesConsumed + reader.TokenStartIndex);
                 }
@@ -82,6 +81,12 @@ sealed class StreamingTestExecutor : ITestExecutor
         catch (NotSupportedException)
         {
             return TryReadCore(jsonReader.Buffer(), json);
+        }
+
+        string Printable(ReadOnlySpan<byte> span)
+        {
+            var json = JsonSerializer.Serialize(Encoding.UTF8.GetString(span));
+            return json[1..^1].Replace(@"\u0022", "\"", StringComparison.Ordinal);
         }
     }
 
