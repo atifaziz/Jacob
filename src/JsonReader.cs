@@ -273,6 +273,7 @@ public static partial class JsonReader
                 case (_, { }):
                     return reader2.TryRead(ref rdr) switch
                     {
+                        { Incomplete: true } => throw PartialJsonNotSupportedException(),
                         (_, { }) => Error(errorMessage ?? "Invalid JSON value."),
                         var some => some
                     };
