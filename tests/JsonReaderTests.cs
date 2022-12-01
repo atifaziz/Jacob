@@ -19,10 +19,26 @@ public sealed class DefaultTests : JsonReaderTests
     internal override ITestExecutor Executor { get; } = new DefaultTestExecutor();
 }
 
-public sealed class StreamingTests : JsonReaderTests
+public sealed class Streaming2Tests : JsonReaderTests
 {
-    public StreamingTests(ITestOutputHelper testOutputHelper) =>
+    public Streaming2Tests(ITestOutputHelper testOutputHelper) =>
         Executor = new StreamingTestExecutor(2, testOutputHelper);
+
+    internal override ITestExecutor Executor { get; }
+}
+
+public sealed class Streaming5Tests : JsonReaderTests
+{
+    public Streaming5Tests(ITestOutputHelper testOutputHelper) =>
+        Executor = new StreamingTestExecutor(5, testOutputHelper);
+
+    internal override ITestExecutor Executor { get; }
+}
+
+public sealed class Streaming10Tests : JsonReaderTests
+{
+    public Streaming10Tests(ITestOutputHelper testOutputHelper) =>
+        Executor = new StreamingTestExecutor(10, testOutputHelper);
 
     internal override ITestExecutor Executor { get; }
 }
