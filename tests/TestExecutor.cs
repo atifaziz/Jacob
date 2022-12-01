@@ -5,6 +5,7 @@
 namespace Jacob.Tests;
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -58,9 +59,10 @@ sealed class StreamingTestExecutor : ITestExecutor
 
             while (true)
             {
-#pragma warning disable CA2012 // Use ValueTasks correctly
-                var memory = r.ReadAsync(bytesConsumed, CancellationToken.None).GetAwaiter().GetResult();
-#pragma warning restore CA2012 // Use ValueTasks correctly
+                var readTask = r.ReadAsync(bytesConsumed, CancellationToken.None);
+                Debug.Assert(readTask.IsCompleted);
+                var memory = readTask.Result;
+
                 var (jsonReadResult, tokenState) = Read();
 
                 if (!jsonReadResult.Incomplete)
