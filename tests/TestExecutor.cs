@@ -14,7 +14,7 @@ using JsonTokenType = System.Text.Json.JsonTokenType;
 using JsonException = System.Text.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
-interface ITestExecutor
+public interface ITestExecutor
 {
     JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json);
 
