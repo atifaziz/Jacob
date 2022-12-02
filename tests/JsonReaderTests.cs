@@ -866,7 +866,7 @@ public abstract class JsonReaderTestsBase
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar"]""");
+        TestReaderPositionPostRead(reader, /*lang=json*/ """[123, "foobar"]""");
     }
 
     [Fact]
@@ -902,7 +902,7 @@ public abstract class JsonReaderTestsBase
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar", 456]""");
+        TestReaderPositionPostRead(reader, /*lang=json*/ """[123, "foobar", 456]""");
     }
 
     [Fact]
