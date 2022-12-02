@@ -8,9 +8,9 @@ namespace Jacob.Tests.Streaming;
 
 using Xunit.Abstractions;
 
-public sealed class TinfyBufferSizeTests : JsonReaderTestsBase
+public sealed class TinyBufferSizeTests : JsonReaderTestsBase
 {
-    public TinfyBufferSizeTests(ITestOutputHelper testOutputHelper)
+    public TinyBufferSizeTests(ITestOutputHelper testOutputHelper)
         : base(new StreamingTestExecutor(2, testOutputHelper)) { }
 }
 
