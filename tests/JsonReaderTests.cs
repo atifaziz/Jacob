@@ -638,17 +638,17 @@ public abstract class JsonReaderTestsBase
                              { "str": "foobar" }
                              """)]
     [InlineData(42, "foobar", /*lang=json*/ """
-                             { "num": 42, "str": "foobar" }
-                             """)]
+                              { "num": 42, "str": "foobar" }
+                              """)]
     [InlineData(42, "foobar", /*lang=json*/ """
-                             { "str": "foobar", "num": 42 }
-                             """)]
+                              { "str": "foobar", "num": 42 }
+                              """)]
     [InlineData(42, "foobar", /*lang=json*/ """
-                             { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
-                             """)]
+                              { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
+                              """)]
     [InlineData(42, "foobar", /*lang=json*/ """
-                             { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
-                             """)]
+                              { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
+                              """)]
     public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
         TestValidInput(ObjectReader, json, (expectedNum, expectedStr));
