@@ -108,8 +108,8 @@ partial class JsonReader
             switch(item<#= n #>Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error<#= n #>): return Error(error<#= n #>);
-                case var (item, _): item<#= n #> = item; break;
+                case { Error: { } error<#= n #> }: return Error(error<#= n #>);
+                case { Value: var item }: item<#= n #> = item; break;
             }
 <#
         } #>

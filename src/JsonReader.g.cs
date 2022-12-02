@@ -286,16 +286,16 @@ partial class JsonReader
             switch(item1Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error1): return Error(error1);
-                case var (item, _): item1 = item; break;
+                case { Error: { } error1 }: return Error(error1);
+                case { Value: var item }: item1 = item; break;
             }
 
             T2 item2;
             switch(item2Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error2): return Error(error2);
-                case var (item, _): item2 = item; break;
+                case { Error: { } error2 }: return Error(error2);
+                case { Value: var item }: item2 = item; break;
             }
 
             if (!rdr.Read())
@@ -324,24 +324,24 @@ partial class JsonReader
             switch(item1Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error1): return Error(error1);
-                case var (item, _): item1 = item; break;
+                case { Error: { } error1 }: return Error(error1);
+                case { Value: var item }: item1 = item; break;
             }
 
             T2 item2;
             switch(item2Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error2): return Error(error2);
-                case var (item, _): item2 = item; break;
+                case { Error: { } error2 }: return Error(error2);
+                case { Value: var item }: item2 = item; break;
             }
 
             T3 item3;
             switch(item3Reader.TryRead(ref rdr))
             {
                 case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case (_, { } error3): return Error(error3);
-                case var (item, _): item3 = item; break;
+                case { Error: { } error3 }: return Error(error3);
+                case { Value: var item }: item3 = item; break;
             }
 
             if (!rdr.Read())
