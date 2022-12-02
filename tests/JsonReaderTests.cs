@@ -234,14 +234,14 @@ public abstract class JsonReaderTestsBase
     {
         var formats = new[]
         {
-        "yyyy-MM-dd",
-        "yyyy-MM-dd'T'HH:mm",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd'T'HH:mm:ss.fff",
-        "yyyy-MM-dd'T'HH:mmK",
-        "yyyy-MM-dd'T'HH:mm:ssK",
-        "yyyy-MM-dd'T'HH:mm:ss.fffK",
-    };
+            "yyyy-MM-dd",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ss.fff",
+            "yyyy-MM-dd'T'HH:mmK",
+            "yyyy-MM-dd'T'HH:mm:ssK",
+            "yyyy-MM-dd'T'HH:mm:ss.fffK",
+        };
         var unquoted = json[2..^2];
         var expected = DateTimeOffset.ParseExact(unquoted, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
         TestValidInput(JsonReader.DateTimeOffset(), json, expected);
