@@ -16,14 +16,18 @@ using JsonException = System.Text.Json.JsonException;
 
 public sealed class JsonReaderTests : JsonReaderTestsBase
 {
-    public JsonReaderTests() : base(new DefaultTestExecutor()) { }
+    protected override T Read<T>(IJsonReader<T> jsonReader, string json) =>
+        jsonReader.Read(json);
+
+    protected override JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json) =>
+        jsonReader.TryRead(json);
 }
 
 public abstract class JsonReaderTestsBase
 {
-    readonly ITestExecutor executor;
+    protected abstract JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json);
 
-    protected JsonReaderTestsBase(ITestExecutor executor) => this.executor = executor;
+    protected abstract T Read<T>(IJsonReader<T> jsonReader, string json);
 
     static void TestReaderPositionPostRead<T>(IJsonReader<T> reader, string json)
     {
@@ -41,17 +45,17 @@ public abstract class JsonReaderTestsBase
     {
         json = json.TrimStart();
 
-        var (value, error) = this.executor.TryRead(reader, json);
+        var (value, error) = TryRead(reader, json);
         Assert.Equal(default, value);
         Assert.Equal(expectedError, error);
 
-        var ex = Assert.Throws<JsonException>(() => this.executor.Read(reader, json));
+        var ex = Assert.Throws<JsonException>(() => Read(reader, json));
         Assert.Equal($@"{expectedError} See token ""{expectedErrorToken}"" at offset {expectedErrorOffset}.", ex.Message);
     }
 
     void TestValidInput<T>(IJsonReader<T> reader, string json, T expected)
     {
-        var result = this.executor.Read(reader, json);
+        var result = Read(reader, json);
         Assert.Equal(expected, result);
     }
 
