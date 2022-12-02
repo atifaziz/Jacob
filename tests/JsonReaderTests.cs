@@ -18,35 +18,35 @@ namespace Jacob.Tests
 
     namespace Streaming
     {
-        public sealed class TinfyBufferSizeTests : JsonReaderTests
+        public sealed class TinfyBufferSizeTests : JsonReaderTestsBase
         {
             public TinfyBufferSizeTests(ITestOutputHelper testOutputHelper)
                 : base(new StreamingTestExecutor(2, testOutputHelper)) { }
         }
 
-        public sealed class ExtraSmallBufferSizeTests : JsonReaderTests
+        public sealed class ExtraSmallBufferSizeTests : JsonReaderTestsBase
         {
             public ExtraSmallBufferSizeTests(ITestOutputHelper testOutputHelper)
                 : base(new StreamingTestExecutor(5, testOutputHelper)) { }
         }
 
-        public sealed class SmallBufferSizeTests : JsonReaderTests
+        public sealed class SmallBufferSizeTests : JsonReaderTestsBase
         {
             public SmallBufferSizeTests(ITestOutputHelper testOutputHelper)
                 : base(new StreamingTestExecutor(10, testOutputHelper)) { }
         }
     }
 
-    public sealed class DefaultTests : JsonReaderTests
+    public sealed class JsonReaderTests : JsonReaderTestsBase
     {
-        public DefaultTests() : base(new DefaultTestExecutor()) { }
+        public JsonReaderTests() : base(new DefaultTestExecutor()) { }
     }
 
-    public abstract class JsonReaderTests
+    public abstract class JsonReaderTestsBase
     {
         readonly ITestExecutor executor;
 
-        protected JsonReaderTests(ITestExecutor executor) => this.executor = executor;
+        protected JsonReaderTestsBase(ITestExecutor executor) => this.executor = executor;
 
         static void TestReaderPositionPostRead<T>(IJsonReader<T> reader, string json)
         {
