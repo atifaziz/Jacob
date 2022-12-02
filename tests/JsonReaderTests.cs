@@ -497,9 +497,7 @@ public class JsonReaderTests
             from words in JsonReader.Array(JsonReader.String())
             select string.Join("-", from w in words select w.ToUpperInvariant());
 
-        var result = reader.Read(/*lang=json*/ """
-            ["foo", "bar", "baz"]
-            """);
+        var result = reader.Read(/*lang=json*/ """["foo", "bar", "baz"]""");
 
         Assert.Equal("FOO-BAR-BAZ", result);
     }
@@ -517,9 +515,7 @@ public class JsonReaderTests
         var valueReader = JsonReader.String();
         var property = JsonReader.Property(name, valueReader);
 
-        const string json = /*lang=json*/ """
-            { "foobar": 42 }
-            """;
+        const string json = /*lang=json*/ """{ "foobar": 42 }""";
 
         var reader =
             new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
@@ -540,9 +536,7 @@ public class JsonReaderTests
         const string defaultValue = "baz";
         var property = JsonReader.Property(name, valueReader, (true, defaultValue));
 
-        const string json = /*lang=json*/ """
-            { "foobar": 42 }
-            """;
+        const string json = /*lang=json*/ """{ "foobar": 42 }""";
 
         var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
         _ = reader.Read(); // "{"
@@ -562,10 +556,7 @@ public class JsonReaderTests
 
         var ex = Assert.Throws<ArgumentException>(() =>
         {
-            const string json = /*lang=json*/ """
-                { "foobar": 42 }
-                """;
-
+            const string json = /*lang=json*/ """{ "foobar": 42 }""";
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
             _ = reader.Read(); // "{"
             return _ = property.IsMatch(ref reader);
@@ -580,21 +571,11 @@ public class JsonReaderTests
                           ValueTuple.Create);
 
     [Theory]
-    [InlineData( 0, "foobar", /*lang=json*/ """
-                              { "str": "foobar" }
-                              """)]
-    [InlineData(42, "foobar", /*lang=json*/ """
-                              { "num": 42, "str": "foobar" }
-                              """)]
-    [InlineData(42, "foobar", /*lang=json*/ """
-                              { "str": "foobar", "num": 42 }
-                              """)]
-    [InlineData(42, "foobar", /*lang=json*/ """
-                              { "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }
-                              """)]
-    [InlineData(42, "foobar", /*lang=json*/ """
-                              { "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }
-                              """)]
+    [InlineData( 0, "foobar", /*lang=json*/ """{ "str": "foobar" }""")]
+    [InlineData(42, "foobar", /*lang=json*/ """{ "num": 42, "str": "foobar" }""")]
+    [InlineData(42, "foobar", /*lang=json*/ """{ "str": "foobar", "num": 42 }""")]
+    [InlineData(42, "foobar", /*lang=json*/ """{ "str": "FOOBAR", "num": -42, "str": "foobar", "num": 42 }""")]
+    [InlineData(42, "foobar", /*lang=json*/ """{ "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }""")]
     public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
         var (num, str) = ObjectReader.Read(json);
@@ -619,9 +600,7 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData(/*lang=json*/ """
-                { "str": "foobar", "num": 42 }
-                """)]
+    [InlineData(/*lang=json*/ """{ "str": "foobar", "num": 42 }""")]
     public void Object_Does_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(ObjectReader, json);
@@ -633,9 +612,7 @@ public class JsonReaderTests
     [Fact]
     public void Object_General_With_Valid_Input()
     {
-        const string json = /*lang=json*/ """
-            { "foo": 123, "bar": 456, "baz": 789 }
-            """;
+        const string json = /*lang=json*/ """{ "foo": 123, "bar": 456, "baz": 789 }""";
 
         var obj = KeyIntMapReader.Read(json);
 
@@ -657,9 +634,7 @@ public class JsonReaderTests
     }
 
     [Theory]
-    [InlineData(/*lang=json*/ """
-                { "foo": 123, "bar": 456, "baz": 789 }
-                """)]
+    [InlineData(/*lang=json*/ """{ "foo": 123, "bar": 456, "baz": 789 }""")]
     public void Object_General_Doesnt_Move_Reader(string json)
     {
         TestMovesReaderPastReadValue(KeyIntMapReader, json);
@@ -861,18 +836,14 @@ public class JsonReaderTests
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """
-                                             [123, "foobar"]
-                                             """);
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar"]""");
     }
 
     [Fact]
     public void Tuple2_With_Valid_Input()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        var result = reader.Read(/*lang=json*/ """
-                                 [123, "foobar"]
-                                 """);
+        var result = reader.Read(/*lang=json*/ """[123, "foobar"]""");
         Assert.Equal((123, "foobar"), result);
     }
 
@@ -901,18 +872,14 @@ public class JsonReaderTests
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """
-                                             [123, "foobar", 456]
-                                             """);
+        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar", 456]""");
     }
 
     [Fact]
     public void Tuple3_With_Valid_Input()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        var result = reader.Read(/*lang=json*/ """
-                                 [123, "foobar", 456]
-                                 """);
+        var result = reader.Read(/*lang=json*/ """[123, "foobar", 456]""");
         Assert.Equal((123, "foobar", 456), result);
     }
 
@@ -1017,9 +984,7 @@ public class JsonReaderTests
             JsonReader.Recursive<object>(it => JsonReader.Either(JsonReader.String().AsObject(),
                                                                  JsonReader.Array(it).AsObject()));
 
-        var result = reader.Read(/*lang=json*/ """
-                                 ["foo", "bar", ["baz", [["qux"]]]]
-                                 """);
+        var result = reader.Read(/*lang=json*/ """["foo", "bar", ["baz", [["qux"]]]]""");
         Assert.Equal(new object[] { "foo", "bar", new object[] { "baz", new object[] { new object[] { "qux" } } } },
                      result);
     }
