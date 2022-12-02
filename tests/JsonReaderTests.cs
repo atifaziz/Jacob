@@ -14,6 +14,7 @@ namespace Jacob.Tests
     using Xunit;
     using Xunit.Abstractions;
     using Utf8JsonReader = Utf8JsonReader;
+    using JsonException = System.Text.Json.JsonException;
 
     namespace Streaming
     {
@@ -1211,6 +1212,24 @@ namespace Jacob.Tests
         public void Complex_Compound_With_Invalid_Input(string json, string expectedError, string expectedErrorToken, int expectedOffset)
         {
             TestInvalidInput(ComplexCompoundReader, json, expectedError, expectedErrorToken, expectedOffset);
+        }
+
+#pragma warning disable JSON001 // Invalid JSON pattern (intentional as test data)
+        public static TheoryData<string> ComplexCompoundInvalidJsonTheoryData() => new()
+        {
+            { /*lang=json*/ """[["value1", "value2"], {"prop1":"value1","prop2":null""" },
+            { /*lang=json*/ """[["value1", "value2"], {"prop1":"value1","prop2":null]""" },
+            { /*lang=json*/ """[["value1", "value2"], true {"prop1":"value1","prop2":null]""" },
+            { /*lang=json*/ """[["value1", "value2", {"prop1":"value1","prop2":null]""" },
+        };
+#pragma warning restore JSON001 // Invalid JSON pattern
+
+        [Theory]
+        [MemberData(nameof(ComplexCompoundInvalidJsonTheoryData))]
+        public void Complex_Compound_With_Invalid_Json(string json)
+        {
+            // Assert that reader terminates when encountering invalid JSON.
+            _ = Assert.ThrowsAny<JsonException>(() => TestValidInput(ComplexCompoundReader, json, Array.Empty<object>()));
         }
     }
 }
