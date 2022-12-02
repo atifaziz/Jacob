@@ -89,7 +89,7 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
-    public void Byte_With_Valid_Input(ulong expected, string json)
+    public void Byte_With_Valid_Input(byte expected, string json)
     {
         var result = JsonReader.Byte().Read(json);
         Assert.Equal(expected, result);
@@ -316,7 +316,7 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
-    public void UInt16_With_Valid_Input(ulong expected, string json)
+    public void UInt16_With_Valid_Input(ushort expected, string json)
     {
         var result = JsonReader.UInt16().Read(json);
         Assert.Equal(expected, result);
@@ -347,7 +347,7 @@ public class JsonReaderTests
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
-    public void UInt32_With_Valid_Input(ulong expected, string json)
+    public void UInt32_With_Valid_Input(uint expected, string json)
     {
         var result = JsonReader.UInt32().Read(json);
         Assert.Equal(expected, result);
