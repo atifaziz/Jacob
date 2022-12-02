@@ -55,7 +55,7 @@ public abstract class JsonReaderTests
     }
 
     void TestInvalidInput<T>(IJsonReader<T> reader, string json,
-                                    string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
+                             string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
     {
         var (value, error) = this.executor.TryRead(reader, json);
         Assert.Equal(default, value);
