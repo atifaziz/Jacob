@@ -2,7 +2,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Jacob.Tests;
+namespace Jacob;
 
 using System;
 using System.IO;
@@ -12,14 +12,16 @@ using System.Threading.Tasks;
 sealed class StreamChunkReader : IDisposable
 {
     readonly Stream stream;
+    readonly bool doesNotOwnStream;
     byte[] buffer;
     ReadOnlyMemory<byte> memory;
 
-    public StreamChunkReader(Stream stream, int bufferSize)
+    public StreamChunkReader(Stream stream, int initialBufferSize, bool doesNotOwnStream = false)
     {
         this.stream = stream;
-        this.buffer = new byte[bufferSize];
+        this.buffer = new byte[initialBufferSize is 0 ? 1024 : initialBufferSize];
         this.memory = null;
+        this.doesNotOwnStream = doesNotOwnStream;
     }
 
     public bool Eof { get; private set; }
@@ -89,5 +91,9 @@ sealed class StreamChunkReader : IDisposable
         return this.memory = this.buffer.AsMemory(0, restLength + actualReadLength);
     }
 
-    public void Dispose() => this.stream.Dispose();
+    public void Dispose()
+    {
+        if (!this.doesNotOwnStream)
+            this.stream.Dispose();
+    }
 }

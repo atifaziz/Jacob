@@ -7,10 +7,13 @@ namespace Jacob;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using StateMachines;
 using Unit = System.ValueTuple;
 
@@ -112,6 +115,102 @@ public static partial class JsonReader
         if (reader == null) throw new ArgumentNullException(nameof(reader));
         var rdr = new Utf8JsonReader(utf8JsonTextBytes);
         return reader.TryRead(ref rdr);
+    }
+
+    public static IAsyncEnumerator<T> GetAsyncEnumerator<T>(this IJsonReader<T> reader,
+                                                            Stream stream, int initialBufferSize) =>
+        GetAsyncEnumerator(reader, stream, initialBufferSize, CancellationToken.None);
+
+    public static IAsyncEnumerator<T> GetAsyncEnumerator<T>(this IJsonReader<T> reader,
+                                                            Stream stream, int initialBufferSize,
+                                                            CancellationToken cancellationToken)
+    {
+        if (reader is null) throw new ArgumentNullException(nameof(reader));
+        if (stream is null) throw new ArgumentNullException(nameof(stream));
+        if (initialBufferSize < 0) throw new ArgumentOutOfRangeException(nameof(initialBufferSize), initialBufferSize, null);
+
+        return GetAsyncEnumeratorCore(reader, stream, initialBufferSize, cancellationToken);
+    }
+
+    static async IAsyncEnumerator<T> GetAsyncEnumeratorCore<T>(IJsonReader<T> reader,
+                                                               Stream stream, int initialBufferSize,
+                                                               CancellationToken cancellationToken)
+    {
+        using var scr = new StreamChunkReader(stream, initialBufferSize);
+        var state = new JsonReaderState();
+        var ar = new ArrayReadStateMachine();
+        ArrayReadStateMachine.ReadResult readResult;
+
+        var totalBytesConsumed = 0;
+        do
+        {
+            var readTask = scr.ReadAsync(totalBytesConsumed, cancellationToken);
+            totalBytesConsumed = 0;
+            var memory = readTask.IsCompleted
+                       ? readTask.Result
+                       : await readTask.AsTask().ConfigureAwait(false);
+
+            while (true)
+            {
+                var read = TryReadItem(memory.Span, out var bytesConsumed, out readResult, out var item);
+                totalBytesConsumed += bytesConsumed;
+                if (!read)
+                    break;
+                cancellationToken.ThrowIfCancellationRequested();
+                yield return item!;
+                memory = memory[bytesConsumed..];
+            }
+        }
+        while (readResult is not ArrayReadStateMachine.ReadResult.Done);
+
+        bool TryReadItem(ReadOnlySpan<byte> span,
+                         out int bytesConsumed,
+                         out ArrayReadStateMachine.ReadResult readResult,
+                         [NotNullWhen(true)] out T? item)
+        {
+            var rdr = new Utf8JsonReader(span, scr.Eof, state);
+            while (true)
+            {
+                switch (ar.Read(ref rdr))
+                {
+                    case ArrayReadStateMachine.ReadResult.Error:
+                    {
+                        throw new JsonException("Invalid JSON value where a JSON array was expected.");
+                    }
+                    case ArrayReadStateMachine.ReadResult.Item:
+                    {
+                        switch (reader.TryRead(ref rdr))
+                        {
+                            case var r when r.IsIncomplete():
+                                break;
+                            case { Error: { } error }:
+                                throw new JsonException(error);
+                            case { Value: { } value }:
+                                ar.OnItemRead();
+                                item = value;
+                                readResult = ArrayReadStateMachine.ReadResult.Item;
+                                bytesConsumed = (int)rdr.BytesConsumed;
+                                state = rdr.CurrentState;
+                                return true;
+                        }
+                        goto case ArrayReadStateMachine.ReadResult.Incomplete;
+                    }
+                    case ArrayReadStateMachine.ReadResult.Done:
+                    {
+                        item = default;
+                        readResult = ArrayReadStateMachine.ReadResult.Done;
+                        bytesConsumed = (int)rdr.BytesConsumed;
+                        return false;
+                    }
+                    case ArrayReadStateMachine.ReadResult.Incomplete:
+                        bytesConsumed = (int)rdr.BytesConsumed;
+                        state = rdr.CurrentState;
+                        item = default;
+                        readResult = ArrayReadStateMachine.ReadResult.Incomplete;
+                        return false;
+                }
+            }
+        }
     }
 
     public static IJsonReader<T> Error<T>(string message) =>
