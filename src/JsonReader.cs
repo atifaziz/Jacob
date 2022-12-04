@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
+using StateMachines;
 using Unit = System.ValueTuple;
 
 #pragma warning disable CA1716 // Identifiers should not match keywords
@@ -546,76 +547,50 @@ public static partial class JsonReader
     public static IJsonReader<T[]> Array<T>(IJsonReader<T> itemReader) =>
         Array(itemReader, list => list.ToArray());
 
-    enum ArrayReadState { Initial, ItemOrEnd, Item }
-
-    sealed class ArrayReadStateData<T>
-    {
-        public ArrayReadState State { get; }
-        public List<T>? List { get; }
-
-        public ArrayReadStateData(ArrayReadState state, List<T>? list) =>
-            (State, List) = (state, list);
-    }
-
     public static IJsonReader<TResult> Array<T, TResult>(IJsonReader<T> itemReader,
                                                          Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var (ars, list) =
-                rdr.IsResuming && (ArrayReadStateData<T>)rdr.Pop() is var ps
-                    ? (ps.State, ps.List)
-                    : (ArrayReadState.Initial, null);
+            var (sm, list) =
+                rdr.IsResuming && ((ArrayReadStateMachine, List<T>))rdr.Pop() is var ps
+                    ? ps
+                    : default;
 
-            return Read(ref rdr, ars, list);
+            return Read(ref rdr, sm, list);
 
-            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ArrayReadState state, List<T>? list)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ArrayReadStateMachine sm, List<T>? list)
             {
-                restart:
-                switch (state)
+                while (true)
                 {
-                    case ArrayReadState.Initial:
+                    switch (sm.Read(ref rdr))
                     {
-                        if (!rdr.Read())
-                            return rdr.Suspend(new ArrayReadStateData<T>(state, list));
-
-                        if (rdr.TokenType != JsonTokenType.StartArray)
+                        case ArrayReadStateMachine.ReadResult.Error:
                             return Error("Invalid JSON value where a JSON array was expected.");
 
-                        state = ArrayReadState.ItemOrEnd;
-                        goto restart;
-                    }
-                    case ArrayReadState.ItemOrEnd:
-                    {
-                        if (!rdr.Read())
-                            return rdr.Suspend(new ArrayReadStateData<T>(state, list));
+                        case ArrayReadStateMachine.ReadResult.Incomplete:
+                            return rdr.Suspend((sm, list));
 
-                        if (rdr.TokenType == JsonTokenType.EndArray)
-                            break;
+                        case ArrayReadStateMachine.ReadResult.Done:
+                            return Value(resultSelector(list ?? new List<T>()));
 
-                        rdr.AssumeTokenRead();
-                        list ??= new List<T>();
-                        state = ArrayReadState.Item;
-                        goto restart;
-                    }
-                    case ArrayReadState.Item:
-                    {
-                        switch (itemReader.TryRead(ref rdr))
+                        case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            case var r when r.IsIncomplete():
-                                return rdr.Suspend(new ArrayReadStateData<T>(state, list));
-                            case { Error: { } error }:
-                                return Error(error);
-                            case { Value: var item }:
-                                Debug.Assert(list is not null);
-                                list.Add(item);
-                                break;
+                            switch (itemReader.TryRead(ref rdr))
+                            {
+                                case var r when r.IsIncomplete():
+                                    return rdr.Suspend((sm, list));
+                                case { Error: { } error }:
+                                    return Error(error);
+                                case { Value: var item }:
+                                    list ??= new List<T>();
+                                    list.Add(item);
+                                    sm.OnItemRead();
+                                    break;
+                            }
+                            break;
                         }
-                        state = ArrayReadState.ItemOrEnd;
-                        goto restart;
                     }
                 }
-
-                return Value(resultSelector(list ?? new List<T>()));
             }
         });
 
