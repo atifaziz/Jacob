@@ -2,11 +2,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-namespace Jacob.StateMachines;
+namespace Jacob;
 
 using System;
 using System.Text.Json;
-using Utf8JsonReader = Utf8JsonReader;
 
 public record struct ArrayReadStateMachine
 {
