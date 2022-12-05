@@ -189,9 +189,7 @@ public static partial class JsonReader
                                 ar.OnItemRead();
                                 item = value;
                                 readResult = ArrayReadStateMachine.ReadResult.Item;
-                                bytesConsumed = (int)rdr.BytesConsumed;
-                                state = rdr.CurrentState;
-                                return true;
+                                goto exit;
                         }
                         goto case ArrayReadStateMachine.ReadResult.Incomplete;
                     }
@@ -199,17 +197,21 @@ public static partial class JsonReader
                     {
                         item = default;
                         readResult = ArrayReadStateMachine.ReadResult.Done;
-                        bytesConsumed = (int)rdr.BytesConsumed;
-                        return false;
+                        goto exit;
                     }
                     case ArrayReadStateMachine.ReadResult.Incomplete:
-                        bytesConsumed = (int)rdr.BytesConsumed;
-                        state = rdr.CurrentState;
+                    {
                         item = default;
                         readResult = ArrayReadStateMachine.ReadResult.Incomplete;
-                        return false;
+                        goto exit;
+                    }
                 }
             }
+
+            exit:
+            bytesConsumed = (int)rdr.BytesConsumed;
+            state = rdr.CurrentState;
+            return readResult is ArrayReadStateMachine.ReadResult.Item;
         }
     }
 
