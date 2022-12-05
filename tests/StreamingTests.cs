@@ -11,10 +11,71 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System;
+using System.Linq;
+using Xunit;
 using Xunit.Abstractions;
 using JsonTokenType = System.Text.Json.JsonTokenType;
 using JsonException = System.Text.Json.JsonException;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+
+public sealed class StreamingTests
+{
+    static readonly IJsonReader<object> NestedObjectReader =
+        JsonReader.Object(
+            JsonReader.Property(
+                "prop1",
+                JsonReader.Object(
+                    JsonReader.Property("prop2", JsonReader.String().AsObject()))));
+
+    public static TheoryData<IJsonReader<object>, string, int, int[]> Buffer_TheoryData() => new()
+    {
+        { JsonReader.Null((object?)null).AsObject(), /*lang=json*/"null", 2, new[] { 0, 4 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/"false", 2, new[] { 0, 0, 5 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/"true", 2, new[] { 0, 4 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/"true", 5, new[] { 4 } },
+        { JsonReader.Int32().AsObject(), /*lang=json*/"12", 2, new[] { 0, 2 } },
+        { JsonReader.Int32().AsObject(), /*lang=json*/"12", 5, new[] { 0, 2 } },
+        { JsonReader.String().AsObject(), /*lang=json*/""" "foo" """, 2, new[] { 1, 0, 0, 5 } },
+        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 2, new[] { 0, 0, 0, 0, 26 } },
+        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 5, new[] { 0, 0, 0, 26 } },
+        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 10, new[] { 0, 0, 26 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 2, new[] { 0, 0, 0, 0, 20 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 5, new[] { 0, 0, 20 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 10, new[] { 0, 20 } },
+    };
+
+    [Theory]
+    [MemberData(nameof(Buffer_TheoryData))]
+    public void Buffer_Expands_Correctly(IJsonReader<object> jsonReader, string json, int bufferSize, int[] expectedBytesConsumed)
+    {
+        var bufferedReader = jsonReader.Buffer();
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        using var r = new StreamChunkReader(ms, bufferSize);
+        var bytesConsumed = 0;
+        var state = new JsonReaderState();
+
+        foreach (var (expectedBytesCons, isLast) in expectedBytesConsumed.Select((e, i) => (e, i + 1 == expectedBytesConsumed.Length)))
+        {
+            var readTask = r.ReadAsync(bytesConsumed, CancellationToken.None);
+            Debug.Assert(readTask.IsCompleted);
+            var memory = readTask.Result;
+            Assert.Equal(!isLast, Read(memory.Span).Incomplete);
+
+            JsonReadResult<object> Read(ReadOnlySpan<byte> span)
+            {
+                var reader = new Utf8JsonReader(span, r.Eof, state);
+                var readResult = bufferedReader.TryRead(ref reader);
+                bytesConsumed = (int)reader.BytesConsumed;
+                Assert.Equal(expectedBytesCons, bytesConsumed);
+                state = reader.CurrentState;
+                return readResult;
+            }
+        }
+
+        var result = bufferedReader.TryRead(json);
+        Assert.False(result.Incomplete);
+    }
+}
 
 public abstract class StreamingTestsBase : JsonReaderTestsBase
 {
