@@ -298,7 +298,10 @@ public static partial class JsonReader
             var read = rdr.Read();
 
             if (!read)
+            {
+                rdr = bookmark;
                 return rdr.Suspend(BufferFrame);
+            }
 
             switch (rdr.TokenType)
             {
