@@ -15,19 +15,34 @@ sealed class StreamChunkReader : IDisposable
     readonly bool doesNotOwnStream;
     byte[] buffer;
     ReadOnlyMemory<byte> memory;
+    ReadOnlyMemory<byte> chunk;
 
     public StreamChunkReader(Stream stream, int initialBufferSize, bool doesNotOwnStream = false)
     {
         this.stream = stream;
         this.buffer = new byte[initialBufferSize is 0 ? 1024 : initialBufferSize];
-        this.memory = null;
+        this.memory = this.chunk = null;
         this.doesNotOwnStream = doesNotOwnStream;
     }
 
     public bool Eof { get; private set; }
 
-    public async ValueTask<ReadOnlyMemory<byte>> ReadAsync(int bytesConsumed, CancellationToken cancellationToken)
+    public int TotalConsumedLength { get; private set; }
+    public int ConsumedChunkLength { get; private set; }
+
+    public ReadOnlySpan<byte> RemainingChunkSpan => this.chunk.Span;
+
+    public void ConsumeChunkBy(int count)
     {
+        this.chunk = this.chunk[count..];
+        TotalConsumedLength += count;
+        ConsumedChunkLength += count;
+    }
+
+    public async ValueTask ReadAsync(CancellationToken cancellationToken)
+    {
+        var bytesConsumed = ConsumedChunkLength;
+
         // |-- buffer ----------------------------------------|
         // |-- memory --------------------------|
         // |<- bytesConsumed ->|<- restLength ->|
@@ -88,7 +103,8 @@ sealed class StreamChunkReader : IDisposable
         // |<- restLength ->|<-- actualReadLength -->|
         // |-- memory -------------------------------|
 
-        return this.memory = this.buffer.AsMemory(0, restLength + actualReadLength);
+        ConsumedChunkLength = 0;
+        this.chunk = this.memory = this.buffer.AsMemory(0, restLength + actualReadLength);
     }
 
     public void Dispose()

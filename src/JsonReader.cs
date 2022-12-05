@@ -137,28 +137,25 @@ public static partial class JsonReader
                                                                CancellationToken cancellationToken)
     {
         using var scr = new StreamChunkReader(stream, initialBufferSize);
+
         var state = new JsonReaderState();
         var ar = new ArrayReadStateMachine();
         ArrayReadStateMachine.ReadResult readResult;
 
-        var totalBytesConsumed = 0;
         do
         {
-            var readTask = scr.ReadAsync(totalBytesConsumed, cancellationToken);
-            totalBytesConsumed = 0;
-            var memory = readTask.IsCompleted
-                       ? readTask.Result
-                       : await readTask.AsTask().ConfigureAwait(false);
+            var readTask = scr.ReadAsync(cancellationToken);
+            if (!readTask.IsCompleted)
+                await readTask.AsTask().ConfigureAwait(false);
 
             while (true)
             {
-                var read = TryReadItem(memory.Span, out var bytesConsumed, out readResult, out var item);
-                totalBytesConsumed += bytesConsumed;
+                var read = TryReadItem(scr.RemainingChunkSpan, out var bytesConsumed, out readResult, out var item);
+                scr.ConsumeChunkBy(bytesConsumed);
                 if (!read)
                     break;
                 cancellationToken.ThrowIfCancellationRequested();
                 yield return item!;
-                memory = memory[bytesConsumed..];
             }
         }
         while (readResult is not ArrayReadStateMachine.ReadResult.Done);

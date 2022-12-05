@@ -53,22 +53,21 @@ public sealed class StreamingTests
         var bufferedReader = jsonReader.Buffer();
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         using var r = new StreamChunkReader(ms, bufferSize);
-        var bytesConsumed = 0;
         var state = new JsonReaderState();
 
         foreach (var (expectedBytesCons, isLast) in expectedBytesConsumed.Select((e, i) => (e, i + 1 == expectedBytesConsumed.Length)))
         {
-            var readTask = r.ReadAsync(bytesConsumed, CancellationToken.None);
+            var readTask = r.ReadAsync(CancellationToken.None);
             Debug.Assert(readTask.IsCompleted);
-            var memory = readTask.Result;
-            Assert.Equal(!isLast, Read(memory.Span).Incomplete);
+            Assert.Equal(!isLast, Read(r.RemainingChunkSpan).Incomplete);
 
             JsonReadResult<object> Read(ReadOnlySpan<byte> span)
             {
                 var reader = new Utf8JsonReader(span, r.Eof, state);
                 var readResult = bufferedReader.TryRead(ref reader);
-                bytesConsumed = (int)reader.BytesConsumed;
+                var bytesConsumed = (int)reader.BytesConsumed;
                 Assert.Equal(expectedBytesCons, bytesConsumed);
+                r.ConsumeChunkBy(bytesConsumed);
                 state = reader.CurrentState;
                 return readResult;
             }
@@ -104,28 +103,26 @@ public abstract class StreamingTestsBase : JsonReaderTestsBase
         {
             using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
             using var r = new StreamChunkReader(ms, this.bufferSize);
-            var totalBytesConsumed = 0;
-            var bytesConsumed = 0;
             var state = new JsonReaderState();
 
             while (true)
             {
-                totalBytesConsumed += bytesConsumed;
-                var readTask = r.ReadAsync(bytesConsumed, CancellationToken.None);
+                var readTask = r.ReadAsync(CancellationToken.None);
                 Debug.Assert(readTask.IsCompleted);
-                var memory = readTask.Result;
 
-                if (Read(memory.Span) is ({ Incomplete: false }, _, _) result)
+                if (Read(r.RemainingChunkSpan) is ({ Incomplete: false }, _, _) result)
                     return result;
 
                 (JsonReadResult<T>, JsonTokenType, long) Read(ReadOnlySpan<byte> span)
                 {
+                    var tokenStartBaseIndex = r.TotalConsumedLength;
                     var reader = new Utf8JsonReader(span, r.Eof, state);
                     var readResult = jsonReader.TryRead(ref reader);
-                    bytesConsumed = (int)reader.BytesConsumed;
+                    var bytesConsumed = (int)reader.BytesConsumed;
+                    r.ConsumeChunkBy(bytesConsumed);
                     WriteLine($"Buffer[{span.Length}] = <{Printable(span)}>, Consumed[{bytesConsumed}] = <{Printable(span[..bytesConsumed])}>");
                     state = reader.CurrentState;
-                    return (readResult, reader.TokenType, totalBytesConsumed + reader.TokenStartIndex);
+                    return (readResult, reader.TokenType, tokenStartBaseIndex + reader.TokenStartIndex);
                 }
             }
         }
