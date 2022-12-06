@@ -46,7 +46,7 @@ public class ArrayReadStateMachineTests
         Assert.Equal(State.Error, subject.CurrentState);
     }
 
-    public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Array_3_Data =
+    public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Array_Data =
         new()
         {
             {
@@ -158,8 +158,8 @@ public class ArrayReadStateMachineTests
         };
 
     [Theory]
-    [MemberData(nameof(Read_Array_3_Data))]
-    public void Read_Array_3(string[] chunks, (ReadResult, State)[] expectations)
+    [MemberData(nameof(Read_Reads_Array_Data))]
+    public void Read_Reads_Array(string[] chunks, (ReadResult, State)[] expectations)
     {
         var subject = new ArrayReadStateMachine();
         var jsonReaderState = new JsonReaderState();
