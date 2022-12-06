@@ -50,14 +50,14 @@ public sealed class StreamingTests
 
     [Theory]
     [MemberData(nameof(Buffer_TheoryData))]
-    public void Buffer_Expands_Correctly(IJsonReader<object> jsonReader, string json, int bufferSize, int[] expectedBytesConsumed)
+    public void Buffer_Expands_Correctly(IJsonReader<object> jsonReader, string json, int bufferSize, int[] bytesConsumedExpectations)
     {
         var bufferedReader = jsonReader.Buffer();
         using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
         using var r = new StreamChunkReader(ms, bufferSize);
         var state = new JsonReaderState();
 
-        foreach (var (expectedBytesCons, _, isLast) in expectedBytesConsumed.TagFirstLast(ValueTuple.Create))
+        foreach (var (expectedBytesConsumed, _, isLast) in bytesConsumedExpectations.TagFirstLast(ValueTuple.Create))
         {
             var readTask = r.ReadAsync(CancellationToken.None);
             Debug.Assert(readTask.IsCompleted);
@@ -68,7 +68,7 @@ public sealed class StreamingTests
                 var reader = new Utf8JsonReader(span, r.Eof, state);
                 var readResult = bufferedReader.TryRead(ref reader);
                 var bytesConsumed = (int)reader.BytesConsumed;
-                Assert.Equal(expectedBytesCons, bytesConsumed);
+                Assert.Equal(expectedBytesConsumed, bytesConsumed);
                 r.ConsumeChunkBy(bytesConsumed);
                 state = reader.CurrentState;
                 return readResult;
