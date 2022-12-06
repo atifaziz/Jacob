@@ -58,11 +58,6 @@ public record struct ArrayReadStateMachine
                 {
                     return ReadResult.Item;
                 }
-                case State.Done:
-                {
-                    CurrentState = State.Initial;
-                    break;
-                }
                 default:
                 {
                     throw new InvalidOperationException();
