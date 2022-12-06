@@ -40,12 +40,12 @@ public sealed class StreamingTests
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 2, new[] { 0, 0, 6 } },
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 5, new[] { 0, 6 } },
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 10, new[] { 6 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 2, new[] { 0, 0, 0, 0, 26 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 5, new[] { 0, 0, 0, 26 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 10, new[] { 0, 0, 26 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 2, new[] { 0, 0, 0, 0, 20 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 5, new[] { 0, 0, 20 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 10, new[] { 0, 20 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 2, new[] { 0, 0, 0, 0, 31 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 5, new[] { 0, 0, 0, 31 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 10, new[] { 0, 0, 31 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 2, new[] { 0, 0, 0, 0, 21 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 5, new[] { 0, 0, 0, 21 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 10, new[] { 0, 0, 21 } },
     };
 
     [Theory]
