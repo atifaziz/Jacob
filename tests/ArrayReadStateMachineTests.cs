@@ -54,16 +54,10 @@ public class ArrayReadStateMachineTests
 
         _ = subject.Read(ref reader);
 
-        try
-        {
-            _ = subject.Read(ref reader);
-        }
-        catch (InvalidOperationException)
-        {
-            return;
-        }
+        Assert.Equal(State.Error, subject.CurrentState);
 
-        Assert.Fail($"Expected an {nameof(InvalidOperationException)} to be thrown, but none was actually thrown.");
+        var ex = CatchExceptionForAssertion(reader, r => _ = subject.Read(ref r));
+        _ = Assert.IsType<InvalidOperationException>(ex);
     }
 
     [Fact]
@@ -76,16 +70,8 @@ public class ArrayReadStateMachineTests
 
         Assert.Equal(State.Done, subject.CurrentState);
 
-        try
-        {
-            _ = subject.Read(ref reader);
-        }
-        catch (InvalidOperationException)
-        {
-            return;
-        }
-
-        Assert.Fail($"Expected an {nameof(InvalidOperationException)} to be thrown, but none was actually thrown.");
+        var ex = CatchExceptionForAssertion(reader, r => _ = subject.Read(ref r));
+        _ = Assert.IsType<InvalidOperationException>(ex);
     }
 
     public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Array_Data =
@@ -232,5 +218,23 @@ public class ArrayReadStateMachineTests
         }
 
         Assert.Empty(chunkRun);
+    }
+
+    delegate void ReaderAction(Utf8JsonReader reader);
+
+    static Exception? CatchExceptionForAssertion(Utf8JsonReader reader, ReaderAction action)
+    {
+        try
+        {
+            action(reader);
+        }
+#pragma warning disable CA1031 // Do not catch general exception types
+        catch (Exception ex)
+#pragma warning restore CA1031
+        {
+            return ex;
+        }
+
+        return null;
     }
 }
