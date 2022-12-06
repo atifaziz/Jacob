@@ -11,7 +11,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System;
-using System.Linq;
+using MoreLinq;
 using Xunit;
 using Xunit.Abstractions;
 using JsonTokenType = System.Text.Json.JsonTokenType;
@@ -55,7 +55,7 @@ public sealed class StreamingTests
         using var r = new StreamChunkReader(ms, bufferSize);
         var state = new JsonReaderState();
 
-        foreach (var (expectedBytesCons, isLast) in expectedBytesConsumed.Select((e, i) => (e, i + 1 == expectedBytesConsumed.Length)))
+        foreach (var (expectedBytesCons, _, isLast) in expectedBytesConsumed.TagFirstLast(ValueTuple.Create))
         {
             var readTask = r.ReadAsync(CancellationToken.None);
             Debug.Assert(readTask.IsCompleted);
