@@ -115,6 +115,10 @@ public ref struct Utf8JsonReader
             case JsonTokenType.StartObject or JsonTokenType.StartArray:
             {
                 var depth = CurrentDepth;
+
+                if (this.isTokenRead)
+                    _ = Read();
+
                 do
                 {
                     if (!Read())
