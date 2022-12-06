@@ -20,6 +20,8 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 public sealed class StreamingTests
 {
+    static readonly object NullObject = new();
+
     static readonly IJsonReader<object> NestedObjectReader =
         JsonReader.Object(
             JsonReader.Property(
@@ -29,7 +31,7 @@ public sealed class StreamingTests
 
     public static TheoryData<IJsonReader<object>, string, int, int[]> Buffer_TheoryData() => new()
     {
-        { JsonReader.Null((object?)null).AsObject(), /*lang=json*/ "null", 2, new[] { 0, 4 } },
+        { JsonReader.Null(NullObject), /*lang=json*/ "null", 2, new[] { 0, 4 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "false", 2, new[] { 0, 0, 5 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 2, new[] { 0, 4 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 5, new[] { 4 } },
