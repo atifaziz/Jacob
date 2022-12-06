@@ -22,12 +22,12 @@ public sealed class StreamingTests
 {
     static readonly object NullObject = new();
 
-    static readonly IJsonReader<object> NestedObjectReader =
+    static readonly IJsonReader<string> NestedObjectReader =
         JsonReader.Object(
             JsonReader.Property(
                 "prop1",
                 JsonReader.Object(
-                    JsonReader.Property("prop2", JsonReader.String().AsObject()))));
+                    JsonReader.Property("prop2", JsonReader.String()))));
 
     public static TheoryData<IJsonReader<object>, string, int, int[]> Buffer_TheoryData() => new()
     {
@@ -40,9 +40,9 @@ public sealed class StreamingTests
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 2, new[] { 0, 0, 6 } },
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 5, new[] { 0, 6 } },
         { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 10, new[] { 6 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 2, new[] { 0, 0, 0, 0, 31 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 5, new[] { 0, 0, 0, 31 } },
-        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 10, new[] { 0, 0, 31 } },
+        { NestedObjectReader.AsObject(), /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 2, new[] { 0, 0, 0, 0, 31 } },
+        { NestedObjectReader.AsObject(), /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 5, new[] { 0, 0, 0, 31 } },
+        { NestedObjectReader.AsObject(), /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 10, new[] { 0, 0, 31 } },
         { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 2, new[] { 0, 0, 0, 0, 21 } },
         { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 5, new[] { 0, 0, 0, 21 } },
         { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 10, new[] { 0, 0, 21 } },
