@@ -337,7 +337,8 @@ public static partial class JsonReader
     public static IJsonReader<T> Validate<T>(this IJsonReader<T> reader, string? errorMessage, Func<T, bool> predicate) =>
         reader.TryMap(v => predicate(v) ? Value(v) : Error(errorMessage ?? "Invalid JSON value."));
 
-    public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader) =>
+    public static IJsonReader<object> AsObject<T>(this IJsonReader<T> reader)
+        where T : notnull =>
         from v in reader select (object)v;
 
     public static IJsonReader<TResult> Let<T, TResult>(this IJsonReader<T> reader,
