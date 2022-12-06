@@ -46,6 +46,26 @@ public class ArrayReadStateMachineTests
         Assert.Equal(State.Error, subject.CurrentState);
     }
 
+    [Fact]
+    public void Read_Throws_When_State_Machine_Is_In_Error_State()
+    {
+        var subject = new ArrayReadStateMachine();
+        var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes("{"));
+
+        _ = subject.Read(ref reader);
+
+        try
+        {
+            _ = subject.Read(ref reader);
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        Assert.Fail($"Expected an {nameof(InvalidOperationException)} to be thrown, but none was actually thrown.");
+    }
+
     public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Array_Data =
         new()
         {
