@@ -29,21 +29,21 @@ public sealed class StreamingTests
 
     public static TheoryData<IJsonReader<object>, string, int, int[]> Buffer_TheoryData() => new()
     {
-        { JsonReader.Null((object?)null).AsObject(), /*lang=json*/"null", 2, new[] { 0, 4 } },
-        { JsonReader.Boolean().AsObject(), /*lang=json*/"false", 2, new[] { 0, 0, 5 } },
-        { JsonReader.Boolean().AsObject(), /*lang=json*/"true", 2, new[] { 0, 4 } },
-        { JsonReader.Boolean().AsObject(), /*lang=json*/"true", 5, new[] { 4 } },
-        { JsonReader.Int32().AsObject(), /*lang=json*/"12", 2, new[] { 0, 2 } },
-        { JsonReader.Int32().AsObject(), /*lang=json*/"12", 5, new[] { 0, 2 } },
-        { JsonReader.String().AsObject(), /*lang=json*/""" "foo" """, 2, new[] { 0, 0, 6 } },
-        { JsonReader.String().AsObject(), /*lang=json*/""" "foo" """, 5, new[] { 0, 6 } },
-        { JsonReader.String().AsObject(), /*lang=json*/""" "foo" """, 10, new[] { 6 } },
-        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 2, new[] { 0, 0, 0, 0, 26 } },
-        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 5, new[] { 0, 0, 0, 26 } },
-        { NestedObjectReader, /*lang=json*/""" {"prop1":{"prop2":"foo"}} """, 10, new[] { 0, 0, 26 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 2, new[] { 0, 0, 0, 0, 20 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 5, new[] { 0, 0, 20 } },
-        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/""" ["foo","bar","baz"] """, 10, new[] { 0, 20 } },
+        { JsonReader.Null((object?)null).AsObject(), /*lang=json*/ "null", 2, new[] { 0, 4 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/ "false", 2, new[] { 0, 0, 5 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 2, new[] { 0, 4 } },
+        { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 5, new[] { 4 } },
+        { JsonReader.Int32().AsObject(), /*lang=json*/ "12", 2, new[] { 0, 2 } },
+        { JsonReader.Int32().AsObject(), /*lang=json*/ "12", 5, new[] { 0, 2 } },
+        { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 2, new[] { 0, 0, 6 } },
+        { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 5, new[] { 0, 6 } },
+        { JsonReader.String().AsObject(), /*lang=json*/ """ "foo" """, 10, new[] { 6 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 2, new[] { 0, 0, 0, 0, 26 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 5, new[] { 0, 0, 0, 26 } },
+        { NestedObjectReader, /*lang=json*/ """{ "prop1": { "prop2": "foo" } }""", 10, new[] { 0, 0, 26 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 2, new[] { 0, 0, 0, 0, 20 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 5, new[] { 0, 0, 20 } },
+        { JsonReader.Array(JsonReader.String()).AsObject(), /*lang=json*/ """["foo", "bar", "baz"]""", 10, new[] { 0, 20 } },
     };
 
     [Theory]
