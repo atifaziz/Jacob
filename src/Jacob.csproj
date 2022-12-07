@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net6.0;netcoreapp3.1</TargetFrameworks>
-    <VersionPrefix>0.5</VersionPrefix>
+    <VersionPrefix>0.6.0</VersionPrefix>
     <Description>A succinct and compositional .NET API for reading JSON.</Description>
     <Authors>Atif Aziz</Authors>
     <Copyright>
