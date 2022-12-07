@@ -229,7 +229,7 @@ public static partial class JsonReader
 
     public static IJsonReader<Guid> Guid() =>
         guidReader ??=
-            Create((ref Utf8JsonReader rdr) =>
+            Create(static (ref Utf8JsonReader rdr) =>
                 !rdr.Read()
                     ? JsonReadError.Incomplete
                     : rdr.TokenType == JsonTokenType.String && rdr.TryGetGuid(out var value)
