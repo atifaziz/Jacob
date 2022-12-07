@@ -133,7 +133,7 @@ public abstract class StreamingTestsBase : JsonReaderTestsBase
             return TryReadCore(jsonReader.Buffer(), json);
         }
 
-        string Printable(ReadOnlySpan<byte> span)
+        static string Printable(ReadOnlySpan<byte> span)
         {
             var json = JsonSerializer.Serialize(Encoding.UTF8.GetString(span));
             return json[1..^1].Replace(@"\u0022", "\"", StringComparison.Ordinal);
