@@ -19,72 +19,88 @@ partial class JsonReader
     public static IJsonReader<byte> Byte() =>
         byteReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetByte(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with Byte."));
 
     static IJsonReader<int> intReader;
 
     public static IJsonReader<int> Int32() =>
         intReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt32(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with Int32."));
 
     static IJsonReader<long> longReader;
 
     public static IJsonReader<long> Int64() =>
         longReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt64(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Int64."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetInt64(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with Int64."));
 
     static IJsonReader<ushort> ushortReader;
 
     public static IJsonReader<ushort> UInt16() =>
         ushortReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt16(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with UInt16."));
 
     static IJsonReader<uint> uintReader;
 
     public static IJsonReader<uint> UInt32() =>
         uintReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt32(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with UInt32."));
 
     static IJsonReader<ulong> ulongReader;
 
     public static IJsonReader<ulong> UInt64() =>
         ulongReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetUInt64(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with UInt64."));
 
     static IJsonReader<double> doubleReader;
 
     public static IJsonReader<double> Double() =>
         doubleReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetDouble(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with Double."));
 
     static IJsonReader<float> floatReader;
 
     public static IJsonReader<float> Single() =>
         floatReader ??=
             Create(static (ref Utf8JsonReader rdr) =>
-                rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
-                ? Value(value)
-                : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
+                !rdr.Read()
+                    ? JsonReadError.Incomplete
+                    : rdr.TokenType == JsonTokenType.Number && rdr.TryGetSingle(out var value)
+                    ? Value(value)
+                    : Error("Invalid JSON value; expecting a JSON number compatible with Single."));
 
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
@@ -260,24 +276,33 @@ partial class JsonReader
             IJsonReader<T2> item2Reader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
+            if (!rdr.Read())
+                throw PartialJsonNotSupportedException();
+
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
 
-            _ = rdr.Read(); // "["
+            T1 item1;
+            switch(item1Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
+                case { Error: { } error1 }: return Error(error1);
+                case { Value: var item }: item1 = item; break;
+            }
 
-            var (item1, error1) = item1Reader.TryRead(ref rdr);
-            if (error1 is not null)
-                return Error(error1);
+            T2 item2;
+            switch(item2Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
+                case { Error: { } error2 }: return Error(error2);
+                case { Value: var item }: item2 = item; break;
+            }
 
-            var (item2, error2) = item2Reader.TryRead(ref rdr);
-            if (error2 is not null)
-                return Error(error2);
+            if (!rdr.Read())
+                throw PartialJsonNotSupportedException();
 
             if (rdr.TokenType != JsonTokenType.EndArray)
                 return Error("Invalid JSON value; JSON array has too many values.");
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "]"
 
             return Value((item1, item2));
         });
@@ -289,28 +314,41 @@ partial class JsonReader
             IJsonReader<T3> item3Reader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
+            if (!rdr.Read())
+                throw PartialJsonNotSupportedException();
+
             if (rdr.TokenType != JsonTokenType.StartArray)
                 return Error("Invalid JSON value where a JSON array was expected.");
 
-            _ = rdr.Read(); // "["
+            T1 item1;
+            switch(item1Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
+                case { Error: { } error1 }: return Error(error1);
+                case { Value: var item }: item1 = item; break;
+            }
 
-            var (item1, error1) = item1Reader.TryRead(ref rdr);
-            if (error1 is not null)
-                return Error(error1);
+            T2 item2;
+            switch(item2Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
+                case { Error: { } error2 }: return Error(error2);
+                case { Value: var item }: item2 = item; break;
+            }
 
-            var (item2, error2) = item2Reader.TryRead(ref rdr);
-            if (error2 is not null)
-                return Error(error2);
+            T3 item3;
+            switch(item3Reader.TryRead(ref rdr))
+            {
+                case { Incomplete: true }: throw PartialJsonNotSupportedException();
+                case { Error: { } error3 }: return Error(error3);
+                case { Value: var item }: item3 = item; break;
+            }
 
-            var (item3, error3) = item3Reader.TryRead(ref rdr);
-            if (error3 is not null)
-                return Error(error3);
+            if (!rdr.Read())
+                throw PartialJsonNotSupportedException();
 
             if (rdr.TokenType != JsonTokenType.EndArray)
                 return Error("Invalid JSON value; JSON array has too many values.");
-
-            // Implementation of "Create" will effectively do the following:
-            // _ = rdr.Read(); // "]"
 
             return Value((item1, item2, item3));
         });

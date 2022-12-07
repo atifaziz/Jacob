@@ -11,37 +11,58 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Xunit;
+using Utf8JsonReader = Utf8JsonReader;
+using JsonException = System.Text.Json.JsonException;
 
-public class JsonReaderTests
+public sealed class JsonReaderTests : JsonReaderTestsBase
 {
-    static void TestMovesReaderPastReadValue<T>(IJsonReader<T> reader, string json)
+    protected override T Read<T>(IJsonReader<T> jsonReader, string json) =>
+        jsonReader.Read(json);
+
+    protected override JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json) =>
+        jsonReader.TryRead(json);
+}
+
+public abstract class JsonReaderTestsBase
+{
+    protected abstract JsonReadResult<T> TryRead<T>(IJsonReader<T> jsonReader, string json);
+
+    protected abstract T Read<T>(IJsonReader<T> jsonReader, string json);
+
+    static void TestReaderPositionPostRead<T>(IJsonReader<T> reader, string json)
     {
         var sentinel = $"END-{Guid.NewGuid()}";
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes($"""[{json}, "{sentinel}"]"""));
-        Assert.True(rdr.Read()); // start
-        Assert.True(rdr.Read()); // "["
+        Assert.True(rdr.Read());
         _ = reader.Read(ref rdr);
+        Assert.True(rdr.Read());
         Assert.Equal(JsonTokenType.String, rdr.TokenType);
         Assert.Equal(sentinel, rdr.GetString());
     }
 
-    static void TestInvalidInput<T>(IJsonReader<T> reader, string json,
-                                    string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
+    void TestInvalidInput<T>(IJsonReader<T> reader, string json,
+                             string expectedError, string expectedErrorToken, int expectedErrorOffset = 0)
     {
         json = json.TrimStart();
 
-        var (value, error) = reader.TryRead(json);
+        var (value, error) = TryRead(reader, json);
         Assert.Equal(default, value);
         Assert.Equal(expectedError, error);
 
-        var ex = Assert.Throws<JsonException>(() => reader.Read(json));
+        var ex = Assert.Throws<JsonException>(() => Read(reader, json));
         Assert.Equal($@"{expectedError} See token ""{expectedErrorToken}"" at offset {expectedErrorOffset}.", ex.Message);
+    }
+
+    void TestValidInput<T>(IJsonReader<T> reader, string json, T expected)
+    {
+        var result = Read(reader, json);
+        Assert.Equal(expected, result);
     }
 
     [Fact]
     public void String_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String(), /*lang=json*/ """ "foobar" """);
+        TestReaderPositionPostRead(JsonReader.String(), /*lang=json*/ """ "foobar" """);
     }
 
     [Fact]
@@ -63,8 +84,7 @@ public class JsonReaderTests
     [InlineData("foo bar", /*lang=json*/ """ "foo bar" """)]
     public void String_With_Valid_Input(string expected, string json)
     {
-        var result = JsonReader.String().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.String(), json, expected);
     }
 
     [Theory]
@@ -84,15 +104,14 @@ public class JsonReaderTests
     [Fact]
     public void Byte_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Byte(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.Byte(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void Byte_With_Valid_Input(byte expected, string json)
     {
-        var result = JsonReader.Byte().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Byte(), json, expected);
     }
 
     [Theory]
@@ -114,14 +133,13 @@ public class JsonReaderTests
     [Fact]
     public void Null_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Null((object?)null), /*lang=json*/ "null");
+        TestReaderPositionPostRead(JsonReader.Null((object?)null), /*lang=json*/ "null");
     }
 
     [Fact]
     public void Null_With_Valid_Input()
     {
-        var result = JsonReader.Null((object?)null).Read(/*lang=json*/ "null");
-        Assert.Null(result);
+        TestValidInput(JsonReader.Null((object?)null), /*lang=json*/ "null", null);
     }
 
     [Theory]
@@ -140,7 +158,7 @@ public class JsonReaderTests
     [Fact]
     public void Boolean_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Boolean(), /*lang=json*/ "true");
+        TestReaderPositionPostRead(JsonReader.Boolean(), /*lang=json*/ "true");
     }
 
     [Theory]
@@ -148,8 +166,7 @@ public class JsonReaderTests
     [InlineData(false, /*lang=json*/ "false")]
     public void Boolean_With_Valid_Input(bool expected, string json)
     {
-        var result = JsonReader.Boolean().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Boolean(), json, expected);
     }
 
     [Theory]
@@ -167,7 +184,7 @@ public class JsonReaderTests
     [Fact]
     public void DateTime_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.DateTime(), /*lang=json*/ """ "2022-02-02T12:34:56" """);
+        TestReaderPositionPostRead(JsonReader.DateTime(), /*lang=json*/ """ "2022-02-02T12:34:56" """);
     }
 
     [Theory]
@@ -175,9 +192,8 @@ public class JsonReaderTests
     [InlineData(2022, 2, 2, 12, 34, 56, 0, /*lang=json*/ """ "2022-02-02T12:34:56" """)]
     public void DateTime_With_Valid_Input(int year, int month, int day, int hour, int minute, int second, int millisecond, string json)
     {
-        var result = JsonReader.DateTime().Read(json);
         var expected = new DateTime(year, month, day, hour, minute, second, millisecond);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.DateTime(), json, expected);
     }
 
     [Theory]
@@ -200,7 +216,7 @@ public class JsonReaderTests
     [Fact]
     public void DateTimeOffset_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.DateTimeOffset(), """ "2022-02-02T12:34:56-01:00" """);
+        TestReaderPositionPostRead(JsonReader.DateTimeOffset(), """ "2022-02-02T12:34:56-01:00" """);
     }
 
     [Theory]
@@ -228,8 +244,7 @@ public class JsonReaderTests
         };
         var unquoted = json[2..^2];
         var expected = DateTimeOffset.ParseExact(unquoted, formats, CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal);
-        var actual = JsonReader.DateTimeOffset().Read(json);
-        Assert.Equal(expected, actual);
+        TestValidInput(JsonReader.DateTimeOffset(), json, expected);
     }
 
     [Theory]
@@ -256,15 +271,14 @@ public class JsonReaderTests
     [Fact]
     public void Int32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.Int32(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void Int32_With_Valid_Input(int expected, string json)
     {
-        var result = JsonReader.Int32().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Int32(), json, expected);
     }
 
     [Theory]
@@ -283,15 +297,14 @@ public class JsonReaderTests
     [Fact]
     public void Single_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Single(), /*lang=json*/ "4.2");
+        TestReaderPositionPostRead(JsonReader.Single(), /*lang=json*/ "4.2");
     }
 
     [Theory]
     [InlineData(4.2, /*lang=json*/ "4.2")]
     public void Single_With_Valid_Input(float expected, string json)
     {
-        var result = JsonReader.Single().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Single(), json, expected);
     }
 
     [Theory]
@@ -311,15 +324,14 @@ public class JsonReaderTests
     [Fact]
     public void UInt16_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt16(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.UInt16(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void UInt16_With_Valid_Input(ushort expected, string json)
     {
-        var result = JsonReader.UInt16().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.UInt16(), json, expected);
     }
 
     [Theory]
@@ -342,15 +354,14 @@ public class JsonReaderTests
     [Fact]
     public void UInt32_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt32(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.UInt32(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void UInt32_With_Valid_Input(uint expected, string json)
     {
-        var result = JsonReader.UInt32().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.UInt32(), json, expected);
     }
 
     [Theory]
@@ -373,15 +384,14 @@ public class JsonReaderTests
     [Fact]
     public void UInt64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.UInt64(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.UInt64(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void UInt64_With_Valid_Input(ulong expected, string json)
     {
-        var result = JsonReader.UInt64().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.UInt64(), json, expected);
     }
 
     [Theory]
@@ -403,15 +413,14 @@ public class JsonReaderTests
     [Fact]
     public void Int64_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int64(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.Int64(), /*lang=json*/ "42");
     }
 
     [Theory]
     [InlineData(42, /*lang=json*/ "42")]
     public void Int64_With_Valid_Input(long expected, string json)
     {
-        var result = JsonReader.Int64().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Int64(), json, expected);
     }
 
     [Theory]
@@ -431,7 +440,7 @@ public class JsonReaderTests
     [Fact]
     public void Double_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Double(), /*lang=json*/ "42");
+        TestReaderPositionPostRead(JsonReader.Double(), /*lang=json*/ "42");
     }
 
     [Theory]
@@ -441,8 +450,7 @@ public class JsonReaderTests
     [InlineData(400, /*lang=json*/ "4e2")]
     public void Double_With_Valid_Input(double expected, string json)
     {
-        var result = JsonReader.Double().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Double(), json, expected);
     }
 
     [Theory]
@@ -461,7 +469,7 @@ public class JsonReaderTests
     [Fact]
     public void Array_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Array(JsonReader.Int32()), /*lang=json*/ "[42]");
+        TestReaderPositionPostRead(JsonReader.Array(JsonReader.Int32()), /*lang=json*/ "[42]");
     }
 
     [Theory]
@@ -469,8 +477,7 @@ public class JsonReaderTests
     [InlineData(new[] { 1, 2, 3 }, /*lang=json*/ "[1, 2, 3]")]
     public void Array_With_Valid_Input(int[] expected, string json)
     {
-        var result = JsonReader.Array(JsonReader.Int32()).Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Array(JsonReader.Int32()), json, expected);
     }
 
     [Theory]
@@ -491,6 +498,41 @@ public class JsonReaderTests
     }
 
     [Fact]
+    public void Array_Of_String_Array_With_Valid_Input()
+    {
+        TestValidInput(JsonReader.Array(JsonReader.Array(JsonReader.String())),
+                       /*lang=json*/ """
+                       [
+                           ["123", "456", "789"],
+                           ["foo", "bar", "baz"],
+                           ["big", "fan", "run"]
+                       ]
+                       """,
+                       new[]
+                       {
+                           new[] { "123", "456", "789" },
+                           new[] { "foo", "bar", "baz" },
+                           new[] { "big", "fan", "run" }
+                       });
+    }
+
+    [Fact]
+    public void String_Array_With_Valid_Input()
+    {
+        TestValidInput(JsonReader.Array(JsonReader.String()),
+                       /*lang=json*/ """["foo", "bar", "baz"]""",
+                       new[] { "foo", "bar", "baz" });
+    }
+
+    [Fact]
+    public void Boolean_Array_With_Valid_Input()
+    {
+        TestValidInput(JsonReader.Array(JsonReader.Boolean()),
+                       /*lang=json*/ """[true, false, true]""",
+                       new[] { true, false, true });
+    }
+
+    [Fact]
     public void Select_Invokes_Projection_Function_For_Read_Value()
     {
         var reader =
@@ -505,7 +547,7 @@ public class JsonReaderTests
     [Fact]
     public void Select_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(from s in JsonReader.String() select s, /*lang=json*/ """ "foobar" """);
+        TestReaderPositionPostRead(from s in JsonReader.String() select s, /*lang=json*/ """ "foobar" """);
     }
 
     [Fact]
@@ -578,10 +620,7 @@ public class JsonReaderTests
     [InlineData(42, "foobar", /*lang=json*/ """{ "nums": [1, 2, 3], "str": "foobar", "num": 42, "obj": {} }""")]
     public void Object_With_Valid_Input(int expectedNum, string expectedStr, string json)
     {
-        var (num, str) = ObjectReader.Read(json);
-
-        Assert.Equal(expectedNum, num);
-        Assert.Equal(expectedStr, str);
+        TestValidInput(ObjectReader, json, (expectedNum, expectedStr));
     }
 
     [Theory]
@@ -603,7 +642,7 @@ public class JsonReaderTests
     [InlineData(/*lang=json*/ """{ "str": "foobar", "num": 42 }""")]
     public void Object_Does_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(ObjectReader, json);
+        TestReaderPositionPostRead(ObjectReader, json);
     }
 
     static readonly IJsonReader<Dictionary<string, int>>
@@ -614,12 +653,7 @@ public class JsonReaderTests
     {
         const string json = /*lang=json*/ """{ "foo": 123, "bar": 456, "baz": 789 }""";
 
-        var obj = KeyIntMapReader.Read(json);
-
-        Assert.Equal(3, obj.Count);
-        Assert.Equal(123, obj["foo"]);
-        Assert.Equal(456, obj["bar"]);
-        Assert.Equal(789, obj["baz"]);
+        TestValidInput(KeyIntMapReader, json, new() { ["foo"] = 123, ["bar"] = 456, ["baz"] = 789 });
     }
 
     [Theory]
@@ -637,7 +671,7 @@ public class JsonReaderTests
     [InlineData(/*lang=json*/ """{ "foo": 123, "bar": 456, "baz": 789 }""")]
     public void Object_General_Doesnt_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(KeyIntMapReader, json);
+        TestReaderPositionPostRead(KeyIntMapReader, json);
     }
 
     static readonly IJsonReader<object> EitherReader =
@@ -651,7 +685,7 @@ public class JsonReaderTests
     [InlineData(/*lang=json*/ "[true, false]")]
     public void Either_Doesnt_Move_Reader(string json)
     {
-        TestMovesReaderPastReadValue(EitherReader, json);
+        TestReaderPositionPostRead(EitherReader, json);
     }
 
     [Theory]
@@ -661,8 +695,7 @@ public class JsonReaderTests
     [InlineData(new[] { true, false }, /*lang=json*/ "[true, false]")]
     public void Either_With_Valid_Input(object expected, string json)
     {
-        var result = EitherReader.Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(EitherReader, json, expected);
     }
 
     [Theory]
@@ -674,6 +707,19 @@ public class JsonReaderTests
     public void Either_With_Invalid_Input(string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(EitherReader, json, "Invalid JSON value.", expectedErrorToken, expectedErrorOffset);
+    }
+
+    [Theory]
+    [InlineData(new[] { "foo", "bar", "baz" }, /*lang=json*/ """["foo", "bar", "baz"]""")]
+    [InlineData(new[] { true, false }, /*lang=json*/ """[true, false]""")]
+    [InlineData(new[] { 123, 456, 789 }, /*lang=json*/ """[123, 456, 789]""")]
+    public void Array_Either_With_Valid_Input(object expected, string json)
+    {
+        var reader =
+            JsonReader.Array(JsonReader.Either(JsonReader.Int32().AsObject(),
+                                               JsonReader.Boolean().AsObject())
+                                       .Or(JsonReader.String().AsObject())).AsObject();
+        TestValidInput(reader, json, expected);
     }
 
 #pragma warning disable CA1008 // Enums should have zero value (by-design)
@@ -691,10 +737,7 @@ public class JsonReaderTests
     [InlineData(LoRaBandwidth.BW500, /*lang=json*/ "500")]
     public void Number_AsEnum_With_Valid_Input(LoRaBandwidth expected, string json)
     {
-        var reader = JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n);
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), json, expected);
     }
 
     [Theory]
@@ -710,8 +753,7 @@ public class JsonReaderTests
     [Fact]
     public void Number_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n),
-                                     /*lang=json*/ "125");
+        TestReaderPositionPostRead(JsonReader.Int32().AsEnum(n => (LoRaBandwidth)n), /*lang=json*/ "125");
     }
 
     [Theory]
@@ -725,10 +767,7 @@ public class JsonReaderTests
     [InlineData(JsonValueKind.Null, /*lang=json*/ """ "Null" """)]
     public void String_AsEnum_With_Valid_Input(JsonValueKind expected, string json)
     {
-        var reader = JsonReader.String().AsEnum<JsonValueKind>();
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.String().AsEnum<JsonValueKind>(), json, expected);
     }
 
     [Theory]
@@ -750,10 +789,7 @@ public class JsonReaderTests
     [InlineData(JsonValueKind.Null, false, /*lang=json*/ """ "Null" """)]
     public void String_AsEnum_With_Ignore_Case_Option_With_Valid_Input(JsonValueKind expected, bool ignoreCase, string json)
     {
-        var reader = JsonReader.String().AsEnum<JsonValueKind>(ignoreCase);
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.String().AsEnum<JsonValueKind>(ignoreCase), json, expected);
     }
 
     [Theory]
@@ -769,7 +805,7 @@ public class JsonReaderTests
     [Fact]
     public void String_AsEnum_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().AsEnum<JsonValueKind>(), /*lang=json*/ """ "Null" """);
+        TestReaderPositionPostRead(JsonReader.String().AsEnum<JsonValueKind>(), /*lang=json*/ """ "Null" """);
     }
 
     [Theory]
@@ -777,10 +813,7 @@ public class JsonReaderTests
     [InlineData(null, /*lang=json*/ "null")]
     public void String_OrNull_With_Valid_Input(string? expected, string json)
     {
-        var reader = JsonReader.String().OrNull();
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.String().OrNull(), json, expected);
     }
 
     [Theory]
@@ -800,10 +833,7 @@ public class JsonReaderTests
     [InlineData(null, /*lang=json*/ "null")]
     public void Number_OrNull_With_Valid_Input(int? expected, string json)
     {
-        var reader = JsonReader.Int32().OrNull();
-        var result = reader.Read(json);
-
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Int32().OrNull(), json, expected);
     }
 
     [Theory]
@@ -822,21 +852,21 @@ public class JsonReaderTests
     public void Number_OrNull_Moves_Reader()
     {
         var reader = JsonReader.Int32().OrNull();
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ "1");
+        TestReaderPositionPostRead(reader, /*lang=json*/ "1");
     }
 
     [Fact]
     public void String_OrNull_Moves_Reader()
     {
         var reader = JsonReader.String().OrNull();
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """ "foobar" """);
+        TestReaderPositionPostRead(reader, /*lang=json*/ """ "foobar" """);
     }
 
     [Fact]
     public void Tuple2_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar"]""");
+        TestReaderPositionPostRead(reader, /*lang=json*/ """[123, "foobar"]""");
     }
 
     [Fact]
@@ -872,7 +902,7 @@ public class JsonReaderTests
     public void Tuple3_Moves_Reader()
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
-        TestMovesReaderPastReadValue(reader, /*lang=json*/ """[123, "foobar", 456]""");
+        TestReaderPositionPostRead(reader, /*lang=json*/ """[123, "foobar", 456]""");
     }
 
     [Fact]
@@ -932,21 +962,20 @@ public class JsonReaderTests
     [Fact]
     public void Validate_Doesnt_Move_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.String().Validate(_ => true), /*lang=json*/ """ "foobar" """);
+        TestReaderPositionPostRead(JsonReader.String().Validate(_ => true), /*lang=json*/ """ "foobar" """);
     }
 
     [Fact]
     public void Guid_Moves_Reader()
     {
-        TestMovesReaderPastReadValue(JsonReader.Guid(), /*lang=json*/ """ "fe58502d-1da1-456d-960c-314e09c2dcd1" """);
+        TestReaderPositionPostRead(JsonReader.Guid(), /*lang=json*/ """ "fe58502d-1da1-456d-960c-314e09c2dcd1" """);
     }
 
     [Theory]
     [InlineData("fe58502d-1da1-456d-960c-314e09c2dcd1", /*lang=json*/ """ "fe58502d-1da1-456d-960c-314e09c2dcd1" """)]
     public void Guid_With_Valid_Input(Guid expected, string json)
     {
-        var result = JsonReader.Guid().Read(json);
-        Assert.Equal(expected, result);
+        TestValidInput(JsonReader.Guid(), json, expected);
     }
 
     [Theory]
