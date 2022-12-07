@@ -15,35 +15,31 @@ using System.Text.Json;
 public readonly struct JsonReaderState
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
-    internal JsonReaderState(System.Text.Json.JsonReaderState state, Stack<object>? stack, bool isTokenRead)
+    internal JsonReaderState(System.Text.Json.JsonReaderState state, Stack<object>? stack)
     {
         InnerState = state;
         Stack = stack;
-        IsTokenRead = isTokenRead;
     }
 
     internal System.Text.Json.JsonReaderState InnerState { get; }
     internal Stack<object>? Stack { get; }
-    internal bool IsTokenRead { get; }
 }
 
 [DebuggerDisplay("{" + nameof(DebuggerDisplay) + ",nq}")]
 public ref struct Utf8JsonReader
 {
     System.Text.Json.Utf8JsonReader reader;
-    bool isTokenRead;
     Stack<object>? stack;
 
     public Utf8JsonReader(ReadOnlySpan<byte> jsonData, JsonReaderOptions options = default) :
-        this(new(jsonData, options), isTokenRead: false, stack: null) { }
+        this(new(jsonData, options), stack: null) { }
 
     public Utf8JsonReader(ReadOnlySpan<byte> jsonData, bool isFinalBlock, JsonReaderState state) :
-        this(new(jsonData, isFinalBlock, state.InnerState), state.IsTokenRead, state.Stack) { }
+        this(new(jsonData, isFinalBlock, state.InnerState), state.Stack) { }
 
-    Utf8JsonReader(System.Text.Json.Utf8JsonReader reader, bool isTokenRead, Stack<object>? stack)
+    Utf8JsonReader(System.Text.Json.Utf8JsonReader reader, Stack<object>? stack)
     {
         this.stack = stack;
-        this.isTokenRead = isTokenRead;
         this.reader = reader;
     }
 
@@ -58,19 +54,7 @@ public ref struct Utf8JsonReader
         return JsonReadError.Incomplete;
     }
 
-    public void AssumeTokenRead() =>
-        this.isTokenRead = !this.isTokenRead ? true : throw new InvalidOperationException();
-
-    public bool Read()
-    {
-        if (this.isTokenRead)
-        {
-            this.isTokenRead = false;
-            return true;
-        }
-
-        return this.reader.Read();
-    }
+    public bool Read() => this.reader.Read();
 
     public bool TryReadToken(out JsonTokenType tokenType)
     {
@@ -84,85 +68,8 @@ public ref struct Utf8JsonReader
         return true;
     }
 
-    public void Skip()
-    {
-        if (!IsFinalBlock)
-            throw new InvalidOperationException($"Cannot skip tokens on partial JSON. Either get the whole payload and create a {nameof(Utf8JsonReader)} instance where {nameof(IsFinalBlock)} is true or call {nameof(TrySkip)}.");
-
-        SkipCore();
-    }
-
-    public bool TrySkip()
-    {
-        if (IsFinalBlock)
-        {
-            SkipCore();
-            return true;
-        }
-
-        Debug.Assert(!IsFinalBlock);
-
-        var bookmark = this;
-
-        re: switch (TokenType)
-        {
-            case JsonTokenType.PropertyName:
-            {
-                if (!Read())
-                    goto restore;
-                goto re;
-            }
-            case JsonTokenType.StartObject or JsonTokenType.StartArray:
-            {
-                var depth = CurrentDepth;
-
-                if (this.isTokenRead)
-                    _ = Read();
-
-                do
-                {
-                    if (!Read())
-                        goto restore;
-                }
-                while (depth < CurrentDepth);
-                break;
-            }
-        }
-
-        return true;
-
-        restore:
-        this = bookmark;
-        return false;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SkipCore()
-    {
-        Debug.Assert(IsFinalBlock);
-
-        if (TokenType == JsonTokenType.PropertyName)
-        {
-            var result = Read();
-            // Since IsFinalBlock == true here, and the JSON token is not a primitive value or comment.
-            // Read() is guaranteed to return true OR throw for invalid/incomplete data.
-            Debug.Assert(result);
-        }
-
-        if (TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
-        {
-            var depth = CurrentDepth;
-            do
-            {
-                var result = Read();
-                // Since IsFinalBlock == true here, and the JSON token is not a primitive value or comment.
-                // Read() is guaranteed to return true OR throw for invalid/incomplete data.
-                Debug.Assert(result);
-            }
-            while (depth < CurrentDepth);
-        }
-    }
-
+    public void Skip() => this.reader.Skip();
+    public bool TrySkip() => this.reader.TrySkip();
     public bool GetBoolean() => this.reader.GetBoolean();
     public byte GetByte() => this.reader.GetByte();
     public byte[] GetBytesFromBase64() => this.reader.GetBytesFromBase64();
@@ -201,7 +108,7 @@ public ref struct Utf8JsonReader
     public bool ValueTextEquals(string? text) => this.reader.ValueTextEquals(text);
     public long BytesConsumed => this.reader.BytesConsumed;
     public int CurrentDepth => this.reader.CurrentDepth;
-    public JsonReaderState CurrentState => new(this.reader.CurrentState, this.stack, this.isTokenRead);
+    public JsonReaderState CurrentState => new(this.reader.CurrentState, this.stack);
     public bool HasValueSequence => this.reader.HasValueSequence;
     public bool IsFinalBlock => this.reader.IsFinalBlock;
     public SequencePosition Position => this.reader.Position;

@@ -27,7 +27,7 @@ public record struct ArrayReadStateMachine
             {
                 case State.Initial:
                 {
-                    if (!reader.Read())
+                    if (reader.TokenType is JsonTokenType.None && !reader.Read())
                         return ReadResult.Incomplete;
 
                     if (reader.TokenType is not JsonTokenType.StartArray)
@@ -41,16 +41,18 @@ public record struct ArrayReadStateMachine
                 }
                 case State.ItemOrEnd:
                 {
-                    if (!reader.Read())
+                    var lookahead = reader;
+
+                    if (!lookahead.Read())
                         return ReadResult.Incomplete;
 
-                    if (reader.TokenType is JsonTokenType.EndArray)
+                    if (lookahead.TokenType is JsonTokenType.EndArray)
                     {
+                        reader = lookahead;
                         CurrentState = State.Done;
                         return ReadResult.Done;
                     }
 
-                    reader.AssumeTokenRead();
                     CurrentState = State.PendingItemRead;
                     return ReadResult.Item;
                 }

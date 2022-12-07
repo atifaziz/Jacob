@@ -204,10 +204,15 @@ public class ArrayReadStateMachineTests
 
             if (result is ReadResult.Item)
             {
-                var read = reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray
-                         ? reader.TrySkip()
-                         : reader.Read();
+                var read = reader.Read();
                 Assert.True(read);
+
+                if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                {
+                    var skipped = reader.TrySkip();
+                    Assert.True(skipped);
+                }
+
                 subject.OnItemRead();
                 Assert.Equal(State.ItemOrEnd, subject.CurrentState);
             }
