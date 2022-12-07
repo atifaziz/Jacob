@@ -61,18 +61,13 @@ public sealed class StreamingTests
         {
             var readTask = r.ReadAsync(CancellationToken.None);
             Debug.Assert(readTask.IsCompleted);
-            Assert.Equal(!isLast, Read(r.RemainingChunkSpan).Incomplete);
-
-            JsonReadResult<object> Read(ReadOnlySpan<byte> span)
-            {
-                var reader = new Utf8JsonReader(span, r.Eof, state);
-                var readResult = bufferedReader.TryRead(ref reader);
-                var bytesConsumed = (int)reader.BytesConsumed;
-                Assert.Equal(expectedBytesConsumed, bytesConsumed);
-                r.ConsumeChunkBy(bytesConsumed);
-                state = reader.CurrentState;
-                return readResult;
-            }
+            var reader = new Utf8JsonReader(r.RemainingChunkSpan, r.Eof, state);
+            var readResult = bufferedReader.TryRead(ref reader);
+            var bytesConsumed = (int)reader.BytesConsumed;
+            Assert.Equal(expectedBytesConsumed, bytesConsumed);
+            r.ConsumeChunkBy(bytesConsumed);
+            state = reader.CurrentState;
+            Assert.Equal(!isLast, readResult.Incomplete);
         }
 
         var result = bufferedReader.TryRead(json);
@@ -112,20 +107,16 @@ public abstract class StreamingTestsBase : JsonReaderTestsBase
                 var readTask = r.ReadAsync(CancellationToken.None);
                 Debug.Assert(readTask.IsCompleted);
 
-                if (Read(r.RemainingChunkSpan) is ({ Incomplete: false }, _, _) result)
-                    return result;
-
-                (JsonReadResult<T>, JsonTokenType, long) Read(ReadOnlySpan<byte> span)
-                {
-                    var tokenStartBaseIndex = r.TotalConsumedLength;
-                    var reader = new Utf8JsonReader(span, r.Eof, state);
-                    var readResult = jsonReader.TryRead(ref reader);
-                    var bytesConsumed = (int)reader.BytesConsumed;
-                    r.ConsumeChunkBy(bytesConsumed);
-                    WriteLine($"Buffer[{span.Length}] = <{Printable(span)}>, Consumed[{bytesConsumed}] = <{Printable(span[..bytesConsumed])}>");
-                    state = reader.CurrentState;
-                    return (readResult, reader.TokenType, tokenStartBaseIndex + reader.TokenStartIndex);
-                }
+                var span1 = r.RemainingChunkSpan;
+                var tokenStartBaseIndex = r.TotalConsumedLength;
+                var reader = new Utf8JsonReader(span1, r.Eof, state);
+                var readResult = jsonReader.TryRead(ref reader);
+                var bytesConsumed = (int)reader.BytesConsumed;
+                r.ConsumeChunkBy(bytesConsumed);
+                WriteLine($"Buffer[{span1.Length}] = <{Printable(span1)}>, Consumed[{bytesConsumed}] = <{Printable(span1[..bytesConsumed])}>");
+                state = reader.CurrentState;
+                if (readResult is { Incomplete: false } completedReadResult)
+                    return (completedReadResult, reader.TokenType, tokenStartBaseIndex + reader.TokenStartIndex);
             }
         }
         catch (NotSupportedException)
