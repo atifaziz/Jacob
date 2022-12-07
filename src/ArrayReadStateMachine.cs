@@ -9,13 +9,13 @@ using System.Text.Json;
 
 public record struct ArrayReadStateMachine
 {
-    public enum State { Initial, ItemOrEnd, Item, Done, Error }
+    public enum State { Initial, ItemOrEnd, PendingItemRead, Done, Error }
     public enum ReadResult { Error, Incomplete, Item, Done }
 
     public State CurrentState { get; private set; }
 
     public void OnItemRead() =>
-        CurrentState = CurrentState is State.Item
+        CurrentState = CurrentState is State.PendingItemRead
             ? State.ItemOrEnd
             : throw new InvalidOperationException();
 
@@ -51,10 +51,10 @@ public record struct ArrayReadStateMachine
                     }
 
                     reader.AssumeTokenRead();
-                    CurrentState = State.Item;
+                    CurrentState = State.PendingItemRead;
                     return ReadResult.Item;
                 }
-                case State.Item:
+                case State.PendingItemRead:
                 {
                     return ReadResult.Item;
                 }

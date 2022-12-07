@@ -111,7 +111,7 @@ public class ArrayReadStateMachineTests
                 new[]
                 {
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -121,7 +121,7 @@ public class ArrayReadStateMachineTests
                 {
                     (ReadResult.Incomplete, State.ItemOrEnd),
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -131,7 +131,7 @@ public class ArrayReadStateMachineTests
                 {
                     (ReadResult.Incomplete, State.ItemOrEnd),
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -141,7 +141,7 @@ public class ArrayReadStateMachineTests
                 {
                     (ReadResult.Incomplete, State.ItemOrEnd),
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -150,10 +150,10 @@ public class ArrayReadStateMachineTests
                 new[]
                 {
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.Item),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -161,7 +161,7 @@ public class ArrayReadStateMachineTests
                 new[] { "[[]]" },
                 new[]
                 {
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -169,8 +169,8 @@ public class ArrayReadStateMachineTests
                 new[] { "[[], {}]" },
                 new[]
                 {
-                    (ReadResult.Item, State.Item),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
@@ -178,8 +178,8 @@ public class ArrayReadStateMachineTests
                 new[] { "[[], ", /*lang=json*/"""{ "x": 123, "y": 456 }""", "]"},
                 new[]
                 {
-                    (ReadResult.Item, State.Item),
-                    (ReadResult.Item, State.Item),
+                    (ReadResult.Item, State.PendingItemRead),
+                    (ReadResult.Item, State.PendingItemRead),
                     (ReadResult.Done, State.Done)
                 }
             },
