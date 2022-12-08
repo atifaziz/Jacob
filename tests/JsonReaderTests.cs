@@ -486,12 +486,12 @@ public abstract class JsonReaderTestsBase
     [InlineData("Invalid JSON value where a JSON array was expected.", "True", 0, /*lang=json*/ "true")]
     [InlineData("Invalid JSON value where a JSON array was expected.", "String", 0, /*lang=json*/ """ "foobar" """)]
     [InlineData("Invalid JSON value where a JSON array was expected.", "StartObject", 0, /*lang=json*/ "{}")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "Null", 5, /*lang=json*/ """[42, null, 42]""")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "False", 5, /*lang=json*/ """[42, false, 42]""")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "True", 5, /*lang=json*/ """[42, true, 42]""")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "Null", 5, /*lang=json*/ "[42, null, 42]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "False", 5, /*lang=json*/ "[42, false, 42]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "True", 5, /*lang=json*/ "[42, true, 42]")]
     [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 5, /*lang=json*/ """[42, "foobar", 42]""")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartArray", 5, /*lang=json*/ """[42, [], 42]""")]
-    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartObject", 5, /*lang=json*/ """[42, {}, 42]""")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartArray", 5, /*lang=json*/ "[42, [], 42]")]
+    [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "StartObject", 5, /*lang=json*/ "[42, {}, 42]")]
     public void Array_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         TestInvalidInput(JsonReader.Array(JsonReader.Int32()), json, expectedError, expectedErrorToken, expectedErrorOffset);
@@ -528,7 +528,7 @@ public abstract class JsonReaderTestsBase
     public void Boolean_Array_With_Valid_Input()
     {
         TestValidInput(JsonReader.Array(JsonReader.Boolean()),
-                       /*lang=json*/ """[true, false, true]""",
+                       /*lang=json*/ "[true, false, true]",
                        new[] { true, false, true });
     }
 
@@ -711,8 +711,8 @@ public abstract class JsonReaderTestsBase
 
     [Theory]
     [InlineData(new[] { "foo", "bar", "baz" }, /*lang=json*/ """["foo", "bar", "baz"]""")]
-    [InlineData(new[] { true, false }, /*lang=json*/ """[true, false]""")]
-    [InlineData(new[] { 123, 456, 789 }, /*lang=json*/ """[123, 456, 789]""")]
+    [InlineData(new[] { true, false }, /*lang=json*/ "[true, false]")]
+    [InlineData(new[] { 123, 456, 789 }, /*lang=json*/ "[123, 456, 789]")]
     public void Array_Either_With_Valid_Input(object expected, string json)
     {
         var reader =
@@ -925,11 +925,11 @@ public abstract class JsonReaderTestsBase
     [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 13, /*lang=json*/"""[123, "foo", "bar"]""")]
     [InlineData("Invalid JSON value; expecting a JSON number compatible with Int32.", "String", 1, /*lang=json*/"""["foobar", 123, 456]""")]
     [InlineData("Invalid JSON value; JSON array has too many values.", "Number", 21, /*lang=json*/"""[123, "foobar", 456, 789]""")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 6, /*lang=json*/ """[123, null, 456]""")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 6, /*lang=json*/ """[123, false, 456]""")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 6, /*lang=json*/ """[123, true, 456]""")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 6, /*lang=json*/ """[123, [], 456]""")]
-    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 6, /*lang=json*/ """[123, {}, 456]""")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "Null", 6, /*lang=json*/ "[123, null, 456]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "False", 6, /*lang=json*/ "[123, false, 456]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "True", 6, /*lang=json*/ "[123, true, 456]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartArray", 6, /*lang=json*/ "[123, [], 456]")]
+    [InlineData("Invalid JSON value where a JSON string was expected.", "StartObject", 6, /*lang=json*/ "[123, {}, 456]")]
     public void Tuple3_With_Invalid_Input(string expectedError, string expectedErrorToken, int expectedErrorOffset, string json)
     {
         var reader = JsonReader.Tuple(JsonReader.Int32(), JsonReader.String(), JsonReader.Int32());
