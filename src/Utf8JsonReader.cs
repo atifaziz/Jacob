@@ -30,6 +30,8 @@ public ref struct Utf8JsonReader
     System.Text.Json.Utf8JsonReader reader;
     Stack<object>? stack;
 
+    public static ref System.Text.Json.Utf8JsonReader GetInnerReader(ref Utf8JsonReader reader) => ref reader.reader;
+
     public Utf8JsonReader(ReadOnlySpan<byte> jsonData, JsonReaderOptions options = default) :
         this(new(jsonData, options), stack: null) { }
 

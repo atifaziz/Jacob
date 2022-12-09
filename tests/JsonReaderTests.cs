@@ -1051,4 +1051,50 @@ public abstract class JsonReaderTestsBase
         Assert.NotNull(result);
         Assert.Same(outputReader, result);
     }
+
+    [Theory]
+    [InlineData(/*lang=json*/ "null")]
+    [InlineData(/*lang=json*/ "false")]
+    [InlineData(/*lang=json*/ "true")]
+    [InlineData(/*lang=json*/ "-4.2")]
+    [InlineData(/*lang=json*/ """ "foobar" """)]
+    [InlineData(/*lang=json*/ "[1, 2, 3]")]
+    [InlineData(/*lang=json*/ """
+                {
+                    "null": null,
+                    "true": true,
+                    "false": false,
+                    "number": 12345.67890,
+                    "string": "The quick brown fox jumps over the lazy dog.",
+                    "array": [],
+                    "object": {}
+                }
+                """)]
+    public void Element_With_Valid_Input(string json)
+    {
+        var actual = JsonReader.Element().Read(json);
+        var reader = new System.Text.Json.Utf8JsonReader(Encoding.UTF8.GetBytes(json));
+#if NET6_0_OR_GREATER
+        var expected = JsonElement.ParseValue(ref reader);
+#elif NETCOREAPP3_1_OR_GREATER
+        using var doc = JsonDocument.ParseValue(ref reader);
+        var expected = doc.RootElement.Clone();
+#else
+#error Unsupported platform.
+#endif
+        Assert.Equal(expected.ToString(), actual.ToString());
+    }
+
+    [Theory]
+    [InlineData(/*lang=json*/ "null")]
+    [InlineData(/*lang=json*/ "false")]
+    [InlineData(/*lang=json*/ "true")]
+    [InlineData(/*lang=json*/ "-4.2")]
+    [InlineData(/*lang=json*/ """ "foobar" """)]
+    [InlineData(/*lang=json*/ "[]")]
+    [InlineData(/*lang=json*/ "{}")]
+    public void Element_Moves_Reader(string json)
+    {
+        TestReaderPositionPostRead(JsonReader.Element(), json);
+    }
 }
