@@ -33,9 +33,10 @@ public abstract class JsonReaderTestsBase
     {
         var sentinel = $"END-{Guid.NewGuid()}";
         var rdr = new Utf8JsonReader(Encoding.UTF8.GetBytes($"""[{json}, "{sentinel}"]"""));
-        Assert.True(rdr.Read());
-        _ = reader.Read(ref rdr);
-        Assert.True(rdr.Read());
+        Assert.True(rdr.Read());  // array start
+        Assert.True(rdr.Read());  // position at first element
+        _ = reader.Read(ref rdr); // read it
+        Assert.True(rdr.Read());  // read next
         Assert.Equal(JsonTokenType.String, rdr.TokenType);
         Assert.Equal(sentinel, rdr.GetString());
     }

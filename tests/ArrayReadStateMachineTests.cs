@@ -5,6 +5,7 @@
 namespace Jacob.Tests;
 
 using System;
+using System.Linq;
 using System.Text;
 using Xunit;
 using MoreLinq;
@@ -15,10 +16,12 @@ using State = ArrayReadStateMachine.State;
 public class ArrayReadStateMachineTests
 {
     [Fact]
-    public void Default_Instance_CurrentState_Is_Initialized()
+    public void Default_Instance_Is_Initialized()
     {
         var subject = new ArrayReadStateMachine();
         Assert.Equal(State.Initial, subject.CurrentState);
+        Assert.Equal(0, subject.CurrentLength);
+        Assert.Equal(0, subject.CurrentItemLoopCount);
     }
 
     [Fact]
@@ -74,128 +77,159 @@ public class ArrayReadStateMachineTests
         _ = Assert.IsType<InvalidOperationException>(ex);
     }
 
-    public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Array_Data =
+    [Fact]
+    public void Read_Increments_CurrentItemLoopCount_When_Current_State_Is_PendingItemRead()
+    {
+        var subject = new ArrayReadStateMachine();
+        var reader = new Utf8JsonReader("[{"u8, isFinalBlock: false, new());
+
+        foreach (var i in Enumerable.Range(0, 10))
+        {
+            var result = subject.Read(ref reader);
+
+            Assert.Equal(ReadResult.Item, result);
+            Assert.Equal(State.PendingItemRead, subject.CurrentState);
+            Assert.Equal(0, subject.CurrentLength);
+            Assert.Equal(i, subject.CurrentItemLoopCount);
+        }
+    }
+
+    public static readonly TheoryData<string[], (ReadResult, int, State)[]> Read_Reads_Array_Data =
         new()
         {
             {
                 Array.Empty<string>(),
                 new[]
                 {
-                    (ReadResult.Incomplete, State.Initial),
+                    (ReadResult.Incomplete, 0, State.Initial),
                 }
             },
             {
                 new[] { "[" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
                 }
             },
             {
                 new[] { "[", "]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Done, 0, State.Done)
                 }
             },
             {
                 new[] { "[]" },
                 new[]
                 {
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Done, 0, State.Done)
                 }
             },
             {
                 new[] { "[", "null", "]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
                 }
             },
             {
                 new[] { "[", "nu", "ll", "]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
+                }
+            },
+            {
+                new[] { "[", "n", "u", "l", "l", "]" },
+                new[]
+                {
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
                 }
             },
             {
                 new[] { "[", "nu", "ll]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
                 }
             },
             {
                 new[] { "[", "123", "]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
                 }
             },
             {
                 new[] { "[", "null", ",", "true", ", false", "]" },
                 new[]
                 {
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Incomplete, State.ItemOrEnd),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Incomplete, 0, State.ItemOrEnd),
+                    (ReadResult.Item, 2, State.PendingItemRead),
+                    (ReadResult.Item, 3, State.PendingItemRead),
+                    (ReadResult.Done, 3, State.Done)
                 }
             },
             {
                 new[] { "[[]]" },
                 new[]
                 {
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Done, 1, State.Done)
                 }
             },
             {
                 new[] { "[[], {}]" },
                 new[]
                 {
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Item, 2, State.PendingItemRead),
+                    (ReadResult.Done, 2, State.Done)
                 }
             },
             {
                 new[] { "[[], ", /*lang=json*/"""{ "x": 123, "y": 456 }""", "]"},
                 new[]
                 {
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Item, State.PendingItemRead),
-                    (ReadResult.Done, State.Done)
+                    (ReadResult.Item, 1, State.PendingItemRead),
+                    (ReadResult.Item, 2, State.PendingItemRead),
+                    (ReadResult.Done, 2, State.Done)
                 }
             },
         };
 
     [Theory]
     [MemberData(nameof(Read_Reads_Array_Data))]
-    public void Read_Reads_Array(string[] chunks, (ReadResult, State)[] expectations)
+    public void Read_Reads_Array(string[] chunks, (ReadResult, int, State)[] expectations)
     {
         var subject = new ArrayReadStateMachine();
         var jsonReaderState = new JsonReaderState();
 
         var chunkRun = string.Empty;
-        foreach (var (chunk, (expectedResult, expectedState)) in chunks.ZipLongest(expectations, ValueTuple.Create))
+        foreach (var (thisChunk, (expectedResult, expectedLength, expectedState)) in
+                 chunks.ZipLongest(expectations, ValueTuple.Create))
         {
-            var chunkSpan = Encoding.UTF8.GetBytes(chunkRun + chunk);
+            var chunk = chunkRun + thisChunk;
+            var chunkSpan = Encoding.UTF8.GetBytes(chunk).AsSpan();
             var reader = new Utf8JsonReader(chunkSpan, false, jsonReaderState);
             var result = subject.Read(ref reader);
 
@@ -204,16 +238,21 @@ public class ArrayReadStateMachineTests
 
             if (result is ReadResult.Item)
             {
-                var read = reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray
-                         ? reader.TrySkip()
-                         : reader.Read();
+                var read = reader.Read();
                 Assert.True(read);
+
+                if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                {
+                    var skipped = reader.TrySkip();
+                    Assert.True(skipped);
+                }
+
                 subject.OnItemRead();
+                Assert.Equal(expectedLength, subject.CurrentLength);
                 Assert.Equal(State.ItemOrEnd, subject.CurrentState);
             }
 
-            var chunkTail = Encoding.UTF8.GetString(chunkSpan[(int)reader.BytesConsumed..]);
-            chunkRun = result is ReadResult.Incomplete ? chunkRun + chunkTail : chunkTail;
+            chunkRun = Encoding.UTF8.GetString(chunkSpan[(int)reader.BytesConsumed..]);
             jsonReaderState = reader.CurrentState;
         }
 

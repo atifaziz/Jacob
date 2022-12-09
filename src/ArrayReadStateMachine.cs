@@ -13,10 +13,13 @@ public record struct ArrayReadStateMachine
     public enum ReadResult { Error, Incomplete, Item, Done }
 
     public State CurrentState { get; private set; }
+    public int CurrentLength { get; private set; }
+    public int CurrentItemLoopCount { get; private set; }
 
     public void OnItemRead() =>
-        CurrentState = CurrentState is State.PendingItemRead
-            ? State.ItemOrEnd
+        (CurrentState, CurrentItemLoopCount, CurrentLength) =
+            CurrentState is State.PendingItemRead
+            ? (State.ItemOrEnd, 0, CurrentLength + 1)
             : throw new InvalidOperationException();
 
     public ReadResult Read(ref Utf8JsonReader reader)
@@ -27,7 +30,7 @@ public record struct ArrayReadStateMachine
             {
                 case State.Initial:
                 {
-                    if (!reader.Read())
+                    if (reader.TokenType is JsonTokenType.None && !reader.Read())
                         return ReadResult.Incomplete;
 
                     if (reader.TokenType is not JsonTokenType.StartArray)
@@ -41,21 +44,24 @@ public record struct ArrayReadStateMachine
                 }
                 case State.ItemOrEnd:
                 {
-                    if (!reader.Read())
+                    var lookahead = reader;
+
+                    if (!lookahead.Read())
                         return ReadResult.Incomplete;
 
-                    if (reader.TokenType is JsonTokenType.EndArray)
+                    if (lookahead.TokenType is JsonTokenType.EndArray)
                     {
+                        reader = lookahead;
                         CurrentState = State.Done;
                         return ReadResult.Done;
                     }
 
-                    reader.AssumeTokenRead();
                     CurrentState = State.PendingItemRead;
                     return ReadResult.Item;
                 }
                 case State.PendingItemRead:
                 {
+                    CurrentItemLoopCount++;
                     return ReadResult.Item;
                 }
                 default:
