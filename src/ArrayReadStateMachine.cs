@@ -10,7 +10,7 @@ using System.Text.Json;
 public record struct ArrayReadStateMachine
 {
     public enum State { Initial, ItemOrEnd, PendingItemRead, Done, Error }
-    public enum ReadResult { Error, Incomplete, Item, Done }
+    public enum ReadResult { Error, Incomplete, BeginItem, Item, Done }
 
     public State CurrentState { get; private set; }
 
@@ -54,7 +54,7 @@ public record struct ArrayReadStateMachine
                     }
 
                     CurrentState = State.PendingItemRead;
-                    return ReadResult.Item;
+                    return ReadResult.BeginItem;
                 }
                 case State.PendingItemRead:
                 {

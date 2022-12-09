@@ -139,7 +139,6 @@ public static partial class JsonReader
 
         var state = new JsonReaderState();
         var ar = new ArrayReadStateMachine();
-        var isReadingItem = false;
         ArrayReadStateMachine.ReadResult readResult;
 
         do
@@ -174,15 +173,14 @@ public static partial class JsonReader
                     {
                         throw new JsonException("Invalid JSON value where a JSON array was expected.");
                     }
+                    case ArrayReadStateMachine.ReadResult.BeginItem:
+                    {
+                        var read = rdr.Read();
+                        Debug.Assert(read);
+                        goto case ArrayReadStateMachine.ReadResult.Item;
+                    }
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        if (!isReadingItem)
-                        {
-                            var read = rdr.Read();
-                            Debug.Assert(read);
-                            isReadingItem = true;
-                        }
-
                         switch (reader.TryRead(ref rdr))
                         {
                             case var r when r.IsIncomplete():
@@ -191,9 +189,8 @@ public static partial class JsonReader
                                 throw new JsonException(error);
                             case { Value: { } value }:
                                 ar.OnItemRead();
-                                isReadingItem = false;
                                 item = value;
-                                readResult = ArrayReadStateMachine.ReadResult.Item;
+                                readResult = ArrayReadStateMachine.ReadResult.BeginItem;
                                 goto exit;
                         }
                         goto case ArrayReadStateMachine.ReadResult.Incomplete;
@@ -216,7 +213,7 @@ public static partial class JsonReader
             exit:
             bytesConsumed = (int)rdr.BytesConsumed;
             state = rdr.CurrentState;
-            return readResult is ArrayReadStateMachine.ReadResult.Item;
+            return readResult is ArrayReadStateMachine.ReadResult.BeginItem;
         }
     }
 
@@ -655,14 +652,14 @@ public static partial class JsonReader
                                                          Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var (sm, isReadingItem, list) =
-                rdr.IsResuming && ((ArrayReadStateMachine, bool, List<T>))rdr.Pop() is var ps
+            var (sm, list) =
+                rdr.IsResuming && ((ArrayReadStateMachine, List<T>))rdr.Pop() is var ps
                     ? ps
                     : default;
 
-            return Read(ref rdr, sm, isReadingItem, list);
+            return Read(ref rdr, sm, list);
 
-            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ArrayReadStateMachine sm, bool isReadingItem, List<T>? list)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ArrayReadStateMachine sm, List<T>? list)
             {
                 while (true)
                 {
@@ -672,31 +669,30 @@ public static partial class JsonReader
                             return Error("Invalid JSON value where a JSON array was expected.");
 
                         case ArrayReadStateMachine.ReadResult.Incomplete:
-                            return rdr.Suspend((sm, isReadingItem, list));
+                            return rdr.Suspend((sm, list));
 
                         case ArrayReadStateMachine.ReadResult.Done:
                             return Value(resultSelector(list ?? new List<T>()));
 
+                        case ArrayReadStateMachine.ReadResult.BeginItem:
+                        {
+                            var read = rdr.Read();
+                            Debug.Assert(read);
+                            goto case ArrayReadStateMachine.ReadResult.Item;
+                        }
+
                         case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            if (!isReadingItem)
-                            {
-                                var read = rdr.Read();
-                                Debug.Assert(read);
-                                isReadingItem = true;
-                            }
-
                             switch (itemReader.TryRead(ref rdr))
                             {
                                 case var r when r.IsIncomplete():
-                                    return rdr.Suspend((sm, isReadingItem, list));
+                                    return rdr.Suspend((sm, list));
                                 case { Error: { } error }:
                                     return Error(error);
                                 case { Value: var item }:
                                     list ??= new List<T>();
                                     list.Add(item);
                                     sm.OnItemRead();
-                                    isReadingItem = false;
                                     break;
                             }
                             break;
