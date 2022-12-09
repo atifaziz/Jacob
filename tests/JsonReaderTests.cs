@@ -71,7 +71,7 @@ public abstract class JsonReaderTestsBase
     {
         const string message = "oops";
         var reader = JsonReader.Error<string>(message);
-        var utf8Reader = new Utf8JsonReader(Encoding.UTF8.GetBytes("42"));
+        var utf8Reader = new Utf8JsonReader("42"u8);
         var (value, error) = reader.TryRead(ref utf8Reader);
 
         Assert.Equal(0, utf8Reader.BytesConsumed);
