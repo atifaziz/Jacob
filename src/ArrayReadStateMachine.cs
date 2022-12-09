@@ -10,13 +10,16 @@ using System.Text.Json;
 public record struct ArrayReadStateMachine
 {
     public enum State { Initial, ItemOrEnd, PendingItemRead, Done, Error }
-    public enum ReadResult { Error, Incomplete, BeginItem, Item, Done }
+    public enum ReadResult { Error, Incomplete, Item, Done }
 
     public State CurrentState { get; private set; }
+    public int CurrentLength { get; private set; }
+    public int CurrentItemLoopCount { get; private set; }
 
     public void OnItemRead() =>
-        CurrentState = CurrentState is State.PendingItemRead
-            ? State.ItemOrEnd
+        (CurrentState, CurrentItemLoopCount, CurrentLength) =
+            CurrentState is State.PendingItemRead
+            ? (State.ItemOrEnd, 0, CurrentLength + 1)
             : throw new InvalidOperationException();
 
     public ReadResult Read(ref Utf8JsonReader reader)
@@ -54,10 +57,11 @@ public record struct ArrayReadStateMachine
                     }
 
                     CurrentState = State.PendingItemRead;
-                    return ReadResult.BeginItem;
+                    return ReadResult.Item;
                 }
                 case State.PendingItemRead:
                 {
+                    CurrentItemLoopCount++;
                     return ReadResult.Item;
                 }
                 default:
