@@ -41,29 +41,6 @@ using System.Text.Json;
 using Jacob;
 ```
 
-Furthermore, to make the JSON data easier to read when encoded as C# literals
-(e.g., by permitting single-quoted strings and unquoted JSON object member names
-so double-quotes don't need escaping), the examples assume the following helper
-method is defined and the [Newtonsoft.Json (13.x)] package is referenced:
-
-```c#
-// #r "nuget: Newtonsoft.Json, 13.0.1"
-
-using Formatting = Newtonsoft.Json.Formatting;
-using JToken = Newtonsoft.Json.Linq.JToken;
-
-static class Json
-{
-    /// <summary>
-    /// Takes somewhat non-conforming JSON
-    /// (<a href="https://github.com/JamesNK/Newtonsoft.Json/issues/646#issuecomment-356194475">as accepted by Json.NET</a>)
-    /// text and re-formats it to be strictly conforming to RFC 7159.
-    /// </summary>
-    public static string Strictify(string json) =>
-        JToken.Parse(json).ToString(Formatting.None);
-}
-```
-
 Starting simple, here is how to read a JSON number as an `int` in C# (or
 `System.Int32`):
 
@@ -75,13 +52,9 @@ Console.WriteLine(x);
 Here is how to read a JSON string as a .NET string:
 
 ```c#
-var s = JsonReader.String().Read(Json.Strictify("'foobar'"));
+var s = JsonReader.String().Read(""" "foobar" """));
 Console.WriteLine(s);
 ```
-
-Note the use of `Json.Strictify` defined and mentioned earlier so the JSON
-string `"foobar"` can be expressed in C# as `"'foobar'"` rather than
-`"\"foobar\""` or `@"""foobar"""`.
 
 Deserializing simple types like a string or an integer is pretty straightforward
 and can be done with [`JsonSerializer.Deserialize`][deserialize] with equal
@@ -91,7 +64,7 @@ ease:
 var x = JsonSerializer.Deserialize<int>("42");
 Console.WriteLine(x);
 
-var s = JsonSerializer.Deserialize<string>(Json.Strictify("'foobar'"));
+var s = JsonSerializer.Deserialize<string>(""" "foobar" """));
 Console.WriteLine(s);
 ```
 
@@ -102,7 +75,7 @@ an array of two elements:
 ```c#
 var (key, value) =
     JsonReader.Tuple(JsonReader.String(), JsonReader.Int32())
-              .Read(Json.Strictify("['foobar', 42]"));
+              .Read("""["foobar", 42]""");
 Console.WriteLine($"Key = {key}, Value = {value}");
 ```
 
@@ -118,7 +91,7 @@ error:
 Attempting to do the same with `JsonSerializer.Deserialize` (assuming .NET 6):
 
 ```c#
-var json = Json.Strictify("['foobar', 42]");
+var json = """["foobar", 42]""";
 var (key, value) = JsonSerializer.Deserialize<(string, int)>(json);
 Console.WriteLine($"Key = {key}, Value = {value}");
 ```
@@ -138,12 +111,11 @@ var reader = JsonReader.Tuple(JsonReader.String(), JsonReader.Int32());
 
 foreach (var json in new[]
                      {
-                         "['foo', 123]",
-                         "['bar', 456]",
-                         "['baz', 789]",
+                         """["foo", 123]""",
+                         """["bar", 456]""",
+                         """["baz", 789]""",
                      })
 {
-    json = Json.Strictify(json);
     var (key, value) = reader.Read(json);
     Console.WriteLine($"Key = {key}, Value = {value}");
 }
@@ -158,7 +130,7 @@ var reader =
     from t in JsonReader.Tuple(JsonReader.String(), JsonReader.Int32())
     select KeyValuePair.Create(t.Item1, t.Item2);
 
-var pair = reader.Read(Json.Strictify("['foobar', 42]"));
+var pair = reader.Read("""["foobar", 42]""");
 Console.WriteLine(pair);
 ```
 
@@ -173,13 +145,15 @@ var pairReader =
     from t in JsonReader.Tuple(JsonReader.String(), JsonReader.Int32())
     select KeyValuePair.Create(t.Item1, t.Item2);
 
-const string json = @"[
-    ['foo', 123],
-    ['bar', 456],
-    ['baz', 789]
-]";
+const string json = """
+    [
+        ["foo", 123],
+        ["bar", 456],
+        ["baz", 789]
+    ]
+    """;
 
-var pairs = JsonReader.Array(pairReader).Read(Json.Strictify(json));
+var pairs = JsonReader.Array(pairReader).Read(json);
 
 foreach (var (key, value) in pairs)
     Console.WriteLine($"Key = {key}, Value = {value}");
@@ -194,9 +168,9 @@ var reader =
     JsonReader.Either(JsonReader.String().AsObject(),
                       JsonReader.Int32().AsObject());
 
-const string json = @"['foo', 123, 'bar', 456, 'baz', 789]";
+const string json = """["foo", 123, "bar", 456, "baz", 789]""";
 
-var values = JsonReader.Array(reader).Read(Json.Strictify(json));
+var values = JsonReader.Array(reader).Read(json);
 
 foreach (var value in values)
     Console.WriteLine($"{value} ({value.GetType().Name})");
@@ -231,13 +205,15 @@ var pairReader =
         (k, v) => KeyValuePair.Create(k, v) */
     );
 
-const string json = @"[
-    { key  : 'foo', value: 123 },
-    { value: 456  , key: 'bar' },
-    { key  : 'baz', value: 789 },
-]";
+const string json = """
+    [
+        { key  : "foo", value: 123 },
+        { value: 456  , key: "bar" },
+        { key  : "baz", value: 789 },
+    ]
+    """;
 
-var pairs = JsonReader.Array(pairReader).Read(Json.Strictify(json));
+var pairs = JsonReader.Array(pairReader).Read(json);
 
 foreach (var (key, value) in pairs)
     Console.WriteLine($"Key = {key}, Value = {value}");
