@@ -287,7 +287,9 @@ public static partial class JsonReader
         DateTime(format, provider, DateTimeStyles.None);
 
     public static IJsonReader<DateTime> DateTime(string format, IFormatProvider? provider, DateTimeStyles styles) =>
-        String().TryMap(s => System.DateTime.TryParseExact(s, format, provider, styles, out var value) ? Value(value) : Error(""));
+        String().TryMap(s => System.DateTime.TryParseExact(s, format, provider, styles, out var value)
+                             ? Value(value)
+                             : Error("JSON value cannot interpreted as date/time."));
 
     static IJsonReader<DateTimeOffset>? dateTimeOffsetReader;
 
