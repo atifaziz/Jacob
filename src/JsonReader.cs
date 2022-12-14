@@ -577,9 +577,9 @@ public static partial class JsonReader
                     ? ps
                     : default;
 
-            return Read(ref reader, sm, values);
+            return Read(ref reader, sm, ref values);
 
-            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm, Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm, ref Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
             {
                 while (true)
                 {
