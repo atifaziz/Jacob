@@ -630,7 +630,10 @@ public static partial class JsonReader
                                  : Error("Invalid JSON object.");
 
                         case ObjectReadStateMachine.ReadResult.PropertyName:
-                            static bool SetPropertyIndex<TValue>(int index, IJsonProperty<TValue, JsonReadResult<TValue>> property, ref Utf8JsonReader reader, ref Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+                            static bool SetPropertyIndex<TValue>(int index,
+                                                                 IJsonProperty<TValue, JsonReadResult<TValue>> property,
+                                                                 ref Utf8JsonReader reader,
+                                                                 ref Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
                             {
                                 if (!property.IsMatch(ref reader))
                                     return false;
@@ -670,23 +673,21 @@ public static partial class JsonReader
                             break;
 
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
-                            bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                                                           ref Utf8JsonReader reader,
-                                                           ref (bool, TValue) value,
-                                                           out JsonReadResult<TResult>? jsonReadResult)
+                            static JsonReadResult<TResult>? ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
+                                                                                      ref Utf8JsonReader reader,
+                                                                                      ref (bool, TValue) value,
+                                                                                      ref ObjectReadStateMachine sm,
+                                                                                      ref Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
                                     case { Incomplete: true }:
-                                        jsonReadResult = reader.Suspend((sm, values));
-                                        return false;
+                                        return reader.Suspend((sm, values));
                                     case { Error: { } err }:
-                                        jsonReadResult = new JsonReadError(err);
-                                        return false;
+                                        return new JsonReadError(err);
                                     case { Value: var val }:
                                         value = (true, val);
-                                        jsonReadResult = null;
-                                        return true;
+                                        return null;
                                 }
                             }
 
@@ -698,29 +699,29 @@ public static partial class JsonReader
                                     return reader.Suspend((sm, values));
                             }
 
-                            var (valueRead, error) = values.NextPropertyIndex switch
+                            var error = values.NextPropertyIndex switch
                             {
-                                1  => (ReadPropertyValue(property1,  ref reader, ref values.P1,  out var e), e),
-                                2  => (ReadPropertyValue(property2,  ref reader, ref values.P2,  out var e), e),
-                                3  => (ReadPropertyValue(property3,  ref reader, ref values.P3,  out var e), e),
-                                4  => (ReadPropertyValue(property4,  ref reader, ref values.P4,  out var e), e),
-                                5  => (ReadPropertyValue(property5,  ref reader, ref values.P5,  out var e), e),
-                                6  => (ReadPropertyValue(property6,  ref reader, ref values.P6,  out var e), e),
-                                7  => (ReadPropertyValue(property7,  ref reader, ref values.P7,  out var e), e),
-                                8  => (ReadPropertyValue(property8,  ref reader, ref values.P8,  out var e), e),
-                                9  => (ReadPropertyValue(property9,  ref reader, ref values.P9,  out var e), e),
-                                10 => (ReadPropertyValue(property10, ref reader, ref values.P10, out var e), e),
-                                11 => (ReadPropertyValue(property11, ref reader, ref values.P11, out var e), e),
-                                12 => (ReadPropertyValue(property12, ref reader, ref values.P12, out var e), e),
-                                13 => (ReadPropertyValue(property13, ref reader, ref values.P13, out var e), e),
-                                14 => (ReadPropertyValue(property14, ref reader, ref values.P14, out var e), e),
-                                15 => (ReadPropertyValue(property15, ref reader, ref values.P15, out var e), e),
-                                16 => (ReadPropertyValue(property16, ref reader, ref values.P16, out var e), e),
-                                null => (true, null),
+                                1  => ReadPropertyValue(property1,  ref reader, ref values.P1,  ref sm, ref values),
+                                2  => ReadPropertyValue(property2,  ref reader, ref values.P2,  ref sm, ref values),
+                                3  => ReadPropertyValue(property3,  ref reader, ref values.P3,  ref sm, ref values),
+                                4  => ReadPropertyValue(property4,  ref reader, ref values.P4,  ref sm, ref values),
+                                5  => ReadPropertyValue(property5,  ref reader, ref values.P5,  ref sm, ref values),
+                                6  => ReadPropertyValue(property6,  ref reader, ref values.P6,  ref sm, ref values),
+                                7  => ReadPropertyValue(property7,  ref reader, ref values.P7,  ref sm, ref values),
+                                8  => ReadPropertyValue(property8,  ref reader, ref values.P8,  ref sm, ref values),
+                                9  => ReadPropertyValue(property9,  ref reader, ref values.P9,  ref sm, ref values),
+                                10 => ReadPropertyValue(property10, ref reader, ref values.P10, ref sm, ref values),
+                                11 => ReadPropertyValue(property11, ref reader, ref values.P11, ref sm, ref values),
+                                12 => ReadPropertyValue(property12, ref reader, ref values.P12, ref sm, ref values),
+                                13 => ReadPropertyValue(property13, ref reader, ref values.P13, ref sm, ref values),
+                                14 => ReadPropertyValue(property14, ref reader, ref values.P14, ref sm, ref values),
+                                15 => ReadPropertyValue(property15, ref reader, ref values.P15, ref sm, ref values),
+                                16 => ReadPropertyValue(property16, ref reader, ref values.P16, ref sm, ref values),
+                                null => null,
                                 _  => throw new InvalidOperationException()
                             };
 
-                            if (!valueRead && error is not null)
+                            if (error is not null)
                                 return error.Value;
 
                             sm.OnPropertyValueRead();
