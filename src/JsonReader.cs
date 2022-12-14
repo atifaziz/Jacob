@@ -691,38 +691,39 @@ public static partial class JsonReader
                                 }
                             }
 
-                            if (values.NextPropertyIndex is null)
+                            if (values.NextPropertyIndex is { } nextPropertyIndex)
+                            {
+                                var error = nextPropertyIndex switch
+                                {
+                                    1  => ReadPropertyValue(property1,  ref reader, ref values.P1,  ref sm, ref values),
+                                    2  => ReadPropertyValue(property2,  ref reader, ref values.P2,  ref sm, ref values),
+                                    3  => ReadPropertyValue(property3,  ref reader, ref values.P3,  ref sm, ref values),
+                                    4  => ReadPropertyValue(property4,  ref reader, ref values.P4,  ref sm, ref values),
+                                    5  => ReadPropertyValue(property5,  ref reader, ref values.P5,  ref sm, ref values),
+                                    6  => ReadPropertyValue(property6,  ref reader, ref values.P6,  ref sm, ref values),
+                                    7  => ReadPropertyValue(property7,  ref reader, ref values.P7,  ref sm, ref values),
+                                    8  => ReadPropertyValue(property8,  ref reader, ref values.P8,  ref sm, ref values),
+                                    9  => ReadPropertyValue(property9,  ref reader, ref values.P9,  ref sm, ref values),
+                                    10 => ReadPropertyValue(property10, ref reader, ref values.P10, ref sm, ref values),
+                                    11 => ReadPropertyValue(property11, ref reader, ref values.P11, ref sm, ref values),
+                                    12 => ReadPropertyValue(property12, ref reader, ref values.P12, ref sm, ref values),
+                                    13 => ReadPropertyValue(property13, ref reader, ref values.P13, ref sm, ref values),
+                                    14 => ReadPropertyValue(property14, ref reader, ref values.P14, ref sm, ref values),
+                                    15 => ReadPropertyValue(property15, ref reader, ref values.P15, ref sm, ref values),
+                                    16 => ReadPropertyValue(property16, ref reader, ref values.P16, ref sm, ref values),
+                                    _ => throw new InvalidOperationException()
+                                };
+
+                                if (error is not null)
+                                    return error.Value;
+                            }
+                            else
                             {
                                 if (reader.IsFinalBlock)
                                     reader.Skip();
                                 else if (!reader.TrySkip())
                                     return reader.Suspend((sm, values));
                             }
-
-                            var error = values.NextPropertyIndex switch
-                            {
-                                1  => ReadPropertyValue(property1,  ref reader, ref values.P1,  ref sm, ref values),
-                                2  => ReadPropertyValue(property2,  ref reader, ref values.P2,  ref sm, ref values),
-                                3  => ReadPropertyValue(property3,  ref reader, ref values.P3,  ref sm, ref values),
-                                4  => ReadPropertyValue(property4,  ref reader, ref values.P4,  ref sm, ref values),
-                                5  => ReadPropertyValue(property5,  ref reader, ref values.P5,  ref sm, ref values),
-                                6  => ReadPropertyValue(property6,  ref reader, ref values.P6,  ref sm, ref values),
-                                7  => ReadPropertyValue(property7,  ref reader, ref values.P7,  ref sm, ref values),
-                                8  => ReadPropertyValue(property8,  ref reader, ref values.P8,  ref sm, ref values),
-                                9  => ReadPropertyValue(property9,  ref reader, ref values.P9,  ref sm, ref values),
-                                10 => ReadPropertyValue(property10, ref reader, ref values.P10, ref sm, ref values),
-                                11 => ReadPropertyValue(property11, ref reader, ref values.P11, ref sm, ref values),
-                                12 => ReadPropertyValue(property12, ref reader, ref values.P12, ref sm, ref values),
-                                13 => ReadPropertyValue(property13, ref reader, ref values.P13, ref sm, ref values),
-                                14 => ReadPropertyValue(property14, ref reader, ref values.P14, ref sm, ref values),
-                                15 => ReadPropertyValue(property15, ref reader, ref values.P15, ref sm, ref values),
-                                16 => ReadPropertyValue(property16, ref reader, ref values.P16, ref sm, ref values),
-                                null => null,
-                                _  => throw new InvalidOperationException()
-                            };
-
-                            if (error is not null)
-                                return error.Value;
 
                             sm.OnPropertyValueRead();
                             values.NextPropertyIndex = null;
