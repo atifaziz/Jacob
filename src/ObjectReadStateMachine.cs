@@ -13,19 +13,18 @@ public record struct ObjectReadStateMachine
     public enum ReadResult { Error, Incomplete, PropertyName, PropertyValue, Done }
 
     public State CurrentState { get; private set; }
-    public int CurrentLength { get; private set; }
     public int CurrentPropertyLoopCount { get; private set; }
 
     public void OnPropertyNameRead() =>
-        (CurrentState, CurrentPropertyLoopCount, CurrentLength) =
+        (CurrentState, CurrentPropertyLoopCount) =
             CurrentState is State.PendingPropertyNameRead
-            ? (State.PendingPropertyValueRead, -1, CurrentLength + 1)
+            ? (State.PendingPropertyValueRead, 0)
             : throw new InvalidOperationException();
 
     public void OnPropertyValueRead() =>
-        (CurrentState, CurrentPropertyLoopCount, CurrentLength) =
+        (CurrentState, CurrentPropertyLoopCount) =
             CurrentState is State.PendingPropertyValueRead
-            ? (State.PropertyNameOrEnd, 0, CurrentLength + 1)
+            ? (State.PropertyNameOrEnd, 0)
             : throw new InvalidOperationException();
 
     public ReadResult Read(ref Utf8JsonReader reader)
