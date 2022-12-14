@@ -645,15 +645,15 @@ public static partial class JsonReader
                                 Debug.Assert(read);
                             }
 
-                            if (SetPropertyIndex(1, property1, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(2, property2, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(3, property3, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(4, property4, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(5, property5, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(6, property6, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(7, property7, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(8, property8, ref reader, ref values)) { }
-                            else if (SetPropertyIndex(9, property9, ref reader, ref values)) { }
+                                 if (SetPropertyIndex(1,  property1,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(2,  property2,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(3,  property3,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(4,  property4,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(5,  property5,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(6,  property6,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(7,  property7,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(8,  property8,  ref reader, ref values)) { }
+                            else if (SetPropertyIndex(9,  property9,  ref reader, ref values)) { }
                             else if (SetPropertyIndex(10, property10, ref reader, ref values)) { }
                             else if (SetPropertyIndex(11, property11, ref reader, ref values)) { }
                             else if (SetPropertyIndex(12, property12, ref reader, ref values)) { }
