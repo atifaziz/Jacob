@@ -533,6 +533,28 @@ public static partial class JsonReader
                NonProperty.Instance,
                (v, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => v);
 
+    struct Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>
+    {
+        public (bool, T1) P1;
+        public (bool, T2) P2;
+        public (bool, T3) P3;
+        public (bool, T4) P4;
+        public (bool, T5) P5;
+        public (bool, T6) P6;
+        public (bool, T7) P7;
+        public (bool, T8) P8;
+        public (bool, T9) P9;
+        public (bool, T10) P10;
+        public (bool, T11) P11;
+        public (bool, T12) P12;
+        public (bool, T13) P13;
+        public (bool, T14) P14;
+        public (bool, T15) P15;
+        public (bool, T16) P16;
+
+        public int? NextPropertyIndex;
+    };
+
     /// <remarks>
     /// Properties without a default value that are missing from the read JSON object will cause
     /// the reader to return an error result.
@@ -548,127 +570,166 @@ public static partial class JsonReader
             IJsonProperty<T13, JsonReadResult<T13>> property13, IJsonProperty<T14, JsonReadResult<T14>> property14,
             IJsonProperty<T15, JsonReadResult<T15>> property15, IJsonProperty<T16, JsonReadResult<T16>> property16,
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
-        CreatePure((ref Utf8JsonReader reader) =>
+        Create((ref Utf8JsonReader reader) =>
         {
-            if (reader.TokenType is JsonTokenType.None && !reader.Read())
-                throw PartialJsonNotSupportedException();
+            var (sm, values) =
+                reader.IsResuming && ((ObjectReadStateMachine, Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>))reader.Pop() is var ps
+                    ? ps
+                    : default;
 
-            var tokenType = reader.TokenType;
-            if (tokenType is not JsonTokenType.StartObject)
-                return Error("Invalid JSON value where a JSON object was expected.");
+            return Read(ref reader, sm, values);
 
-            (bool, T1) value1 = default;
-            (bool, T2) value2 = default;
-            (bool, T3) value3 = default;
-            (bool, T4) value4 = default;
-            (bool, T5) value5 = default;
-            (bool, T6) value6 = default;
-            (bool, T7) value7 = default;
-            (bool, T8) value8 = default;
-            (bool, T9) value9 = default;
-            (bool, T10) value10 = default;
-            (bool, T11) value11 = default;
-            (bool, T12) value12 = default;
-            (bool, T13) value13 = default;
-            (bool, T14) value14 = default;
-            (bool, T15) value15 = default;
-            (bool, T16) value16 = default;
-
-            while (true)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm, Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
             {
-                string? error = null;
-
-                if (!reader.TryReadToken(out tokenType))
-                    throw PartialJsonNotSupportedException();
-
-                if (tokenType is JsonTokenType.EndObject)
-                    break;
-
-                Debug.Assert(reader.TokenType is JsonTokenType.PropertyName);
-
-                if (ReadPropertyValue(property1, ref reader, ref value1, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property2, ref reader, ref value2, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property3, ref reader, ref value3, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property4, ref reader, ref value4, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property5, ref reader, ref value5, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property6, ref reader, ref value6, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property7, ref reader, ref value7, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property8, ref reader, ref value8, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property9, ref reader, ref value9, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property10, ref reader, ref value10, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property11, ref reader, ref value11, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property12, ref reader, ref value12, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property13, ref reader, ref value13, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property14, ref reader, ref value14, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property15, ref reader, ref value15, ref error)) continue; if (error is not null) return Error(error);
-                if (ReadPropertyValue(property16, ref reader, ref value16, ref error)) continue; if (error is not null) return Error(error);
-
-                if (reader.IsFinalBlock)
-                    reader.Skip();
-                else if (!reader.TrySkip())
-                    throw PartialJsonNotSupportedException();
-
-                static bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                                                      ref Utf8JsonReader reader,
-                                                      ref (bool, TValue) value,
-                                                      ref string? error)
+                while (true)
                 {
-                    if (!property.IsMatch(ref reader))
-                        return false;
-
-                    if (!reader.Read())
-                        throw PartialJsonNotSupportedException();
-
-                    switch (property.Reader.TryRead(ref reader))
+                    switch (sm.Read(ref reader))
                     {
-                        case { Incomplete: true }:
-                            throw PartialJsonNotSupportedException();
-                        case { Error: { } err }:
-                            error = err;
-                            return false;
-                        case { Value: var val }:
-                            value = (true, val);
-                            return true;
+                        case ObjectReadStateMachine.ReadResult.Error:
+                            return Error("Invalid JSON value where a JSON object was expected.");
+
+                        case ObjectReadStateMachine.ReadResult.Incomplete:
+                            return reader.Suspend((sm, values));
+
+                        case ObjectReadStateMachine.ReadResult.Done:
+                            static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
+                            {
+                                if (v is (false, _) && property.HasDefaultValue)
+                                    v = (true, property.DefaultValue);
+                            }
+
+                            DefaultUnassigned(property1, ref values.P1);
+                            DefaultUnassigned(property2, ref values.P2);
+                            DefaultUnassigned(property3, ref values.P3);
+                            DefaultUnassigned(property4, ref values.P4);
+                            DefaultUnassigned(property5, ref values.P5);
+                            DefaultUnassigned(property6, ref values.P6);
+                            DefaultUnassigned(property7, ref values.P7);
+                            DefaultUnassigned(property8, ref values.P8);
+                            DefaultUnassigned(property9, ref values.P9);
+                            DefaultUnassigned(property10, ref values.P10);
+                            DefaultUnassigned(property11, ref values.P11);
+                            DefaultUnassigned(property12, ref values.P12);
+                            DefaultUnassigned(property13, ref values.P13);
+                            DefaultUnassigned(property14, ref values.P14);
+                            DefaultUnassigned(property15, ref values.P15);
+                            DefaultUnassigned(property16, ref values.P16);
+
+                            return (values.P1, values.P2, values.P3,
+                                    values.P4, values.P5, values.P6,
+                                    values.P7, values.P8, values.P9,
+                                    values.P10, values.P11, values.P12,
+                                    values.P13, values.P14, values.P15,
+                                    values.P16) is ((true, var v1), (true, var v2), (true, var v3),
+                                                    (true, var v4), (true, var v5), (true, var v6),
+                                                    (true, var v7), (true, var v8), (true, var v9),
+                                                    (true, var v10), (true, var v11), (true, var v12),
+                                                    (true, var v13), (true, var v14), (true, var v15),
+                                                    (true, var v16))
+                                 ? Value(projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16))
+                                 : Error("Invalid JSON object.");
+
+                        case ObjectReadStateMachine.ReadResult.PropertyName:
+                            static bool SetPropertyIndex<TValue>(int index, IJsonProperty<TValue, JsonReadResult<TValue>> property, ref Utf8JsonReader reader, ref Values<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+                            {
+                                if (!property.IsMatch(ref reader))
+                                    return false;
+
+                                values.NextPropertyIndex = index;
+                                return true;
+                            }
+
+                            if (sm.CurrentPropertyLoopCount is 0)
+                            {
+                                var read = reader.Read();
+                                Debug.Assert(read);
+                            }
+
+                            if (SetPropertyIndex(1, property1, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(2, property2, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(3, property3, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(4, property4, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(5, property5, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(6, property6, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(7, property7, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(8, property8, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(9, property9, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(10, property10, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(11, property11, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(12, property12, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(13, property13, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(14, property14, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(15, property15, ref reader, ref values)) { }
+                            else if (SetPropertyIndex(16, property16, ref reader, ref values)) { }
+
+                            if (!reader.Read())
+                                return reader.Suspend((sm, values));
+
+                            sm.OnPropertyNameRead();
+
+                            break;
+
+                        case ObjectReadStateMachine.ReadResult.PropertyValue:
+                            bool ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
+                                                           ref Utf8JsonReader reader,
+                                                           ref (bool, TValue) value,
+                                                           out JsonReadResult<TResult>? jsonReadResult)
+                            {
+                                switch (property.Reader.TryRead(ref reader))
+                                {
+                                    case { Incomplete: true }:
+                                        jsonReadResult = reader.Suspend((sm, values));
+                                        return false;
+                                    case { Error: { } err }:
+                                        jsonReadResult = new JsonReadError(err);
+                                        return false;
+                                    case { Value: var val }:
+                                        value = (true, val);
+                                        jsonReadResult = null;
+                                        return true;
+                                }
+                            }
+
+                            if (values.NextPropertyIndex is null)
+                            {
+                                if (reader.IsFinalBlock)
+                                    reader.Skip();
+                                else if (!reader.TrySkip())
+                                    return reader.Suspend((sm, values));
+                            }
+
+                            var (valueRead, error) = values.NextPropertyIndex switch
+                            {
+                                1  => (ReadPropertyValue(property1,  ref reader, ref values.P1,  out var e), e),
+                                2  => (ReadPropertyValue(property2,  ref reader, ref values.P2,  out var e), e),
+                                3  => (ReadPropertyValue(property3,  ref reader, ref values.P3,  out var e), e),
+                                4  => (ReadPropertyValue(property4,  ref reader, ref values.P4,  out var e), e),
+                                5  => (ReadPropertyValue(property5,  ref reader, ref values.P5,  out var e), e),
+                                6  => (ReadPropertyValue(property6,  ref reader, ref values.P6,  out var e), e),
+                                7  => (ReadPropertyValue(property7,  ref reader, ref values.P7,  out var e), e),
+                                8  => (ReadPropertyValue(property8,  ref reader, ref values.P8,  out var e), e),
+                                9  => (ReadPropertyValue(property9,  ref reader, ref values.P9,  out var e), e),
+                                10 => (ReadPropertyValue(property10, ref reader, ref values.P10, out var e), e),
+                                11 => (ReadPropertyValue(property11, ref reader, ref values.P11, out var e), e),
+                                12 => (ReadPropertyValue(property12, ref reader, ref values.P12, out var e), e),
+                                13 => (ReadPropertyValue(property13, ref reader, ref values.P13, out var e), e),
+                                14 => (ReadPropertyValue(property14, ref reader, ref values.P14, out var e), e),
+                                15 => (ReadPropertyValue(property15, ref reader, ref values.P15, out var e), e),
+                                16 => (ReadPropertyValue(property16, ref reader, ref values.P16, out var e), e),
+                                null => (true, null),
+                                _  => throw new InvalidOperationException()
+                            };
+
+                            if (!valueRead && error is not null)
+                                return error.Value;
+
+                            sm.OnPropertyValueRead();
+                            values.NextPropertyIndex = null;
+
+                            break;
                     }
                 }
             }
-
-            static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
-            {
-                if (v is (false, _) && property.HasDefaultValue)
-                    v = (true, property.DefaultValue);
-            }
-
-            DefaultUnassigned(property1, ref value1);
-            DefaultUnassigned(property2, ref value2);
-            DefaultUnassigned(property3, ref value3);
-            DefaultUnassigned(property4, ref value4);
-            DefaultUnassigned(property5, ref value5);
-            DefaultUnassigned(property6, ref value6);
-            DefaultUnassigned(property7, ref value7);
-            DefaultUnassigned(property8, ref value8);
-            DefaultUnassigned(property9, ref value9);
-            DefaultUnassigned(property10, ref value10);
-            DefaultUnassigned(property11, ref value11);
-            DefaultUnassigned(property12, ref value12);
-            DefaultUnassigned(property13, ref value13);
-            DefaultUnassigned(property14, ref value14);
-            DefaultUnassigned(property15, ref value15);
-            DefaultUnassigned(property16, ref value16);
-
-            return (value1, value2, value3,
-                    value4, value5, value6,
-                    value7, value8, value9,
-                    value10, value11, value12,
-                    value13, value14, value15,
-                    value16) is ((true, var v1), (true, var v2), (true, var v3),
-                                 (true, var v4), (true, var v5), (true, var v6),
-                                 (true, var v7), (true, var v8), (true, var v9),
-                                 (true, var v10), (true, var v11), (true, var v12),
-                                 (true, var v13), (true, var v14), (true, var v15),
-                                 (true, var v16))
-                 ? Value(projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16))
-                 : Error("Invalid JSON object.");
         });
 
     public static IJsonReader<T[]> Array<T>(IJsonReader<T> itemReader) =>
