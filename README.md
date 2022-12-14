@@ -52,7 +52,7 @@ Console.WriteLine(x);
 Here is how to read a JSON string as a .NET string:
 
 ```c#
-var s = JsonReader.String().Read(""" "foobar" """));
+var s = JsonReader.String().Read(""" "foobar" """);
 Console.WriteLine(s);
 ```
 
@@ -64,7 +64,7 @@ ease:
 var x = JsonSerializer.Deserialize<int>("42");
 Console.WriteLine(x);
 
-var s = JsonSerializer.Deserialize<string>(""" "foobar" """));
+var s = JsonSerializer.Deserialize<string>(""" "foobar" """);
 Console.WriteLine(s);
 ```
 
@@ -207,9 +207,9 @@ var pairReader =
 
 const string json = """
     [
-        { key  : "foo", value: 123 },
-        { value: 456  , key: "bar" },
-        { key  : "baz", value: 789 },
+        { "key"  : "foo", "value": 123   },
+        { "value": 456  , "key"  : "bar" },
+        { "key"  : "baz", "value": 789   }
     ]
     """;
 
