@@ -18,7 +18,7 @@ public record struct ObjectReadStateMachine
     public void OnPropertyNameRead() =>
         (CurrentState, CurrentPropertyLoopCount) =
             CurrentState is State.PendingPropertyNameRead
-            ? (State.PendingPropertyValueRead, 0)
+            ? (State.PendingPropertyValueRead, -1)
             : throw new InvalidOperationException();
 
     public void OnPropertyValueRead() =>
