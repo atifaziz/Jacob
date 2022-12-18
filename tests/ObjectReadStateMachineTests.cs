@@ -4,10 +4,12 @@
 
 namespace Jacob.Tests;
 
+using MoreLinq;
 using System;
 using System.Linq;
 using System.Text;
 using Xunit;
+using JsonTokenType = System.Text.Json.JsonTokenType;
 using ReadResult = ObjectReadStateMachine.ReadResult;
 using State = ObjectReadStateMachine.State;
 
@@ -114,6 +116,181 @@ public sealed class ObjectReadStateMachineTests
             Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
             Assert.Equal(i, subject.CurrentPropertyLoopCount);
         }
+    }
+
+    public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Object_Data =
+        new()
+        {
+            {
+                Array.Empty<string>(),
+                new[]
+                {
+                    (ReadResult.Incomplete, State.Initial),
+                }
+            },
+            {
+                new[] { "{" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                }
+            },
+            {
+                new[] { "{", "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{}" },
+                new[]
+                {
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", """ "foo": """, """ "bar" """, "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", """ "f """, """ oo": """, """ "bar" """, "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", """ "foo": """, """ "ba """, """ r" """, "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", "\"", "f", "o", "o", "\"", ":", "4","2", "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", """ "foo": """, "123", "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { "{", """ "foo":42 """, ",", """ "bar": "baz" """, "}" },
+                new[]
+                {
+                    (ReadResult.Incomplete, State.PropertyNameOrEnd),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { """ { "foo": """, /*lang=json*/ """ {"bar":42} """, "}" },
+                new[]
+                {
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+            {
+                new[] { """ {"foo": """, /*lang=json*/ """ [123,456] """, "}"},
+                new[]
+                {
+                    (ReadResult.PropertyName, State.PendingPropertyNameRead),
+                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Done, State.Done)
+                }
+            },
+        };
+
+    [Theory]
+    [MemberData(nameof(Read_Reads_Object_Data))]
+    public void Read_Reads_Object(string[] chunks, (ReadResult, State)[] expectations)
+    {
+        var subject = new ObjectReadStateMachine();
+        var jsonReaderState = new JsonReaderState();
+
+        var chunkRun = string.Empty;
+        foreach (var (thisChunk, (expectedResult, expectedState)) in
+                 chunks.ZipLongest(expectations, ValueTuple.Create))
+        {
+            var chunk = chunkRun + thisChunk;
+            var chunkSpan = Encoding.UTF8.GetBytes(chunk).AsSpan();
+            var reader = new Utf8JsonReader(chunkSpan, false, jsonReaderState);
+            var result = subject.Read(ref reader);
+
+            Assert.Equal(expectedResult, result);
+            Assert.Equal(expectedState, subject.CurrentState);
+
+            if (result is ReadResult.PropertyName)
+            {
+                var read = reader.Read();
+                Assert.True(read);
+                subject.OnPropertyNameRead();
+                Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
+            }
+
+            if (result is ReadResult.PropertyValue)
+            {
+                var read = reader.Read();
+
+                if (read)
+                {
+                    if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
+                    {
+                        var skipped = reader.TrySkip();
+                        Assert.True(skipped);
+                    }
+
+                    subject.OnPropertyValueRead();
+                    Assert.Equal(State.PropertyNameOrEnd, subject.CurrentState);
+                }
+            }
+
+            chunkRun = Encoding.UTF8.GetString(chunkSpan[(int)reader.BytesConsumed..]);
+            jsonReaderState = reader.CurrentState;
+        }
+
+        Assert.Empty(chunkRun);
     }
 
     delegate void ReaderAction(Utf8JsonReader reader);
