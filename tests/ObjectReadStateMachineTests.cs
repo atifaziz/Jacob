@@ -6,7 +6,6 @@ namespace Jacob.Tests;
 
 using MoreLinq;
 using System;
-using System.Linq;
 using System.Text;
 using Xunit;
 using JsonTokenType = System.Text.Json.JsonTokenType;
@@ -80,39 +79,6 @@ public sealed class ObjectReadStateMachineTests
 
         var ex = CatchExceptionForAssertion(reader, r => _ = subject.Read(ref r));
         _ = Assert.IsType<InvalidOperationException>(ex);
-    }
-
-    [Fact]
-    public void Read_Increments_CurrentPropertyLoopCount_When_Current_State_Is_PendingPropertyNameRead()
-    {
-        var subject = new ObjectReadStateMachine();
-        var reader = new Utf8JsonReader("""{"foo":"""u8, isFinalBlock: false, new());
-
-        foreach (var _ in Enumerable.Range(0, 10))
-        {
-            var result = subject.Read(ref reader);
-
-            Assert.Equal(ReadResult.PropertyName, result);
-            Assert.Equal(State.PendingPropertyNameRead, subject.CurrentState);
-        }
-    }
-
-    [Fact]
-    public void Read_Increments_CurrentPropertyLoopCount_When_Current_State_Is_PendingPropertyValueRead()
-    {
-        var subject = new ObjectReadStateMachine();
-        var reader = new Utf8JsonReader("""{"foo":4"""u8, isFinalBlock: false, new());
-
-        _ = subject.Read(ref reader);
-        subject.OnPropertyNameRead();
-
-        foreach (var _ in Enumerable.Range(0, 10))
-        {
-            var result = subject.Read(ref reader);
-
-            Assert.Equal(ReadResult.PropertyValue, result);
-            Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
-        }
     }
 
     public static readonly TheoryData<string[], (ReadResult, State)[]> Read_Reads_Object_Data =
