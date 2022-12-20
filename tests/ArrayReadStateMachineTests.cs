@@ -21,7 +21,6 @@ public class ArrayReadStateMachineTests
         var subject = new ArrayReadStateMachine();
         Assert.Equal(State.Initial, subject.CurrentState);
         Assert.Equal(0, subject.CurrentLength);
-        Assert.Equal(0, subject.CurrentItemLoopCount);
     }
 
     [Fact]
@@ -90,7 +89,6 @@ public class ArrayReadStateMachineTests
             Assert.Equal(ReadResult.Item, result);
             Assert.Equal(State.PendingItemRead, subject.CurrentState);
             Assert.Equal(0, subject.CurrentLength);
-            Assert.Equal(i, subject.CurrentItemLoopCount);
         }
     }
 
@@ -238,9 +236,6 @@ public class ArrayReadStateMachineTests
 
             if (result is ReadResult.Item)
             {
-                var read = reader.Read();
-                Assert.True(read);
-
                 if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
                 {
                     var skipped = reader.TrySkip();

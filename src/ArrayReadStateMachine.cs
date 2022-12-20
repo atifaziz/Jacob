@@ -14,12 +14,11 @@ public record struct ArrayReadStateMachine
 
     public State CurrentState { get; private set; }
     public int CurrentLength { get; private set; }
-    public int CurrentItemLoopCount { get; private set; }
 
     public void OnItemRead() =>
-        (CurrentState, CurrentItemLoopCount, CurrentLength) =
+        (CurrentState, CurrentLength) =
             CurrentState is State.PendingItemRead
-            ? (State.ItemOrEnd, 0, CurrentLength + 1)
+            ? (State.ItemOrEnd, CurrentLength + 1)
             : throw new InvalidOperationException();
 
     public ReadResult Read(ref Utf8JsonReader reader)
@@ -44,14 +43,11 @@ public record struct ArrayReadStateMachine
                 }
                 case State.ItemOrEnd:
                 {
-                    var lookahead = reader;
-
-                    if (!lookahead.Read())
+                    if (!reader.Read())
                         return ReadResult.Incomplete;
 
-                    if (lookahead.TokenType is JsonTokenType.EndArray)
+                    if (reader.TokenType is JsonTokenType.EndArray)
                     {
-                        reader = lookahead;
                         CurrentState = State.Done;
                         return ReadResult.Done;
                     }
@@ -61,7 +57,6 @@ public record struct ArrayReadStateMachine
                 }
                 case State.PendingItemRead:
                 {
-                    CurrentItemLoopCount++;
                     return ReadResult.Item;
                 }
                 default:

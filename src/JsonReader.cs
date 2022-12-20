@@ -175,12 +175,6 @@ public static partial class JsonReader
                     }
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        if (ar.CurrentItemLoopCount is 0)
-                        {
-                            var read = rdr.Read();
-                            Debug.Assert(read);
-                        }
-
                         switch (reader.TryRead(ref rdr))
                         {
                             case var r when r.IsIncomplete():
@@ -702,12 +696,6 @@ public static partial class JsonReader
 
                         case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            if (sm.CurrentItemLoopCount is 0)
-                            {
-                                var read = rdr.Read();
-                                Debug.Assert(read);
-                            }
-
                             switch (itemReader.TryRead(ref rdr))
                             {
                                 case var r when r.IsIncomplete():
