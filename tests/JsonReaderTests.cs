@@ -565,7 +565,7 @@ public abstract class JsonReaderTestsBase
         _ = reader.Read(); // "{"
         _ = reader.Read(); // property
 
-        Assert.True(property.IsMatch(ref reader));
+        Assert.True(property.IsMatch(reader));
         Assert.Same(valueReader, property.Reader);
         Assert.False(property.HasDefaultValue);
         Assert.Null(property.DefaultValue);
@@ -585,7 +585,7 @@ public abstract class JsonReaderTestsBase
         _ = reader.Read(); // "{"
         _ = reader.Read(); // property
 
-        Assert.True(property.IsMatch(ref reader));
+        Assert.True(property.IsMatch(reader));
         Assert.True(property.HasDefaultValue);
         Assert.Same(defaultValue, property.DefaultValue);
         Assert.Same(valueReader, property.Reader);
@@ -602,7 +602,7 @@ public abstract class JsonReaderTestsBase
             const string json = /*lang=json*/ """{ "foobar": 42 }""";
             var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(json));
             _ = reader.Read(); // "{"
-            return _ = property.IsMatch(ref reader);
+            return _ = property.IsMatch(reader);
         });
 
         Assert.Equal("reader", ex.ParamName);

@@ -70,7 +70,7 @@ public interface IJsonReader<T> : IJsonReader<T, JsonReadResult<T>> { }
 public interface IJsonProperty<out T, out TReadResult>
     where TReadResult : IJsonReadResult<T>
 {
-    bool IsMatch(ref Utf8JsonReader reader);
+    bool IsMatch(in Utf8JsonReader reader);
     IJsonReader<T, TReadResult> Reader { get; }
     bool HasDefaultValue { get; }
     T DefaultValue { get; }
@@ -447,7 +447,7 @@ public static partial class JsonReader
         public JsonProperty(string name, IJsonReader<T> reader, (bool, T) @default = default) =>
             (this.name, Reader, (HasDefaultValue, DefaultValue)) = (name, reader, @default);
 
-        public bool IsMatch(ref Utf8JsonReader reader) =>
+        public bool IsMatch(in Utf8JsonReader reader) =>
             reader.TokenType != JsonTokenType.PropertyName
                 ? throw new ArgumentException(null, nameof(reader))
                 : reader.ValueTextEquals(this.name);
@@ -466,7 +466,7 @@ public static partial class JsonReader
 
         NonProperty() { }
 
-        public bool IsMatch(ref Utf8JsonReader reader) => false;
+        public bool IsMatch(in Utf8JsonReader reader) => false;
         public IJsonReader<Unit, JsonReadResult<Unit>> Reader => throw new NotSupportedException();
         public bool HasDefaultValue => true;
         public Unit DefaultValue => default;
@@ -595,7 +595,7 @@ public static partial class JsonReader
                                                                ref Utf8JsonReader reader,
                                                                ref int? currentIndex)
                             {
-                                if (!property.IsMatch(ref reader))
+                                if (!property.IsMatch(reader))
                                     return false;
 
                                 currentIndex = index;
