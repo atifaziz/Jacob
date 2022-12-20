@@ -594,34 +594,36 @@ public static partial class JsonReader
 
                         case ObjectReadStateMachine.ReadResult.PropertyName:
                         {
-                            static bool TrySetPropertyIndex<T>(int index,
-                                                               IJsonProperty<T, JsonReadResult<T>> property,
-                                                               ref Utf8JsonReader reader,
-                                                               ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                            static bool TrySetPropertyIndex<TValue>(int index,
+                                                                    IJsonProperty<TValue, JsonReadResult<TValue>> property,
+                                                                    ref Utf8JsonReader reader,
+                                                                    ref int? currentIndex)
                             {
                                 if (!property.IsMatch(ref reader))
                                     return false;
 
-                                state.CurrentPropertyIndex = index;
+                                currentIndex = index;
                                 return true;
                             }
 
-                            _ =    TrySetPropertyIndex(1,  property1,  ref reader, ref state)
-                                || TrySetPropertyIndex(2,  property2,  ref reader, ref state)
-                                || TrySetPropertyIndex(3,  property3,  ref reader, ref state)
-                                || TrySetPropertyIndex(4,  property4,  ref reader, ref state)
-                                || TrySetPropertyIndex(5,  property5,  ref reader, ref state)
-                                || TrySetPropertyIndex(6,  property6,  ref reader, ref state)
-                                || TrySetPropertyIndex(7,  property7,  ref reader, ref state)
-                                || TrySetPropertyIndex(8,  property8,  ref reader, ref state)
-                                || TrySetPropertyIndex(9,  property9,  ref reader, ref state)
-                                || TrySetPropertyIndex(10, property10, ref reader, ref state)
-                                || TrySetPropertyIndex(11, property11, ref reader, ref state)
-                                || TrySetPropertyIndex(12, property12, ref reader, ref state)
-                                || TrySetPropertyIndex(13, property13, ref reader, ref state)
-                                || TrySetPropertyIndex(14, property14, ref reader, ref state)
-                                || TrySetPropertyIndex(15, property15, ref reader, ref state)
-                                || TrySetPropertyIndex(16, property16, ref reader, ref state);
+                            ref var currentPropertyIndex = ref state.CurrentPropertyIndex;
+
+                            _ =    TrySetPropertyIndex(1,  property1,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(2,  property2,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(3,  property3,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(4,  property4,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(5,  property5,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(6,  property6,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(7,  property7,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(8,  property8,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(9,  property9,  ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(10, property10, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(11, property11, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(12, property12, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(13, property13, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(14, property14, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(15, property15, ref reader, ref currentPropertyIndex)
+                                || TrySetPropertyIndex(16, property16, ref reader, ref currentPropertyIndex);
 
                             if (!reader.Read())
                                 return reader.Suspend((sm, state));
