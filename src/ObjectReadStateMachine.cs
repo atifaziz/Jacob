@@ -13,18 +13,17 @@ public record struct ObjectReadStateMachine
     public enum ReadResult { Error, Incomplete, PropertyName, PropertyValue, Done }
 
     public State CurrentState { get; private set; }
-    public int CurrentPropertyLoopCount { get; private set; }
 
     public void OnPropertyNameRead() =>
-        (CurrentState, CurrentPropertyLoopCount) =
+        CurrentState =
             CurrentState is State.PendingPropertyNameRead
-            ? (State.PendingPropertyValueRead, -1)
+            ? State.PendingPropertyValueRead
             : throw new InvalidOperationException();
 
     public void OnPropertyValueRead() =>
-        (CurrentState, CurrentPropertyLoopCount) =
+        CurrentState =
             CurrentState is State.PendingPropertyValueRead
-            ? (State.PropertyNameOrEnd, 0)
+            ? State.PropertyNameOrEnd
             : throw new InvalidOperationException();
 
     public ReadResult Read(ref Utf8JsonReader reader)
@@ -47,14 +46,11 @@ public record struct ObjectReadStateMachine
                     break;
 
                 case State.PropertyNameOrEnd:
-                    var lookahead = reader;
-
-                    if (!lookahead.Read())
+                    if (!reader.Read())
                         return ReadResult.Incomplete;
 
-                    if (lookahead.TokenType is JsonTokenType.EndObject)
+                    if (reader.TokenType is JsonTokenType.EndObject)
                     {
-                        reader = lookahead;
                         CurrentState = State.Done;
                         return ReadResult.Done;
                     }
@@ -63,11 +59,9 @@ public record struct ObjectReadStateMachine
                     return ReadResult.PropertyName;
 
                 case State.PendingPropertyNameRead:
-                    CurrentPropertyLoopCount++;
                     return ReadResult.PropertyName;
 
                 case State.PendingPropertyValueRead:
-                    CurrentPropertyLoopCount++;
                     return ReadResult.PropertyValue;
 
                 default:

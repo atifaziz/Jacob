@@ -20,7 +20,6 @@ public sealed class ObjectReadStateMachineTests
     {
         var subject = new ObjectReadStateMachine();
         Assert.Equal(State.Initial, subject.CurrentState);
-        Assert.Equal(0, subject.CurrentPropertyLoopCount);
     }
 
     [Fact]
@@ -89,13 +88,12 @@ public sealed class ObjectReadStateMachineTests
         var subject = new ObjectReadStateMachine();
         var reader = new Utf8JsonReader("{\"foo\":"u8, isFinalBlock: false, new());
 
-        foreach (var i in Enumerable.Range(0, 10))
+        foreach (var _ in Enumerable.Range(0, 10))
         {
             var result = subject.Read(ref reader);
 
             Assert.Equal(ReadResult.PropertyName, result);
             Assert.Equal(State.PendingPropertyNameRead, subject.CurrentState);
-            Assert.Equal(i, subject.CurrentPropertyLoopCount);
         }
     }
 
@@ -108,13 +106,12 @@ public sealed class ObjectReadStateMachineTests
         _ = subject.Read(ref reader);
         subject.OnPropertyNameRead();
 
-        foreach (var i in Enumerable.Range(0, 10))
+        foreach (var _ in Enumerable.Range(0, 10))
         {
             var result = subject.Read(ref reader);
 
             Assert.Equal(ReadResult.PropertyValue, result);
             Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
-            Assert.Equal(i, subject.CurrentPropertyLoopCount);
         }
     }
 
@@ -263,8 +260,6 @@ public sealed class ObjectReadStateMachineTests
 
             if (result is ReadResult.PropertyName)
             {
-                var read = reader.Read();
-                Assert.True(read);
                 subject.OnPropertyNameRead();
                 Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
             }

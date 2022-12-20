@@ -642,12 +642,6 @@ public static partial class JsonReader
                                 return true;
                             }
 
-                            if (sm.CurrentPropertyLoopCount is 0)
-                            {
-                                var read = reader.Read();
-                                Debug.Assert(read);
-                            }
-
                                  if (TrySetPropertyIndex(1,  property1,  ref reader, ref values)) { }
                             else if (TrySetPropertyIndex(2,  property2,  ref reader, ref values)) { }
                             else if (TrySetPropertyIndex(3,  property3,  ref reader, ref values)) { }
