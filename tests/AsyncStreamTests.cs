@@ -76,7 +76,7 @@ public class AsyncStreamTests
     [Fact]
     public async Task GetAsyncEnumerator_With_Airports_Data()
     {
-        var jsonReader = AirportReader.Buffer();
+        var jsonReader = AirportReader;
         Airport? lastGoodAirport = null;
         var actual = new List<Airport>();
 
