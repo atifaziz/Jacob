@@ -590,10 +590,10 @@ public static partial class JsonReader
                         }
                         case ObjectReadStateMachine.ReadResult.PropertyName:
                         {
-                            static bool TrySetPropertyIndex<TValue>(int index,
-                                                                    IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                                                                    ref Utf8JsonReader reader,
-                                                                    ref int? currentIndex)
+                            static bool TrySetPropertyIndex<T>(int index,
+                                                               IJsonProperty<T, JsonReadResult<T>> property,
+                                                               ref Utf8JsonReader reader,
+                                                               ref int? currentIndex)
                             {
                                 if (!property.IsMatch(ref reader))
                                     return false;
