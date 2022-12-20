@@ -16,114 +16,112 @@ In another configuration, we benchmark the worst-case scenario performance of
 `JsonReader.Either` by deserializing an array with elements of type
 `MultiPolygon`. We measure the following:
 
-    BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.963)
+    BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.819)
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
-    .NET SDK=7.0.101
-      [Host]     : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
-      Job-YZVNIW : .NET 6.0.12 (6.0.1222.56807), X64 RyuJIT AVX2
-      Job-MRCBRH : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
-      Job-DTLXOA : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
+    .NET SDK=7.0.100
+      [Host]     : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-IBGVMK : .NET 6.0.11 (6.0.1122.52304), X64 RyuJIT AVX2
+      Job-TTWDSU : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-XACLOO : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
 
-
-|                  Method |       Runtime | ObjectCount |    SampleSet |          Mean |         Error |        StdDev |        Median | Ratio | RatioSD |      Gen0 |      Gen1 |      Gen2 |   Allocated | Alloc Ratio |
-|------------------------ |-------------- |------------ |------------- |--------------:|--------------:|--------------:|--------------:|------:|--------:|----------:|----------:|----------:|------------:|------------:|
-|     JsonReaderBenchmark |      .NET 6.0 |          10 |          All |     107.64 us |      4.443 us |     12.604 us |     106.22 us |  1.80 |    0.30 |    2.4414 |         - |         - |    10.02 KB |        0.61 |
-| SystemTextJsonBenchmark |      .NET 6.0 |          10 |          All |      64.51 us |      3.668 us |     10.525 us |      64.49 us |  1.09 |    0.25 |    4.0283 |         - |         - |    16.52 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |          10 |          All |     115.35 us |      7.387 us |     21.666 us |     109.83 us |  1.96 |    0.51 |    2.4414 |         - |         - |    10.02 KB |        0.61 |
-| SystemTextJsonBenchmark |      .NET 7.0 |          10 |          All |      89.88 us |      5.434 us |     16.023 us |      90.87 us |  1.51 |    0.33 |    4.0283 |         - |         - |    16.55 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |          10 |          All |     126.09 us |      7.309 us |     21.437 us |     126.91 us |  2.12 |    0.42 |    2.4414 |         - |         - |    10.02 KB |        0.61 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |          10 |          All |      60.37 us |      2.882 us |      8.452 us |      58.99 us |  1.00 |    0.00 |    4.0283 |         - |         - |    16.55 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |          10 | MultiPolygon |     277.33 us |     16.455 us |     47.475 us |     267.42 us |  1.69 |    0.38 |    6.3477 |         - |         - |    26.72 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 6.0 |          10 | MultiPolygon |     185.33 us |     18.201 us |     53.094 us |     173.14 us |  1.13 |    0.38 |    9.7656 |         - |         - |    41.39 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |          10 | MultiPolygon |     229.31 us |     16.622 us |     47.958 us |     221.21 us |  1.40 |    0.36 |    6.3477 |         - |         - |    26.72 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 7.0 |          10 | MultiPolygon |     164.54 us |     10.203 us |     29.764 us |     161.83 us |  1.00 |    0.23 |   10.0098 |         - |         - |    41.42 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |          10 | MultiPolygon |     273.79 us |     26.971 us |     78.675 us |     252.71 us |  1.67 |    0.52 |    6.3477 |         - |         - |    26.72 KB |        0.65 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |          10 | MultiPolygon |     168.58 us |      9.231 us |     26.487 us |     164.39 us |  1.00 |    0.00 |   10.0098 |         - |         - |    41.42 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |         100 |          All |   1,155.46 us |     63.990 us |    186.662 us |   1,143.43 us |  1.71 |    0.42 |   25.3906 |         - |         - |   107.19 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 6.0 |         100 |          All |     733.39 us |     51.815 us |    144.440 us |     701.48 us |  1.10 |    0.29 |   41.0156 |    3.9063 |         - |   170.35 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |         100 |          All |   1,266.09 us |    103.432 us |    303.347 us |   1,215.61 us |  1.90 |    0.61 |   25.3906 |    3.9063 |         - |   107.19 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 7.0 |         100 |          All |     646.42 us |     34.145 us |     96.308 us |     621.46 us |  0.96 |    0.21 |   41.0156 |    2.9297 |         - |   170.38 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |         100 |          All |   1,416.92 us |    117.686 us |    346.999 us |   1,317.38 us |  2.12 |    0.63 |   25.3906 |    3.9063 |         - |   107.19 KB |        0.63 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |         100 |          All |     697.47 us |     41.941 us |    119.659 us |     676.30 us |  1.00 |    0.00 |   41.0156 |    2.9297 |         - |   170.38 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |         100 | MultiPolygon |   2,296.71 us |    118.628 us |    344.162 us |   2,209.99 us |  1.13 |    0.29 |   62.5000 |   19.5313 |         - |   264.79 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 6.0 |         100 | MultiPolygon |   1,749.16 us |    107.134 us |    305.659 us |   1,664.00 us |  0.88 |    0.26 |   82.0313 |   27.3438 |         - |   407.76 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |         100 | MultiPolygon |   2,339.49 us |    121.793 us |    353.343 us |   2,277.38 us |  1.16 |    0.30 |   62.5000 |   19.5313 |         - |   264.79 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 7.0 |         100 | MultiPolygon |   1,588.36 us |     70.990 us |    202.538 us |   1,579.53 us |  0.80 |    0.21 |   85.9375 |   35.1563 |         - |   407.79 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |         100 | MultiPolygon |   2,559.98 us |    180.068 us |    525.266 us |   2,515.30 us |  1.27 |    0.42 |   64.4531 |   21.4844 |         - |   264.79 KB |        0.65 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |         100 | MultiPolygon |   2,154.43 us |    174.058 us |    513.215 us |   2,077.98 us |  1.00 |    0.00 |   87.8906 |   33.2031 |         - |   407.79 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |        1000 |          All |  13,797.56 us |  1,010.837 us |  2,948.659 us |  13,126.70 us |  1.82 |    0.40 |  156.2500 |   62.5000 |         - |     1081 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 6.0 |        1000 |          All |   8,510.29 us |    476.227 us |  1,358.704 us |   8,289.47 us |  1.12 |    0.23 |  265.6250 |  125.0000 |         - |   1704.2 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |        1000 |          All |  11,832.44 us |    764.299 us |  2,217.369 us |  11,243.20 us |  1.57 |    0.37 |  171.8750 |  156.2500 |         - |     1081 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 7.0 |        1000 |          All |   7,787.50 us |    372.270 us |  1,080.023 us |   7,676.07 us |  1.03 |    0.19 |  265.6250 |  250.0000 |         - |  1704.21 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |        1000 |          All |  12,580.42 us |    840.195 us |  2,437.559 us |  12,080.19 us |  1.68 |    0.48 |  171.8750 |  156.2500 |         - |     1081 KB |        0.63 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |        1000 |          All |   7,734.19 us |    484.599 us |  1,413.597 us |   7,465.44 us |  1.00 |    0.00 |  265.6250 |  250.0000 |         - |  1704.23 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |        1000 | MultiPolygon |  28,557.35 us |  1,731.647 us |  5,051.297 us |  27,777.35 us |  1.51 |    0.37 |  406.2500 |  187.5000 |         - |  2641.37 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 6.0 |        1000 | MultiPolygon |  21,377.49 us |  1,370.007 us |  3,841.647 us |  20,630.76 us |  1.13 |    0.24 |  656.2500 |  312.5000 |         - |  4056.82 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |        1000 | MultiPolygon |  26,085.62 us |  1,267.862 us |  3,637.734 us |  25,941.45 us |  1.38 |    0.28 |  406.2500 |  375.0000 |         - |  2641.37 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 7.0 |        1000 | MultiPolygon |  20,511.24 us |  1,108.834 us |  3,199.238 us |  20,036.13 us |  1.08 |    0.22 |  656.2500 |  625.0000 |         - |  4056.86 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |        1000 | MultiPolygon |  28,741.63 us |  2,139.559 us |  6,274.956 us |  27,943.37 us |  1.52 |    0.40 |  375.0000 |  312.5000 |         - |  2641.38 KB |        0.65 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |        1000 | MultiPolygon |  19,308.50 us |    973.496 us |  2,824.287 us |  18,594.40 us |  1.00 |    0.00 |  656.2500 |  625.0000 |         - |  4056.85 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |       10000 |          All | 140,908.96 us |  6,766.913 us | 19,739.404 us | 136,317.40 us |  1.33 |    0.24 | 2000.0000 |  750.0000 |  250.0000 | 10904.08 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 6.0 |       10000 |          All | 131,826.77 us |  8,006.933 us | 23,608.621 us | 127,007.23 us |  1.24 |    0.30 | 3000.0000 | 1500.0000 |  500.0000 | 17418.09 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |       10000 |          All | 157,915.71 us | 14,169.957 us | 41,780.437 us | 146,523.96 us |  1.50 |    0.47 | 2000.0000 |  750.0000 |  250.0000 |  10902.9 KB |        0.63 |
-| SystemTextJsonBenchmark |      .NET 7.0 |       10000 |          All | 116,689.56 us |  6,214.653 us | 18,029.835 us | 118,253.00 us |  1.10 |    0.21 | 3200.0000 | 1800.0000 |  600.0000 | 17419.33 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |       10000 |          All | 154,409.44 us | 12,657.378 us | 37,320.565 us | 145,850.53 us |  1.45 |    0.39 | 1666.6667 |  666.6667 |         - | 10902.25 KB |        0.63 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |       10000 |          All | 107,816.94 us |  5,196.811 us | 15,159.340 us | 105,062.48 us |  1.00 |    0.00 | 3000.0000 | 1750.0000 |  500.0000 | 17418.92 KB |        1.00 |
-|                         |               |             |              |               |               |               |               |       |         |           |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |       10000 | MultiPolygon | 293,468.74 us | 14,792.433 us | 41,963.671 us | 292,364.05 us |  1.36 |    0.26 | 4000.0000 | 1000.0000 |         - | 26506.64 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 6.0 |       10000 | MultiPolygon | 259,996.72 us | 17,096.448 us | 49,599.895 us | 253,629.60 us |  1.20 |    0.26 | 6500.0000 | 2500.0000 |  500.0000 | 40948.99 KB |        1.00 |
-|     JsonReaderBenchmark |      .NET 7.0 |       10000 | MultiPolygon | 269,429.68 us | 13,348.577 us | 39,149.066 us | 260,418.40 us |  1.24 |    0.21 | 4000.0000 | 1500.0000 |         - | 26506.64 KB |        0.65 |
-| SystemTextJsonBenchmark |      .NET 7.0 |       10000 | MultiPolygon | 240,378.36 us | 10,937.142 us | 31,730.633 us | 236,796.45 us |  1.11 |    0.20 | 7500.0000 | 3500.0000 | 1000.0000 | 40951.48 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |       10000 | MultiPolygon | 281,075.48 us | 17,166.275 us | 50,345.712 us | 270,001.27 us |  1.30 |    0.28 | 4333.3333 | 1666.6667 |  333.3333 | 26508.55 KB |        0.65 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |       10000 | MultiPolygon | 219,534.95 us |  9,294.446 us | 26,667.507 us | 216,748.60 us |  1.00 |    0.00 | 7000.0000 | 3333.3333 |  666.6667 | 40949.07 KB |        1.00 |
-
+| Method                  | Runtime       | ObjectCount | SampleSet    |          Mean |        Error |       StdDev | Ratio | RatioSD |      Gen0 |      Gen1 |      Gen2 |   Allocated | Alloc Ratio |
+| ----------------------- | ------------- | ----------- | ------------ | ------------: | -----------: | -----------: | ----: | ------: | --------: | --------: | --------: | ----------: | ----------: |
+| JsonReaderBenchmark     | .NET 6.0      | 10          | All          |      46.14 μs |     0.883 μs |     1.179 μs |  1.37 |    0.06 |    1.8921 |         - |         - |     7.83 KB |        0.50 |
+| SystemTextJsonBenchmark | .NET 6.0      | 10          | All          |      36.19 μs |     0.714 μs |     1.153 μs |  1.09 |    0.06 |    3.7842 |         - |         - |     15.7 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 10          | All          |      45.87 μs |     0.907 μs |     2.155 μs |  1.37 |    0.09 |    1.8921 |         - |         - |     7.83 KB |        0.50 |
+| SystemTextJsonBenchmark | .NET 7.0      | 10          | All          |      34.14 μs |     0.676 μs |     1.805 μs |  1.02 |    0.06 |    3.8452 |         - |         - |    15.73 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 10          | All          |      45.52 μs |     0.910 μs |     1.011 μs |  1.36 |    0.05 |    1.8921 |         - |         - |     7.83 KB |        0.50 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 10          | All          |      33.32 μs |     0.661 μs |     1.364 μs |  1.00 |    0.00 |    3.8452 |         - |         - |    15.73 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 10          | MultiPolygon |      99.51 μs |     1.948 μs |     3.089 μs |  1.19 |    0.08 |    4.8828 |    0.1221 |         - |    20.16 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 6.0      | 10          | MultiPolygon |      89.99 μs |     1.796 μs |     3.828 μs |  1.08 |    0.07 |    9.2773 |         - |         - |    38.02 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 10          | MultiPolygon |      96.79 μs |     1.778 μs |     2.493 μs |  1.17 |    0.08 |    4.8828 |         - |         - |    20.16 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 7.0      | 10          | MultiPolygon |      83.68 μs |     1.667 μs |     4.421 μs |  1.01 |    0.07 |    9.2773 |    0.1221 |         - |    38.05 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 10          | MultiPolygon |      97.53 μs |     1.937 μs |     4.931 μs |  1.18 |    0.10 |    4.8828 |         - |         - |    20.16 KB |        0.53 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 10          | MultiPolygon |      83.18 μs |     1.651 μs |     4.603 μs |  1.00 |    0.00 |    9.2773 |    0.1221 |         - |    38.05 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 100         | All          |     526.45 μs |    10.437 μs |    24.190 μs |  1.46 |    0.11 |   20.5078 |    0.9766 |         - |    83.88 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 6.0      | 100         | All          |     388.72 μs |     7.755 μs |    16.527 μs |  1.07 |    0.08 |   39.0625 |    3.4180 |         - |   161.09 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 100         | All          |     525.17 μs |    10.467 μs |    19.915 μs |  1.45 |    0.12 |   20.5078 |    0.9766 |         - |    83.88 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 7.0      | 100         | All          |     364.38 μs |     7.255 μs |    13.083 μs |  1.00 |    0.07 |   39.0625 |    9.7656 |         - |   161.13 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 100         | All          |     504.33 μs |    10.086 μs |    27.267 μs |  1.39 |    0.11 |   20.5078 |    0.9766 |         - |    83.88 KB |        0.52 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 100         | All          |     364.79 μs |     7.257 μs |    20.350 μs |  1.00 |    0.00 |   39.0625 |    9.7656 |         - |   161.13 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 100         | MultiPolygon |   1,019.00 μs |    20.298 μs |    46.637 μs |  1.25 |    0.07 |   46.8750 |   15.6250 |         - |   199.17 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 6.0      | 100         | MultiPolygon |     922.65 μs |    18.362 μs |    48.694 μs |  1.14 |    0.06 |   83.0078 |   25.3906 |         - |   373.45 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 100         | MultiPolygon |     990.79 μs |    19.510 μs |    46.369 μs |  1.23 |    0.07 |   47.8516 |   15.6250 |         - |   199.16 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 7.0      | 100         | MultiPolygon |     845.85 μs |    16.686 μs |    33.324 μs |  1.04 |    0.05 |   82.0313 |   37.1094 |         - |   373.48 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 100         | MultiPolygon |     994.97 μs |    19.737 μs |    35.083 μs |  1.23 |    0.05 |   47.8516 |   15.6250 |         - |   199.16 KB |        0.53 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 100         | MultiPolygon |     809.81 μs |    15.948 μs |    22.356 μs |  1.00 |    0.00 |   83.0078 |   33.2031 |         - |   373.48 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 1000        | All          |   5,093.26 μs |    80.493 μs |    71.355 μs |  1.38 |    0.03 |  132.8125 |   62.5000 |         - |   844.31 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 6.0      | 1000        | All          |   4,069.82 μs |    80.943 μs |    79.497 μs |  1.11 |    0.02 |  257.8125 |  125.0000 |         - |  1609.24 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 1000        | All          |   4,941.00 μs |    81.365 μs |    76.109 μs |  1.34 |    0.03 |  132.8125 |  125.0000 |         - |   844.31 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 7.0      | 1000        | All          |   3,668.58 μs |    55.642 μs |    49.325 μs |  1.00 |    0.02 |  261.7188 |  257.8125 |         - |  1609.27 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 1000        | All          |   4,899.00 μs |    89.187 μs |    83.426 μs |  1.33 |    0.03 |  132.8125 |  125.0000 |         - |   844.31 KB |        0.52 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 1000        | All          |   3,677.57 μs |    60.946 μs |    57.009 μs |  1.00 |    0.00 |  261.7188 |  257.8125 |         - |  1609.27 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 1000        | MultiPolygon |  10,301.49 μs |   147.689 μs |   130.922 μs |  1.07 |    0.02 |  312.5000 |  156.2500 |         - |  1985.12 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 6.0      | 1000        | MultiPolygon |  10,380.42 μs |   207.354 μs |   221.867 μs |  1.07 |    0.04 |  593.7500 |  296.8750 |         - |  3713.12 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 1000        | MultiPolygon |   9,756.26 μs |   189.087 μs |   185.708 μs |  1.01 |    0.03 |  312.5000 |  296.8750 |         - |  1985.12 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 7.0      | 1000        | MultiPolygon |   9,409.72 μs |   181.121 μs |   169.421 μs |  0.98 |    0.03 |  593.7500 |  578.1250 |         - |  3713.15 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 1000        | MultiPolygon |   9,895.79 μs |   178.855 μs |   158.550 μs |  1.03 |    0.02 |  312.5000 |  296.8750 |         - |  1985.12 KB |        0.53 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 1000        | MultiPolygon |   9,680.68 μs |   189.996 μs |   218.800 μs |  1.00 |    0.00 |  593.7500 |  578.1250 |         - |  3713.15 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 10000       | All          |  63,113.40 μs | 1,140.368 μs | 1,066.701 μs |  0.95 |    0.04 | 1375.0000 |  500.0000 |  125.0000 |  8536.96 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 6.0      | 10000       | All          |  60,578.91 μs | 1,211.539 μs | 1,850.148 μs |  0.92 |    0.04 | 2750.0000 | 1250.0000 |  375.0000 | 16469.52 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 10000       | All          |  60,089.65 μs | 1,164.006 μs | 1,777.559 μs |  0.91 |    0.04 | 1444.4444 |  555.5556 |  111.1111 |  8537.14 KB |        0.52 |
+| SystemTextJsonBenchmark | .NET 7.0      | 10000       | All          |  65,042.87 μs | 1,295.430 μs | 2,091.877 μs |  0.99 |    0.05 | 3000.0000 | 1777.7778 |  555.5556 | 16470.91 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 10000       | All          |  60,257.12 μs | 1,120.240 μs | 1,047.873 μs |  0.91 |    0.03 | 1444.4444 |  555.5556 |  111.1111 |  8536.96 KB |        0.52 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | All          |  65,941.92 μs | 1,301.190 μs | 2,244.488 μs |  1.00 |    0.00 | 3000.0000 | 1777.7778 |  555.5556 | 16470.68 KB |        1.00 |
+|                         |               |             |              |               |              |              |       |         |           |           |           |             |             |
+| JsonReaderBenchmark     | .NET 6.0      | 10000       | MultiPolygon | 130,158.13 μs | 2,516.953 μs | 3,918.593 μs |  1.02 |    0.04 | 3500.0000 | 1500.0000 |  500.0000 | 19945.64 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 6.0      | 10000       | MultiPolygon | 146,698.48 μs | 2,909.600 μs | 6,073.419 μs |  1.16 |    0.06 | 6750.0000 | 3000.0000 | 1000.0000 | 37510.12 KB |        1.00 |
+| JsonReaderBenchmark     | .NET 7.0      | 10000       | MultiPolygon | 119,218.10 μs | 2,369.504 μs | 3,243.404 μs |  0.94 |    0.03 | 3250.0000 | 1250.0000 |  250.0000 | 19945.11 KB |        0.53 |
+| SystemTextJsonBenchmark | .NET 7.0      | 10000       | MultiPolygon | 127,485.37 μs | 2,488.375 μs | 4,292.325 μs |  1.00 |    0.04 | 6500.0000 | 3000.0000 |  750.0000 |  37511.3 KB |        1.00 |
+| JsonReaderBenchmark     | NativeAOT 7.0 | 10000       | MultiPolygon | 123,240.28 μs | 2,443.043 μs | 2,508.826 μs |  0.97 |    0.04 | 3600.0000 | 1400.0000 |  400.0000 | 19945.28 KB |        0.53 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 | 10000       | MultiPolygon | 127,045.45 μs | 2,512.918 μs | 3,761.218 μs |  1.00 |    0.00 | 6500.0000 | 3000.0000 |  750.0000 | 37510.46 KB |        1.00 |
 
 When benchmarking deserialization a subset of an example payload from the
 [GitHub REST API (Merge a branch)], we measure the following:
 
-    BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.963)
+    BenchmarkDotNet=v0.13.2, OS=Windows 11 (10.0.22621.819)
     Intel Core i7-1065G7 CPU 1.30GHz, 1 CPU, 8 logical and 4 physical cores
-    .NET SDK=7.0.101
-      [Host]     : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
-      Job-GBHHXP : .NET 6.0.12 (6.0.1222.56807), X64 RyuJIT AVX2
-      Job-JZANEJ : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
-      Job-JTAKIM : .NET 7.0.1 (7.0.122.56804), X64 RyuJIT AVX2
+    .NET SDK=7.0.100
+      [Host]     : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-OVWNPR : .NET 6.0.11 (6.0.1122.52304), X64 RyuJIT AVX2
+      Job-KJBBGH : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+      Job-CKYCTW : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
 
 
-|                  Method |       Runtime | ObjectCount |           Mean |        Error |        StdDev |         Median | Ratio | RatioSD |       Gen0 |      Gen1 |      Gen2 |   Allocated | Alloc Ratio |
-|------------------------ |-------------- |------------ |---------------:|-------------:|--------------:|---------------:|------:|--------:|-----------:|----------:|----------:|------------:|------------:|
-|     JsonReaderBenchmark |      .NET 6.0 |          10 |       829.7 us |     32.92 us |      97.06 us |       814.4 us |  1.79 |    0.29 |    20.5078 |    1.9531 |         - |    84.61 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 6.0 |          10 |       495.0 us |     19.81 us |      58.11 us |       488.3 us |  1.07 |    0.18 |    23.9258 |    7.8125 |         - |     98.9 KB |        1.01 |
-|     JsonReaderBenchmark |      .NET 7.0 |          10 |       763.3 us |     26.06 us |      75.18 us |       750.6 us |  1.64 |    0.24 |    20.5078 |    1.9531 |         - |    84.61 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 7.0 |          10 |       437.4 us |     14.41 us |      42.02 us |       425.0 us |  0.94 |    0.13 |    23.4375 |    7.8125 |         - |    98.07 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |          10 |       730.1 us |     20.06 us |      56.92 us |       731.0 us |  1.57 |    0.18 |    20.5078 |    1.9531 |         - |    84.61 KB |        0.86 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |          10 |       469.7 us |     17.84 us |      50.32 us |       455.1 us |  1.00 |    0.00 |    23.9258 |    7.8125 |         - |    98.07 KB |        1.00 |
-|                         |               |             |                |              |               |                |       |         |            |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |         100 |     8,242.5 us |    230.19 us |     664.16 us |     8,186.2 us |  1.75 |    0.18 |   132.8125 |   62.5000 |         - |    843.7 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 6.0 |         100 |     5,236.2 us |    204.64 us |     590.42 us |     5,115.8 us |  1.11 |    0.15 |   156.2500 |   78.1250 |         - |   994.96 KB |        1.01 |
-|     JsonReaderBenchmark |      .NET 7.0 |         100 |     7,875.5 us |    260.36 us |     755.36 us |     7,716.2 us |  1.67 |    0.21 |   132.8125 |  125.0000 |         - |    843.7 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 7.0 |         100 |     4,802.9 us |    146.16 us |     426.35 us |     4,760.6 us |  1.02 |    0.11 |   156.2500 |  148.4375 |         - |    986.4 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |         100 |     7,769.7 us |    254.58 us |     734.51 us |     7,622.5 us |  1.65 |    0.21 |   132.8125 |  125.0000 |         - |    843.7 KB |        0.86 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |         100 |     4,752.8 us |    126.98 us |     368.39 us |     4,679.4 us |  1.00 |    0.00 |   156.2500 |  148.4375 |         - |    986.4 KB |        1.00 |
-|                         |               |             |                |              |               |                |       |         |            |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |        1000 |    91,705.6 us |  2,731.55 us |   7,924.72 us |    90,147.4 us |  1.18 |    0.26 |  1500.0000 |  666.6667 |  166.6667 |  8431.46 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 6.0 |        1000 |    66,529.9 us |  2,066.72 us |   6,028.71 us |    65,676.7 us |  0.85 |    0.18 |  1777.7778 |  777.7778 |  222.2222 |  9875.75 KB |        1.01 |
-|     JsonReaderBenchmark |      .NET 7.0 |        1000 |    94,818.1 us |  3,732.08 us |  10,827.44 us |    92,959.7 us |  1.23 |    0.33 |  1400.0000 |  800.0000 |  200.0000 |  8431.39 KB |        0.86 |
-| SystemTextJsonBenchmark |      .NET 7.0 |        1000 |    71,909.2 us |  2,588.82 us |   7,510.64 us |    70,775.3 us |  0.93 |    0.21 |  1857.1429 | 1000.0000 |  285.7143 |  9789.17 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |        1000 |    91,905.9 us |  3,260.01 us |   9,509.61 us |    89,695.9 us |  1.18 |    0.29 |  1500.0000 |  833.3333 |  166.6667 |  8430.87 KB |        0.86 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |        1000 |    82,566.5 us |  6,914.74 us |  20,388.27 us |    72,473.2 us |  1.00 |    0.00 |  1750.0000 | 1000.0000 |  250.0000 |  9789.55 KB |        1.00 |
-|                         |               |             |                |              |               |                |       |         |            |           |           |             |             |
-|     JsonReaderBenchmark |      .NET 6.0 |       10000 | 1,092,464.8 us | 42,949.12 us | 125,284.58 us | 1,067,990.2 us |  1.16 |    0.31 | 13000.0000 | 5000.0000 |         - | 84397.45 KB |        0.87 |
-| SystemTextJsonBenchmark |      .NET 6.0 |       10000 |   634,041.7 us | 30,142.52 us |  87,927.16 us |   629,761.8 us |  0.68 |    0.23 | 15000.0000 | 5000.0000 |         - | 98321.43 KB |        1.01 |
-|     JsonReaderBenchmark |      .NET 7.0 |       10000 |   775,164.9 us | 31,426.50 us |  90,168.53 us |   750,062.1 us |  0.82 |    0.23 | 14000.0000 | 7000.0000 | 1000.0000 | 84397.85 KB |        0.87 |
-| SystemTextJsonBenchmark |      .NET 7.0 |       10000 |   533,456.7 us | 18,085.20 us |  52,468.43 us |   521,280.2 us |  0.57 |    0.16 | 16000.0000 | 8000.0000 | 1000.0000 |  97466.7 KB |        1.00 |
-|     JsonReaderBenchmark | NativeAOT 7.0 |       10000 | 1,066,155.4 us | 48,754.39 us | 142,218.84 us | 1,038,770.2 us |  1.13 |    0.33 | 14000.0000 | 7000.0000 | 1000.0000 |  84399.3 KB |        0.87 |
-| SystemTextJsonBenchmark | NativeAOT 7.0 |       10000 | 1,005,954.9 us | 83,038.53 us | 244,840.98 us | 1,008,079.6 us |  1.00 |    0.00 | 16000.0000 | 8000.0000 | 1000.0000 | 97462.72 KB |        1.00 |
+|                  Method |       Runtime | ObjectCount |         Mean |        Error |       StdDev |       Median | Ratio | RatioSD |       Gen0 |      Gen1 |      Gen2 |   Allocated | Alloc Ratio |
+|------------------------ |-------------- |------------ |-------------:|-------------:|-------------:|-------------:|------:|--------:|-----------:|----------:|----------:|------------:|------------:|
+|     JsonReaderBenchmark |      .NET 6.0 |          10 |     361.1 us |     11.90 us |     33.17 us |     353.0 us |  1.23 |    0.21 |    19.5313 |    5.8594 |         - |    83.67 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 6.0 |          10 |     249.3 us |      4.98 us |     13.64 us |     248.7 us |  0.84 |    0.12 |    23.9258 |    7.8125 |         - |     98.9 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |          10 |     327.6 us |     10.28 us |     29.32 us |     318.4 us |  1.12 |    0.19 |    20.0195 |    1.9531 |         - |    83.67 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 7.0 |          10 |     285.3 us |     13.16 us |     35.79 us |     273.4 us |  0.96 |    0.18 |    23.9258 |    7.8125 |         - |    98.07 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |          10 |     406.9 us |     34.08 us |     94.44 us |     371.2 us |  1.37 |    0.30 |    20.0195 |    1.9531 |         - |    83.67 KB |        0.85 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |          10 |     298.6 us |     16.48 us |     46.50 us |     285.7 us |  1.00 |    0.00 |    23.9258 |    7.8125 |         - |    98.07 KB |        1.00 |
+|                         |               |             |              |              |              |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |         100 |   3,867.9 us |    164.67 us |    456.31 us |   3,714.0 us |  1.28 |    0.23 |   132.8125 |   66.4063 |         - |   834.32 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 6.0 |         100 |   3,363.0 us |    219.58 us |    615.72 us |   3,143.9 us |  1.12 |    0.27 |   160.1563 |   78.1250 |         - |   994.96 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |         100 |   3,781.9 us |    131.40 us |    374.89 us |   3,689.5 us |  1.25 |    0.22 |   132.8125 |  128.9063 |         - |   834.32 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 7.0 |         100 |   3,047.9 us |    154.99 us |    439.68 us |   2,928.2 us |  0.99 |    0.19 |   160.1563 |  156.2500 |         - |   986.39 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |         100 |   3,733.0 us |    165.12 us |    465.73 us |   3,628.0 us |  1.25 |    0.24 |   132.8125 |  125.0000 |         - |   834.32 KB |        0.85 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |         100 |   3,085.3 us |    185.14 us |    503.69 us |   2,935.6 us |  1.00 |    0.00 |   160.1563 |  156.2500 |         - |   986.39 KB |        1.00 |
+|                         |               |             |              |              |              |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |        1000 |  48,127.1 us |  2,503.79 us |  7,102.84 us |  45,877.2 us |  0.98 |    0.21 |  1400.0000 |  500.0000 |  100.0000 |  8336.78 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 6.0 |        1000 |  44,739.9 us |  1,663.72 us |  4,800.22 us |  43,065.2 us |  0.91 |    0.18 |  1727.2727 |  727.2727 |  272.7273 |  9875.11 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |        1000 |  53,535.8 us |  3,335.49 us |  9,676.85 us |  49,938.4 us |  1.09 |    0.25 |  1555.5556 |  888.8889 |  222.2222 |  8336.96 KB |        0.85 |
+| SystemTextJsonBenchmark |      .NET 7.0 |        1000 |  45,374.4 us |  1,225.50 us |  3,516.18 us |  44,875.0 us |  0.92 |    0.16 |  1833.3333 | 1083.3333 |  333.3333 |  9789.81 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |        1000 |  53,250.5 us |  2,668.28 us |  7,569.46 us |  50,447.6 us |  1.09 |    0.26 |  1500.0000 |  875.0000 |  250.0000 |  8337.59 KB |        0.85 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |        1000 |  50,615.8 us |  3,317.44 us |  9,356.91 us |  48,137.7 us |  1.00 |    0.00 |  1818.1818 | 1000.0000 |  272.7273 |  9789.16 KB |        1.00 |
+|                         |               |             |              |              |              |              |       |         |            |           |           |             |             |
+|     JsonReaderBenchmark |      .NET 6.0 |       10000 | 473,801.2 us | 18,509.33 us | 51,902.14 us | 455,522.1 us |  1.24 |    0.19 | 13000.0000 | 5000.0000 |         - | 83459.95 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 6.0 |       10000 | 402,131.6 us | 12,635.45 us | 36,049.65 us | 391,502.2 us |  1.05 |    0.12 | 15000.0000 | 5000.0000 |         - | 98321.43 KB |        1.01 |
+|     JsonReaderBenchmark |      .NET 7.0 |       10000 | 435,829.0 us | 13,578.17 us | 39,392.74 us | 421,647.1 us |  1.14 |    0.15 | 14000.0000 | 7000.0000 | 1000.0000 | 83460.31 KB |        0.86 |
+| SystemTextJsonBenchmark |      .NET 7.0 |       10000 | 378,523.2 us | 12,743.50 us | 37,173.38 us | 362,073.7 us |  1.00 |    0.15 | 16000.0000 | 8000.0000 | 1000.0000 |  97462.8 KB |        1.00 |
+|     JsonReaderBenchmark | NativeAOT 7.0 |       10000 | 430,449.1 us | 16,561.16 us | 47,249.91 us | 412,971.2 us |  1.13 |    0.17 | 14000.0000 | 7000.0000 | 1000.0000 | 83462.89 KB |        0.86 |
+| SystemTextJsonBenchmark | NativeAOT 7.0 |       10000 | 384,891.2 us | 14,468.88 us | 41,280.54 us | 367,407.8 us |  1.00 |    0.00 | 16000.0000 | 8000.0000 | 1000.0000 | 97462.79 KB |        1.00 |
 
   [GitHub REST API]: https://docs.github.com/en/rest/branches/branches#merge-a-branch
