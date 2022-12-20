@@ -86,7 +86,7 @@ public sealed class ObjectReadStateMachineTests
     public void Read_Increments_CurrentPropertyLoopCount_When_Current_State_Is_PendingPropertyNameRead()
     {
         var subject = new ObjectReadStateMachine();
-        var reader = new Utf8JsonReader("{\"foo\":"u8, isFinalBlock: false, new());
+        var reader = new Utf8JsonReader("""{"foo":"""u8, isFinalBlock: false, new());
 
         foreach (var _ in Enumerable.Range(0, 10))
         {
