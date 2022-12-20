@@ -472,46 +472,62 @@ public static partial class JsonReader
         public Unit DefaultValue => default;
     }
 
-    public static IJsonReader<TResult> Object<T, TResult>(IJsonReader<T> reader,
+    public static IJsonReader<TResult> Object<T, TResult>(IJsonReader<T> jsonReader,
                                                           Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
-        CreatePure((ref Utf8JsonReader rdr) =>
+        Create((ref Utf8JsonReader reader) =>
         {
-            if (rdr.TokenType is JsonTokenType.None && !rdr.Read())
-                throw PartialJsonNotSupportedException();
+            var (sm, currentPropertyName, acc) =
+                reader.IsResuming && ((ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>))reader.Pop() is var ps
+                    ? ps
+                    : (default, default, new());
 
-            var tokenType = rdr.TokenType;
-            if (tokenType is not JsonTokenType.StartObject)
-                return Error("Invalid JSON value where a JSON object was expected.");
+            return Read(ref reader, sm, currentPropertyName, acc);
 
-            var properties = new List<KeyValuePair<string, T>>();
-
-            while (true)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm, string? currentPropertyName, List<KeyValuePair<string, T>> acc)
             {
-                if (!rdr.TryReadToken(out tokenType))
-                    throw PartialJsonNotSupportedException();
-
-                if (tokenType is JsonTokenType.EndObject)
-                    break;
-
-                Debug.Assert(rdr.TokenType is JsonTokenType.PropertyName);
-                var name = rdr.GetString()!;
-
-                if (!rdr.Read())
-                    throw PartialJsonNotSupportedException();
-
-                switch (reader.TryRead(ref rdr))
+                while (true)
                 {
-                    case { Incomplete: true }:
-                        throw PartialJsonNotSupportedException();
-                    case { Error: { } error }:
-                        return Error(error);
-                    case { Value: var value }:
-                        properties.Add(KeyValuePair.Create(name, value));
-                        break;
+                    switch (sm.Read(ref reader))
+                    {
+                        case ObjectReadStateMachine.ReadResult.Error:
+                        {
+                            return Error("Invalid JSON value where a JSON object was expected.");
+                        }
+                        case ObjectReadStateMachine.ReadResult.Incomplete:
+                        {
+                            return reader.Suspend((sm, currentPropertyName, acc));
+                        }
+                        case ObjectReadStateMachine.ReadResult.PropertyName:
+                        {
+                            currentPropertyName = reader.GetString();
+                            sm.OnPropertyNameRead();
+                            break;
+                        }
+                        case ObjectReadStateMachine.ReadResult.PropertyValue:
+                        {
+                            switch (jsonReader.TryRead(ref reader))
+                            {
+                                case { Incomplete: true }:
+                                    return reader.Suspend((sm, currentPropertyName));
+                                case { Error: { } err }:
+                                    return new JsonReadError(err);
+                                case { Value: var val }:
+                                    acc.Add(KeyValuePair.Create(currentPropertyName!, val));
+                                    break;
+                            }
+
+                            sm.OnPropertyValueRead();
+                            currentPropertyName = null;
+
+                            break;
+                        }
+                        case ObjectReadStateMachine.ReadResult.Done:
+                        {
+                            return Value(resultSelector(acc));
+                        }
+                    }
                 }
             }
-
-            return Value(resultSelector(properties));
         });
 
     /// <remarks>
