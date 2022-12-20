@@ -46,7 +46,6 @@ public record struct ObjectReadStateMachine
                     CurrentState = State.PropertyNameOrEnd;
                     break;
                 }
-
                 case State.PropertyNameOrEnd:
                 {
                     if (!reader.Read())
@@ -61,10 +60,10 @@ public record struct ObjectReadStateMachine
                     CurrentState = State.PendingPropertyNameRead;
                     return ReadResult.PropertyName;
                 }
-
                 case State.PendingPropertyNameRead:
+                {
                     return ReadResult.PropertyName;
-
+                }
                 case State.PropertyValue:
                 {
                     if (!reader.Read())
@@ -73,12 +72,14 @@ public record struct ObjectReadStateMachine
                     CurrentState = State.PendingPropertyValueRead;
                     return ReadResult.PropertyValue;
                 }
-
                 case State.PendingPropertyValueRead:
+                {
                     return ReadResult.PropertyValue;
-
+                }
                 default:
+                {
                     throw new InvalidOperationException();
+                }
             }
         }
     }

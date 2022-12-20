@@ -581,11 +581,13 @@ public static partial class JsonReader
                     switch (sm.Read(ref reader))
                     {
                         case ObjectReadStateMachine.ReadResult.Error:
+                        {
                             return Error("Invalid JSON value where a JSON object was expected.");
-
+                        }
                         case ObjectReadStateMachine.ReadResult.Incomplete:
+                        {
                             return reader.Suspend((sm, state));
-
+                        }
                         case ObjectReadStateMachine.ReadResult.PropertyName:
                         {
                             static bool TrySetPropertyIndex<TValue>(int index,
@@ -623,7 +625,6 @@ public static partial class JsonReader
 
                             break;
                         }
-
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
                         {
                             static JsonReadResult<TResult>? ReadPropertyValue<T>(ref Utf8JsonReader reader,
@@ -683,7 +684,6 @@ public static partial class JsonReader
 
                             break;
                         }
-
                         case ObjectReadStateMachine.ReadResult.Done:
                         {
                             static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
