@@ -688,7 +688,7 @@ public static partial class JsonReader
 
                             if (values.CurrentPropertyIndex is { } nextPropertyIndex)
                             {
-                                var error = nextPropertyIndex switch
+                                var result = nextPropertyIndex switch
                                 {
                                     1  => ReadPropertyValue(property1,  ref reader, ref values.V1,  ref sm, ref values),
                                     2  => ReadPropertyValue(property2,  ref reader, ref values.V2,  ref sm, ref values),
@@ -709,7 +709,7 @@ public static partial class JsonReader
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
-                                if (error is { } someResult)
+                                if (result is { } someResult)
                                     return someResult;
                             }
                             else
