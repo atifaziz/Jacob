@@ -535,22 +535,22 @@ public static partial class JsonReader
 
     struct ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>
     {
-        public (bool, T1) V1;
-        public (bool, T2) V2;
-        public (bool, T3) V3;
-        public (bool, T4) V4;
-        public (bool, T5) V5;
-        public (bool, T6) V6;
-        public (bool, T7) V7;
-        public (bool, T8) V8;
-        public (bool, T9) V9;
-        public (bool, T10) V10;
-        public (bool, T11) V11;
-        public (bool, T12) V12;
-        public (bool, T13) V13;
-        public (bool, T14) V14;
-        public (bool, T15) V15;
-        public (bool, T16) V16;
+        public (bool, T1) Value1;
+        public (bool, T2) Value2;
+        public (bool, T3) Value3;
+        public (bool, T4) Value4;
+        public (bool, T5) Value5;
+        public (bool, T6) Value6;
+        public (bool, T7) Value7;
+        public (bool, T8) Value8;
+        public (bool, T9) Value9;
+        public (bool, T10) Value10;
+        public (bool, T11) Value11;
+        public (bool, T12) Value12;
+        public (bool, T13) Value13;
+        public (bool, T14) Value14;
+        public (bool, T15) Value15;
+        public (bool, T16) Value16;
 
         public int? CurrentPropertyIndex;
     };
@@ -655,22 +655,22 @@ public static partial class JsonReader
                             {
                                 var result = nextPropertyIndex switch
                                 {
-                                    1  => ReadPropertyValue(ref reader, property1,  ref state.V1,  ref sm, in state),
-                                    2  => ReadPropertyValue(ref reader, property2,  ref state.V2,  ref sm, in state),
-                                    3  => ReadPropertyValue(ref reader, property3,  ref state.V3,  ref sm, in state),
-                                    4  => ReadPropertyValue(ref reader, property4,  ref state.V4,  ref sm, in state),
-                                    5  => ReadPropertyValue(ref reader, property5,  ref state.V5,  ref sm, in state),
-                                    6  => ReadPropertyValue(ref reader, property6,  ref state.V6,  ref sm, in state),
-                                    7  => ReadPropertyValue(ref reader, property7,  ref state.V7,  ref sm, in state),
-                                    8  => ReadPropertyValue(ref reader, property8,  ref state.V8,  ref sm, in state),
-                                    9  => ReadPropertyValue(ref reader, property9,  ref state.V9,  ref sm, in state),
-                                    10 => ReadPropertyValue(ref reader, property10, ref state.V10, ref sm, in state),
-                                    11 => ReadPropertyValue(ref reader, property11, ref state.V11, ref sm, in state),
-                                    12 => ReadPropertyValue(ref reader, property12, ref state.V12, ref sm, in state),
-                                    13 => ReadPropertyValue(ref reader, property13, ref state.V13, ref sm, in state),
-                                    14 => ReadPropertyValue(ref reader, property14, ref state.V14, ref sm, in state),
-                                    15 => ReadPropertyValue(ref reader, property15, ref state.V15, ref sm, in state),
-                                    16 => ReadPropertyValue(ref reader, property16, ref state.V16, ref sm, in state),
+                                    1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  ref sm, in state),
+                                    2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  ref sm, in state),
+                                    3  => ReadPropertyValue(ref reader, property3,  ref state.Value3,  ref sm, in state),
+                                    4  => ReadPropertyValue(ref reader, property4,  ref state.Value4,  ref sm, in state),
+                                    5  => ReadPropertyValue(ref reader, property5,  ref state.Value5,  ref sm, in state),
+                                    6  => ReadPropertyValue(ref reader, property6,  ref state.Value6,  ref sm, in state),
+                                    7  => ReadPropertyValue(ref reader, property7,  ref state.Value7,  ref sm, in state),
+                                    8  => ReadPropertyValue(ref reader, property8,  ref state.Value8,  ref sm, in state),
+                                    9  => ReadPropertyValue(ref reader, property9,  ref state.Value9,  ref sm, in state),
+                                    10 => ReadPropertyValue(ref reader, property10, ref state.Value10, ref sm, in state),
+                                    11 => ReadPropertyValue(ref reader, property11, ref state.Value11, ref sm, in state),
+                                    12 => ReadPropertyValue(ref reader, property12, ref state.Value12, ref sm, in state),
+                                    13 => ReadPropertyValue(ref reader, property13, ref state.Value13, ref sm, in state),
+                                    14 => ReadPropertyValue(ref reader, property14, ref state.Value14, ref sm, in state),
+                                    15 => ReadPropertyValue(ref reader, property15, ref state.Value15, ref sm, in state),
+                                    16 => ReadPropertyValue(ref reader, property16, ref state.Value16, ref sm, in state),
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
@@ -699,29 +699,29 @@ public static partial class JsonReader
                                     v = (true, property.DefaultValue);
                             }
 
-                            DefaultUnassigned(property1, ref state.V1);
-                            DefaultUnassigned(property2, ref state.V2);
-                            DefaultUnassigned(property3, ref state.V3);
-                            DefaultUnassigned(property4, ref state.V4);
-                            DefaultUnassigned(property5, ref state.V5);
-                            DefaultUnassigned(property6, ref state.V6);
-                            DefaultUnassigned(property7, ref state.V7);
-                            DefaultUnassigned(property8, ref state.V8);
-                            DefaultUnassigned(property9, ref state.V9);
-                            DefaultUnassigned(property10, ref state.V10);
-                            DefaultUnassigned(property11, ref state.V11);
-                            DefaultUnassigned(property12, ref state.V12);
-                            DefaultUnassigned(property13, ref state.V13);
-                            DefaultUnassigned(property14, ref state.V14);
-                            DefaultUnassigned(property15, ref state.V15);
-                            DefaultUnassigned(property16, ref state.V16);
+                            DefaultUnassigned(property1, ref state.Value1);
+                            DefaultUnassigned(property2, ref state.Value2);
+                            DefaultUnassigned(property3, ref state.Value3);
+                            DefaultUnassigned(property4, ref state.Value4);
+                            DefaultUnassigned(property5, ref state.Value5);
+                            DefaultUnassigned(property6, ref state.Value6);
+                            DefaultUnassigned(property7, ref state.Value7);
+                            DefaultUnassigned(property8, ref state.Value8);
+                            DefaultUnassigned(property9, ref state.Value9);
+                            DefaultUnassigned(property10, ref state.Value10);
+                            DefaultUnassigned(property11, ref state.Value11);
+                            DefaultUnassigned(property12, ref state.Value12);
+                            DefaultUnassigned(property13, ref state.Value13);
+                            DefaultUnassigned(property14, ref state.Value14);
+                            DefaultUnassigned(property15, ref state.Value15);
+                            DefaultUnassigned(property16, ref state.Value16);
 
-                            return (state.V1, state.V2, state.V3,
-                                    state.V4, state.V5, state.V6,
-                                    state.V7, state.V8, state.V9,
-                                    state.V10, state.V11, state.V12,
-                                    state.V13, state.V14, state.V15,
-                                    state.V16) is ((true, var v1), (true, var v2), (true, var v3),
+                            return (state.Value1, state.Value2, state.Value3,
+                                    state.Value4, state.Value5, state.Value6,
+                                    state.Value7, state.Value8, state.Value9,
+                                    state.Value10, state.Value11, state.Value12,
+                                    state.Value13, state.Value14, state.Value15,
+                                    state.Value16) is ((true, var v1), (true, var v2), (true, var v3),
                                                     (true, var v4), (true, var v5), (true, var v6),
                                                     (true, var v7), (true, var v8), (true, var v9),
                                                     (true, var v10), (true, var v11), (true, var v12),
