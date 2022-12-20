@@ -672,7 +672,7 @@ public static partial class JsonReader
                                                                                  ref Utf8JsonReader reader,
                                                                                  ref (bool, T) value,
                                                                                  ref ObjectReadStateMachine sm,
-                                                                                 ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                                                                                 in ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
@@ -690,22 +690,22 @@ public static partial class JsonReader
                             {
                                 var result = nextPropertyIndex switch
                                 {
-                                    1  => ReadPropertyValue(property1,  ref reader, ref state.V1,  ref sm, ref state),
-                                    2  => ReadPropertyValue(property2,  ref reader, ref state.V2,  ref sm, ref state),
-                                    3  => ReadPropertyValue(property3,  ref reader, ref state.V3,  ref sm, ref state),
-                                    4  => ReadPropertyValue(property4,  ref reader, ref state.V4,  ref sm, ref state),
-                                    5  => ReadPropertyValue(property5,  ref reader, ref state.V5,  ref sm, ref state),
-                                    6  => ReadPropertyValue(property6,  ref reader, ref state.V6,  ref sm, ref state),
-                                    7  => ReadPropertyValue(property7,  ref reader, ref state.V7,  ref sm, ref state),
-                                    8  => ReadPropertyValue(property8,  ref reader, ref state.V8,  ref sm, ref state),
-                                    9  => ReadPropertyValue(property9,  ref reader, ref state.V9,  ref sm, ref state),
-                                    10 => ReadPropertyValue(property10, ref reader, ref state.V10, ref sm, ref state),
-                                    11 => ReadPropertyValue(property11, ref reader, ref state.V11, ref sm, ref state),
-                                    12 => ReadPropertyValue(property12, ref reader, ref state.V12, ref sm, ref state),
-                                    13 => ReadPropertyValue(property13, ref reader, ref state.V13, ref sm, ref state),
-                                    14 => ReadPropertyValue(property14, ref reader, ref state.V14, ref sm, ref state),
-                                    15 => ReadPropertyValue(property15, ref reader, ref state.V15, ref sm, ref state),
-                                    16 => ReadPropertyValue(property16, ref reader, ref state.V16, ref sm, ref state),
+                                    1  => ReadPropertyValue(property1,  ref reader, ref state.V1,  ref sm, in state),
+                                    2  => ReadPropertyValue(property2,  ref reader, ref state.V2,  ref sm, in state),
+                                    3  => ReadPropertyValue(property3,  ref reader, ref state.V3,  ref sm, in state),
+                                    4  => ReadPropertyValue(property4,  ref reader, ref state.V4,  ref sm, in state),
+                                    5  => ReadPropertyValue(property5,  ref reader, ref state.V5,  ref sm, in state),
+                                    6  => ReadPropertyValue(property6,  ref reader, ref state.V6,  ref sm, in state),
+                                    7  => ReadPropertyValue(property7,  ref reader, ref state.V7,  ref sm, in state),
+                                    8  => ReadPropertyValue(property8,  ref reader, ref state.V8,  ref sm, in state),
+                                    9  => ReadPropertyValue(property9,  ref reader, ref state.V9,  ref sm, in state),
+                                    10 => ReadPropertyValue(property10, ref reader, ref state.V10, ref sm, in state),
+                                    11 => ReadPropertyValue(property11, ref reader, ref state.V11, ref sm, in state),
+                                    12 => ReadPropertyValue(property12, ref reader, ref state.V12, ref sm, in state),
+                                    13 => ReadPropertyValue(property13, ref reader, ref state.V13, ref sm, in state),
+                                    14 => ReadPropertyValue(property14, ref reader, ref state.V14, ref sm, in state),
+                                    15 => ReadPropertyValue(property15, ref reader, ref state.V15, ref sm, in state),
+                                    16 => ReadPropertyValue(property16, ref reader, ref state.V16, ref sm, in state),
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
