@@ -645,9 +645,9 @@ public static partial class JsonReader
                                 }
                             }
 
-                            if (state.CurrentPropertyIndex is { } nextPropertyIndex)
+                            if (state.CurrentPropertyIndex is { } propertyIndex)
                             {
-                                var result = nextPropertyIndex switch
+                                var result = propertyIndex switch
                                 {
                                     1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  sm, state),
                                     2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  sm, state),
