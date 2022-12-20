@@ -644,9 +644,9 @@ public static partial class JsonReader
                                 }
                             }
 
-                            if (state.CurrentPropertyIndex is { } nextPropertyIndex)
+                            if (state.CurrentPropertyIndex is { } propertyIndex)
                             {
-                                var result = nextPropertyIndex switch
+                                var result = propertyIndex switch
                                 {
                                     1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  ref sm, state),
                                     2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  ref sm, state),
@@ -664,7 +664,6 @@ public static partial class JsonReader
                                     14 => ReadPropertyValue(ref reader, property14, ref state.Value14, ref sm, state),
                                     15 => ReadPropertyValue(ref reader, property15, ref state.Value15, ref sm, state),
                                     16 => ReadPropertyValue(ref reader, property16, ref state.Value16, ref sm, state),
-                                    var i => throw new SwitchExpressionException(i)
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
