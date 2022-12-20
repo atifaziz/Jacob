@@ -211,6 +211,108 @@ public static partial class JsonReader
         }
     }
 
+    public static IAsyncEnumerator<KeyValuePair<string, T>>
+        GetObjectAsyncEnumerator<T>(this IJsonReader<T> reader,
+                                    Stream stream, int initialBufferSize) =>
+        GetObjectAsyncEnumerator(reader, stream, initialBufferSize, CancellationToken.None);
+
+    public static IAsyncEnumerator<KeyValuePair<string, T>>
+        GetObjectAsyncEnumerator<T>(this IJsonReader<T> reader,
+                                    Stream stream, int initialBufferSize,
+                                    CancellationToken cancellationToken)
+    {
+        if (reader is null) throw new ArgumentNullException(nameof(reader));
+        if (stream is null) throw new ArgumentNullException(nameof(stream));
+        if (initialBufferSize < 0) throw new ArgumentOutOfRangeException(nameof(initialBufferSize), initialBufferSize, null);
+
+        return GetObjectAsyncEnumeratorCore(reader, stream, initialBufferSize, cancellationToken);
+    }
+
+    static async IAsyncEnumerator<KeyValuePair<string, T>>
+        GetObjectAsyncEnumeratorCore<T>(IJsonReader<T> reader,
+                                        Stream stream, int initialBufferSize,
+                                        CancellationToken cancellationToken)
+    {
+        using var scr = new StreamChunkReader(stream, initialBufferSize);
+
+        var state = new JsonReaderState();
+        var sm = new ObjectReadStateMachine();
+        ObjectReadStateMachine.ReadResult readResult;
+        string? name = null;
+
+        do
+        {
+            var readTask = scr.ReadAsync(cancellationToken);
+            if (!readTask.IsCompleted)
+                await readTask.AsTask().ConfigureAwait(false);
+
+            while (true)
+            {
+                var read = TryReadItem(scr.RemainingChunkSpan, out var bytesConsumed, out readResult, out var item);
+                scr.ConsumeChunkBy(bytesConsumed);
+                if (!read)
+                    break;
+                cancellationToken.ThrowIfCancellationRequested();
+                Debug.Assert(name is not null);
+                yield return KeyValuePair.Create(name, item!);
+            }
+        }
+        while (readResult is not ObjectReadStateMachine.ReadResult.Done);
+
+        bool TryReadItem(ReadOnlySpan<byte> span,
+                         out int bytesConsumed,
+                         out ObjectReadStateMachine.ReadResult readResult,
+                         [NotNullWhen(true)] out T? item)
+        {
+            var rdr = new Utf8JsonReader(span, scr.Eof, state);
+            while (true)
+            {
+                switch (readResult = sm.Read(ref rdr))
+                {
+                    case ObjectReadStateMachine.ReadResult.Error:
+                    {
+                        throw new JsonException("Invalid JSON value where a JSON object was expected.");
+                    }
+                    case ObjectReadStateMachine.ReadResult.PropertyName:
+                    {
+                        name = rdr.GetString();
+                        sm.OnPropertyNameRead();
+                        break;
+                    }
+                    case ObjectReadStateMachine.ReadResult.PropertyValue:
+                    {
+                        switch (reader.TryRead(ref rdr))
+                        {
+                            case var r when r.IsIncomplete():
+                                item = default;
+                                readResult = ObjectReadStateMachine.ReadResult.Incomplete;
+                                goto exit;
+                            case { Error: { } error }:
+                                throw new JsonException(error);
+                            case { Value: { } value }:
+                                sm.OnPropertyValueRead();
+                                item = value;
+                                goto exit;
+                        }
+
+                        break;
+                    }
+                    case ObjectReadStateMachine.ReadResult.Incomplete:
+                    case ObjectReadStateMachine.ReadResult.Done:
+                    {
+                        item = default;
+                        goto exit;
+                    }
+                }
+            }
+
+            exit:
+            bytesConsumed = (int)rdr.BytesConsumed;
+            state = rdr.CurrentState;
+            return readResult is ObjectReadStateMachine.ReadResult.PropertyValue;
+        }
+    }
+
     static IJsonReader<JsonElement>? jsonElementReader;
 
     public static IJsonReader<JsonElement> Element() =>

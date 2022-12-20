@@ -5,7 +5,9 @@
 namespace Jacob.Tests;
 
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Abstractions;
@@ -73,34 +75,9 @@ public class AsyncStreamTests
                                   TimeZone = tz,
                               });
 
-    [Fact]
-    public async Task GetAsyncEnumerator_With_Airports_Data()
-    {
-        var jsonReader = AirportReader;
-        Airport? lastGoodAirport = null;
-        var actual = new List<Airport>();
-
-        try
-        {
-            var count = 0;
-
-            await using var stream = File.OpenRead(Path.Join("..", "..", "..", "data", "airports", "airports.json"));
-            await using var enumerator = jsonReader.GetAsyncEnumerator(stream, initialBufferSize: 10);
-            while (await enumerator.MoveNextAsync())
-            {
-                lastGoodAirport = enumerator.Current;
-                if (count++ % 5_000 is 0)
-                    actual.Add(lastGoodAirport);
-            }
-        }
-        catch (JsonException) when (lastGoodAirport is not null)
-        {
-            WriteLine($"Last Good Airport = {lastGoodAirport}");
-            throw;
-        }
-
-        var expected = new[]
-        {
+    static readonly ImmutableArray<Airport> ExpectedAirports =
+        // Since the airports list is large, only every 5,000th airport is listed below.
+        ImmutableArray.Create(
             new Airport
             {
                 Icao = "00AK", Iata = null, Name = "Lowell Field", City = "Anchor Point",
@@ -137,10 +114,64 @@ public class AsyncStreamTests
                 Icao = "TX98", Iata = null, Name = "Hawkins Private Airport", City = "Godley",
                 State = "Texas", Country = CountryCode.US, Elevation = 975,
                 Coordinates = new(32.4751014709, -97.5009002686), TimeZone = "America/Chicago"
-            },
-        };
+            });
 
-        Assert.Equal(expected, actual);
+    [Fact]
+    public async Task GetAsyncEnumerator_With_Airports_Data()
+    {
+        Airport? lastGoodAirport = null;
+        var actual = new List<Airport>();
+
+        try
+        {
+            var count = 0;
+
+            await using var stream = File.OpenRead(Path.Join("..", "..", "..", "data", "airports", "airports-array.json"));
+            await using var enumerator = AirportReader.GetAsyncEnumerator(stream, initialBufferSize: 10);
+            while (await enumerator.MoveNextAsync())
+            {
+                lastGoodAirport = enumerator.Current;
+                if (count++ % 5_000 is 0)
+                    actual.Add(lastGoodAirport);
+            }
+        }
+        catch (JsonException) when (lastGoodAirport is not null)
+        {
+            WriteLine($"Last Good Airport = {lastGoodAirport}");
+            throw;
+        }
+
+        Assert.Equal(ExpectedAirports, actual);
+    }
+
+    [Fact]
+    public async Task GetObjectAsyncEnumerator_With_Airports_Data()
+    {
+        Airport? lastGoodAirport = null;
+        var expectedAirportByCode = ExpectedAirports.ToDictionary(a => a.Icao);
+
+        try
+        {
+            await using var stream = File.OpenRead(Path.Join("..", "..", "..", "data", "airports", "airports-object.json"));
+            await using var enumerator = AirportReader.GetObjectAsyncEnumerator(stream, initialBufferSize: 10);
+            while (await enumerator.MoveNextAsync())
+            {
+                var (code, airport) = enumerator.Current;
+                lastGoodAirport = airport;
+                if (expectedAirportByCode.TryGetValue(code, out var expected))
+                {
+                    Assert.Equal(expected, airport);
+                    _ = expectedAirportByCode.Remove(code);
+                }
+            }
+        }
+        catch (JsonException) when (lastGoodAirport is not null)
+        {
+            WriteLine($"Last Good Airport = {lastGoodAirport}");
+            throw;
+        }
+
+        Assert.Empty(expectedAirportByCode);
     }
 
     enum CountryCode // ISO 3166-1
