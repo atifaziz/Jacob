@@ -579,7 +579,8 @@ public static partial class JsonReader
 
             return Read(ref reader, sm, ref values);
 
-            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm, ref ObjectValueState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+            JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm,
+                                         ref ObjectValueState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
             {
                 while (true)
                 {
@@ -642,22 +643,22 @@ public static partial class JsonReader
                                 return true;
                             }
 
-                                 if (TrySetPropertyIndex(1,  property1,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(2,  property2,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(3,  property3,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(4,  property4,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(5,  property5,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(6,  property6,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(7,  property7,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(8,  property8,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(9,  property9,  ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(10, property10, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(11, property11, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(12, property12, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(13, property13, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(14, property14, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(15, property15, ref reader, ref values)) { }
-                            else if (TrySetPropertyIndex(16, property16, ref reader, ref values)) { }
+                            _ =    TrySetPropertyIndex(1,  property1,  ref reader, ref values)
+                                || TrySetPropertyIndex(2,  property2,  ref reader, ref values)
+                                || TrySetPropertyIndex(3,  property3,  ref reader, ref values)
+                                || TrySetPropertyIndex(4,  property4,  ref reader, ref values)
+                                || TrySetPropertyIndex(5,  property5,  ref reader, ref values)
+                                || TrySetPropertyIndex(6,  property6,  ref reader, ref values)
+                                || TrySetPropertyIndex(7,  property7,  ref reader, ref values)
+                                || TrySetPropertyIndex(8,  property8,  ref reader, ref values)
+                                || TrySetPropertyIndex(9,  property9,  ref reader, ref values)
+                                || TrySetPropertyIndex(10, property10, ref reader, ref values)
+                                || TrySetPropertyIndex(11, property11, ref reader, ref values)
+                                || TrySetPropertyIndex(12, property12, ref reader, ref values)
+                                || TrySetPropertyIndex(13, property13, ref reader, ref values)
+                                || TrySetPropertyIndex(14, property14, ref reader, ref values)
+                                || TrySetPropertyIndex(15, property15, ref reader, ref values)
+                                || TrySetPropertyIndex(16, property16, ref reader, ref values);
 
                             if (!reader.Read())
                                 return reader.Suspend((sm, values));
@@ -705,11 +706,11 @@ public static partial class JsonReader
                                     14 => ReadPropertyValue(property14, ref reader, ref values.V14, ref sm, ref values),
                                     15 => ReadPropertyValue(property15, ref reader, ref values.V15, ref sm, ref values),
                                     16 => ReadPropertyValue(property16, ref reader, ref values.V16, ref sm, ref values),
-                                    _ => throw new InvalidOperationException()
+                                    var i => throw new SwitchExpressionException(i)
                                 };
 
-                                if (error is not null)
-                                    return error.Value;
+                                if (error is { } someResult)
+                                    return someResult;
                             }
                             else
                             {

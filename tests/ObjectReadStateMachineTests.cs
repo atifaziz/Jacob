@@ -101,7 +101,7 @@ public sealed class ObjectReadStateMachineTests
     public void Read_Increments_CurrentPropertyLoopCount_When_Current_State_Is_PendingPropertyValueRead()
     {
         var subject = new ObjectReadStateMachine();
-        var reader = new Utf8JsonReader("{\"foo\":4"u8, isFinalBlock: false, new());
+        var reader = new Utf8JsonReader("""{"foo":4"""u8, isFinalBlock: false, new());
 
         _ = subject.Read(ref reader);
         subject.OnPropertyNameRead();
@@ -158,7 +158,7 @@ public sealed class ObjectReadStateMachineTests
                 }
             },
             {
-                new[] { "{", """ "f """, """ oo": """, """ "bar" """, "}" },
+                new[] { "{", """ "f""", """oo": """, """ "bar" """, "}" },
                 new[]
                 {
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
@@ -169,7 +169,7 @@ public sealed class ObjectReadStateMachineTests
                 }
             },
             {
-                new[] { "{", """ "foo": """, """ "ba """, """ r" """, "}" },
+                new[] { "{", """ "foo": """, """ "ba""", """r" """, "}" },
                 new[]
                 {
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
@@ -180,7 +180,7 @@ public sealed class ObjectReadStateMachineTests
                 }
             },
             {
-                new[] { "{", "\"", "f", "o", "o", "\"", ":", "4","2", "}" },
+                new[] { "{", "\"", "f", "o", "o", "\"", ":", "4", "2", "}" },
                 new[]
                 {
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
@@ -220,7 +220,7 @@ public sealed class ObjectReadStateMachineTests
                 }
             },
             {
-                new[] { """ { "foo": """, /*lang=json*/ """ {"bar":42} """, "}" },
+                new[] { """ {"foo": """, /*lang=json*/ """ {"bar":42} """, "}" },
                 new[]
                 {
                     (ReadResult.PropertyName, State.PendingPropertyNameRead),
