@@ -631,10 +631,10 @@ public static partial class JsonReader
                                  : Error("Invalid JSON object.");
 
                         case ObjectReadStateMachine.ReadResult.PropertyName:
-                            static bool TrySetPropertyIndex<TValue>(int index,
-                                                                    IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                                                                    ref Utf8JsonReader reader,
-                                                                    ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                            static bool TrySetPropertyIndex<T>(int index,
+                                                               IJsonProperty<T, JsonReadResult<T>> property,
+                                                               ref Utf8JsonReader reader,
+                                                               ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 if (!property.IsMatch(ref reader))
                                     return false;
@@ -668,11 +668,11 @@ public static partial class JsonReader
                             break;
 
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
-                            static JsonReadResult<TResult>? ReadPropertyValue<TValue>(IJsonProperty<TValue, JsonReadResult<TValue>> property,
-                                                                                      ref Utf8JsonReader reader,
-                                                                                      ref (bool, TValue) value,
-                                                                                      ref ObjectReadStateMachine sm,
-                                                                                      ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                            static JsonReadResult<TResult>? ReadPropertyValue<T>(IJsonProperty<T, JsonReadResult<T>> property,
+                                                                                 ref Utf8JsonReader reader,
+                                                                                 ref (bool, T) value,
+                                                                                 ref ObjectReadStateMachine sm,
+                                                                                 ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
