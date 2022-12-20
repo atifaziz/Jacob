@@ -474,7 +474,7 @@ public static partial class JsonReader
 
     public static IJsonReader<TResult> Object<T, TResult>(IJsonReader<T> reader,
                                                           Func<List<KeyValuePair<string, T>>, TResult> resultSelector) =>
-        Create((ref Utf8JsonReader rdr) =>
+        CreatePure((ref Utf8JsonReader rdr) =>
         {
             var (sm, currentPropertyName, acc) =
                 rdr.IsResuming && ((ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>))rdr.Pop() is var ps
