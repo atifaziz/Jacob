@@ -481,50 +481,45 @@ public static partial class JsonReader
                     ? ps
                     : (default, default, new());
 
-            return Read(ref rdr, sm, currentPropertyName, acc);
-
-            JsonReadResult<TResult> Read(ref Utf8JsonReader rdr, ObjectReadStateMachine sm, string? currentPropertyName, List<KeyValuePair<string, T>> acc)
+            while (true)
             {
-                while (true)
+                switch (sm.Read(ref rdr))
                 {
-                    switch (sm.Read(ref rdr))
+                    case ObjectReadStateMachine.ReadResult.Error:
                     {
-                        case ObjectReadStateMachine.ReadResult.Error:
+                        return Error("Invalid JSON value where a JSON object was expected.");
+                    }
+                    case ObjectReadStateMachine.ReadResult.Incomplete:
+                    {
+                        return rdr.Suspend((sm, currentPropertyName, acc));
+                    }
+                    case ObjectReadStateMachine.ReadResult.PropertyName:
+                    {
+                        currentPropertyName = rdr.GetString();
+                        sm.OnPropertyNameRead();
+                        break;
+                    }
+                    case ObjectReadStateMachine.ReadResult.PropertyValue:
+                    {
+                        switch (reader.TryRead(ref rdr))
                         {
-                            return Error("Invalid JSON value where a JSON object was expected.");
+                            case { Incomplete: true }:
+                                return rdr.Suspend((sm, currentPropertyName));
+                            case { Error: { } err }:
+                                return new JsonReadError(err);
+                            case { Value: var val }:
+                                acc.Add(KeyValuePair.Create(currentPropertyName!, val));
+                                break;
                         }
-                        case ObjectReadStateMachine.ReadResult.Incomplete:
-                        {
-                            return rdr.Suspend((sm, currentPropertyName, acc));
-                        }
-                        case ObjectReadStateMachine.ReadResult.PropertyName:
-                        {
-                            currentPropertyName = rdr.GetString();
-                            sm.OnPropertyNameRead();
-                            break;
-                        }
-                        case ObjectReadStateMachine.ReadResult.PropertyValue:
-                        {
-                            switch (reader.TryRead(ref rdr))
-                            {
-                                case { Incomplete: true }:
-                                    return rdr.Suspend((sm, currentPropertyName));
-                                case { Error: { } err }:
-                                    return new JsonReadError(err);
-                                case { Value: var val }:
-                                    acc.Add(KeyValuePair.Create(currentPropertyName!, val));
-                                    break;
-                            }
 
-                            sm.OnPropertyValueRead();
-                            currentPropertyName = null;
+                        sm.OnPropertyValueRead();
+                        currentPropertyName = null;
 
-                            break;
-                        }
-                        case ObjectReadStateMachine.ReadResult.Done:
-                        {
-                            return Value(resultSelector(acc));
-                        }
+                        break;
+                    }
+                    case ObjectReadStateMachine.ReadResult.Done:
+                    {
+                        return Value(resultSelector(acc));
                     }
                 }
             }
