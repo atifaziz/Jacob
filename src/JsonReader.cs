@@ -504,7 +504,7 @@ public static partial class JsonReader
                         switch (reader.TryRead(ref rdr))
                         {
                             case { Incomplete: true }:
-                                return rdr.Suspend((sm, currentPropertyName));
+                                return rdr.Suspend((sm, currentPropertyName, acc));
                             case { Error: { } err }:
                                 return new JsonReadError(err);
                             case { Value: var val }:

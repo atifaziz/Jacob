@@ -657,6 +657,27 @@ public abstract class JsonReaderTestsBase
         TestValidInput(KeyIntMapReader, json, new() { ["foo"] = 123, ["bar"] = 456, ["baz"] = 789 });
     }
 
+    static readonly IJsonReader<Dictionary<string, Dictionary<string, string>>> NestedObjectReader =
+        JsonReader.Object(JsonReader.Object(JsonReader.String(),
+                                            ps => ps.ToDictionary(e => e.Key, e => e.Value)),
+                          ps => ps.ToDictionary(e => e.Key, e => e.Value));
+
+    [Fact]
+    public void Object_General_With_Nested_Property_And_Valid_Input()
+    {
+        const string json = /*lang=json*/ """{ "foo": { "bar": "foobarbaz" } }""";
+
+        TestValidInput(NestedObjectReader, json, new() { ["foo"] = new() { ["bar"] = "foobarbaz" } });
+    }
+
+    [Fact]
+    public void Object_General_With_Nested_Property_And_Invalid_Input()
+    {
+        const string json = /*lang=json*/ """{ "foo": { "bar": { "baz": "foo" } } }""";
+
+        TestInvalidInput(NestedObjectReader, json, "Invalid JSON value where a JSON string was expected.", "StartObject", 16);
+    }
+
     [Theory]
     [InlineData("Invalid JSON value where a JSON object was expected.", "Null", /*lang=json*/ "null")]
     [InlineData("Invalid JSON value where a JSON object was expected.", "False", /*lang=json*/ "false")]
