@@ -477,8 +477,8 @@ public static partial class JsonReader
         CreatePure((ref Utf8JsonReader rdr) =>
         {
             var (sm, currentPropertyName, acc) =
-                rdr.IsResuming && ((ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>))rdr.Pop() is var ps
-                    ? ps
+                rdr.IsResuming
+                    ? ((ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>))rdr.Pop()
                     : (default, default, new());
 
             while (true)
