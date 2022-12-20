@@ -9,7 +9,7 @@ using System.Text.Json;
 
 public record struct ObjectReadStateMachine
 {
-    public enum State { Initial, PropertyNameOrEnd, PendingPropertyNameRead, PendingPropertyValueRead, Done, Error }
+    public enum State { Initial, PropertyNameOrEnd, PendingPropertyNameRead, PropertyValue, PendingPropertyValueRead, Done, Error }
     public enum ReadResult { Error, Incomplete, PropertyName, PropertyValue, Done }
 
     public State CurrentState { get; private set; }
@@ -17,7 +17,7 @@ public record struct ObjectReadStateMachine
     public void OnPropertyNameRead() =>
         CurrentState =
             CurrentState is State.PendingPropertyNameRead
-            ? State.PendingPropertyValueRead
+            ? State.PropertyValue
             : throw new InvalidOperationException();
 
     public void OnPropertyValueRead() =>
@@ -64,6 +64,15 @@ public record struct ObjectReadStateMachine
 
                 case State.PendingPropertyNameRead:
                     return ReadResult.PropertyName;
+
+                case State.PropertyValue:
+                {
+                    if (!reader.Read())
+                        return ReadResult.Incomplete;
+
+                    CurrentState = State.PendingPropertyValueRead;
+                    return ReadResult.PropertyValue;
+                }
 
                 case State.PendingPropertyValueRead:
                     return ReadResult.PropertyValue;

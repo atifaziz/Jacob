@@ -140,7 +140,7 @@ public sealed class ObjectReadStateMachineTests
                 {
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
                     (ReadResult.PropertyName, State.PendingPropertyNameRead),
-                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Incomplete, State.PropertyValue),
                     (ReadResult.PropertyValue, State.PendingPropertyValueRead),
                     (ReadResult.Done, State.Done)
                 }
@@ -156,8 +156,8 @@ public sealed class ObjectReadStateMachineTests
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
                     (ReadResult.PropertyName, State.PendingPropertyNameRead),
-                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
-                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Incomplete, State.PropertyValue),
+                    (ReadResult.Incomplete, State.PropertyValue),
                     (ReadResult.PropertyValue, State.PendingPropertyValueRead),
                     (ReadResult.Done, State.Done)
                 }
@@ -168,7 +168,7 @@ public sealed class ObjectReadStateMachineTests
                 {
                     (ReadResult.Incomplete, State.PropertyNameOrEnd),
                     (ReadResult.PropertyName, State.PendingPropertyNameRead),
-                    (ReadResult.PropertyValue, State.PendingPropertyValueRead),
+                    (ReadResult.Incomplete, State.PropertyValue),
                     (ReadResult.PropertyValue, State.PendingPropertyValueRead),
                     (ReadResult.Done, State.Done)
                 }
@@ -227,24 +227,19 @@ public sealed class ObjectReadStateMachineTests
             if (result is ReadResult.PropertyName)
             {
                 subject.OnPropertyNameRead();
-                Assert.Equal(State.PendingPropertyValueRead, subject.CurrentState);
+                Assert.Equal(State.PropertyValue, subject.CurrentState);
             }
 
             if (result is ReadResult.PropertyValue)
             {
-                var read = reader.Read();
-
-                if (read)
+                if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
                 {
-                    if (reader.TokenType is JsonTokenType.StartObject or JsonTokenType.StartArray)
-                    {
-                        var skipped = reader.TrySkip();
-                        Assert.True(skipped);
-                    }
-
-                    subject.OnPropertyValueRead();
-                    Assert.Equal(State.PropertyNameOrEnd, subject.CurrentState);
+                    var skipped = reader.TrySkip();
+                    Assert.True(skipped);
                 }
+
+                subject.OnPropertyValueRead();
+                Assert.Equal(State.PropertyNameOrEnd, subject.CurrentState);
             }
 
             chunkRun = Encoding.UTF8.GetString(chunkSpan[(int)reader.BytesConsumed..]);

@@ -625,9 +625,6 @@ public static partial class JsonReader
                                 || TrySetPropertyIndex(15, property15, ref reader, ref currentPropertyIndex)
                                 || TrySetPropertyIndex(16, property16, ref reader, ref currentPropertyIndex);
 
-                            if (!reader.Read())
-                                return reader.Suspend((sm, state));
-
                             sm.OnPropertyNameRead();
 
                             break;
