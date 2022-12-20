@@ -675,7 +675,7 @@ public abstract class JsonReaderTestsBase
     {
         const string json = /*lang=json*/ """{ "foo": { "bar": { "baz": "foo" } } }""";
 
-        TestInvalidInput(NestedObjectReader, json, "Invalid JSON value where a JSON string was expected.", "StartObject", 16);
+        TestInvalidInput(NestedObjectReader, json, "Invalid JSON value where a JSON string was expected.", "StartObject", 18);
     }
 
     [Theory]
