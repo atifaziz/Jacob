@@ -572,15 +572,15 @@ public static partial class JsonReader
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
         Create((ref Utf8JsonReader reader) =>
         {
-            var (sm, values) =
+            var (sm, state) =
                 reader.IsResuming && ((ObjectReadStateMachine, ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>))reader.Pop() is var ps
                     ? ps
                     : default;
 
-            return Read(ref reader, sm, ref values);
+            return Read(ref reader, sm, ref state);
 
             JsonReadResult<TResult> Read(ref Utf8JsonReader reader, ObjectReadStateMachine sm,
-                                         ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+                                         ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
             {
                 while (true)
                 {
@@ -590,7 +590,7 @@ public static partial class JsonReader
                             return Error("Invalid JSON value where a JSON object was expected.");
 
                         case ObjectReadStateMachine.ReadResult.Incomplete:
-                            return reader.Suspend((sm, values));
+                            return reader.Suspend((sm, state));
 
                         case ObjectReadStateMachine.ReadResult.Done:
                             static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
@@ -599,29 +599,29 @@ public static partial class JsonReader
                                     v = (true, property.DefaultValue);
                             }
 
-                            DefaultUnassigned(property1,  ref values.V1);
-                            DefaultUnassigned(property2,  ref values.V2);
-                            DefaultUnassigned(property3,  ref values.V3);
-                            DefaultUnassigned(property4,  ref values.V4);
-                            DefaultUnassigned(property5,  ref values.V5);
-                            DefaultUnassigned(property6,  ref values.V6);
-                            DefaultUnassigned(property7,  ref values.V7);
-                            DefaultUnassigned(property8,  ref values.V8);
-                            DefaultUnassigned(property9,  ref values.V9);
-                            DefaultUnassigned(property10, ref values.V10);
-                            DefaultUnassigned(property11, ref values.V11);
-                            DefaultUnassigned(property12, ref values.V12);
-                            DefaultUnassigned(property13, ref values.V13);
-                            DefaultUnassigned(property14, ref values.V14);
-                            DefaultUnassigned(property15, ref values.V15);
-                            DefaultUnassigned(property16, ref values.V16);
+                            DefaultUnassigned(property1,  ref state.V1);
+                            DefaultUnassigned(property2,  ref state.V2);
+                            DefaultUnassigned(property3,  ref state.V3);
+                            DefaultUnassigned(property4,  ref state.V4);
+                            DefaultUnassigned(property5,  ref state.V5);
+                            DefaultUnassigned(property6,  ref state.V6);
+                            DefaultUnassigned(property7,  ref state.V7);
+                            DefaultUnassigned(property8,  ref state.V8);
+                            DefaultUnassigned(property9,  ref state.V9);
+                            DefaultUnassigned(property10, ref state.V10);
+                            DefaultUnassigned(property11, ref state.V11);
+                            DefaultUnassigned(property12, ref state.V12);
+                            DefaultUnassigned(property13, ref state.V13);
+                            DefaultUnassigned(property14, ref state.V14);
+                            DefaultUnassigned(property15, ref state.V15);
+                            DefaultUnassigned(property16, ref state.V16);
 
-                            return (values.V1, values.V2, values.V3,
-                                    values.V4, values.V5, values.V6,
-                                    values.V7, values.V8, values.V9,
-                                    values.V10, values.V11, values.V12,
-                                    values.V13, values.V14, values.V15,
-                                    values.V16) is ((true, var v1), (true, var v2), (true, var v3),
+                            return (state.V1, state.V2, state.V3,
+                                    state.V4, state.V5, state.V6,
+                                    state.V7, state.V8, state.V9,
+                                    state.V10, state.V11, state.V12,
+                                    state.V13, state.V14, state.V15,
+                                    state.V16) is ((true, var v1), (true, var v2), (true, var v3),
                                                     (true, var v4), (true, var v5), (true, var v6),
                                                     (true, var v7), (true, var v8), (true, var v9),
                                                     (true, var v10), (true, var v11), (true, var v12),
@@ -634,34 +634,34 @@ public static partial class JsonReader
                             static bool TrySetPropertyIndex<TValue>(int index,
                                                                     IJsonProperty<TValue, JsonReadResult<TValue>> property,
                                                                     ref Utf8JsonReader reader,
-                                                                    ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+                                                                    ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 if (!property.IsMatch(ref reader))
                                     return false;
 
-                                values.CurrentPropertyIndex = index;
+                                state.CurrentPropertyIndex = index;
                                 return true;
                             }
 
-                            _ =    TrySetPropertyIndex(1,  property1,  ref reader, ref values)
-                                || TrySetPropertyIndex(2,  property2,  ref reader, ref values)
-                                || TrySetPropertyIndex(3,  property3,  ref reader, ref values)
-                                || TrySetPropertyIndex(4,  property4,  ref reader, ref values)
-                                || TrySetPropertyIndex(5,  property5,  ref reader, ref values)
-                                || TrySetPropertyIndex(6,  property6,  ref reader, ref values)
-                                || TrySetPropertyIndex(7,  property7,  ref reader, ref values)
-                                || TrySetPropertyIndex(8,  property8,  ref reader, ref values)
-                                || TrySetPropertyIndex(9,  property9,  ref reader, ref values)
-                                || TrySetPropertyIndex(10, property10, ref reader, ref values)
-                                || TrySetPropertyIndex(11, property11, ref reader, ref values)
-                                || TrySetPropertyIndex(12, property12, ref reader, ref values)
-                                || TrySetPropertyIndex(13, property13, ref reader, ref values)
-                                || TrySetPropertyIndex(14, property14, ref reader, ref values)
-                                || TrySetPropertyIndex(15, property15, ref reader, ref values)
-                                || TrySetPropertyIndex(16, property16, ref reader, ref values);
+                            _ =    TrySetPropertyIndex(1,  property1,  ref reader, ref state)
+                                || TrySetPropertyIndex(2,  property2,  ref reader, ref state)
+                                || TrySetPropertyIndex(3,  property3,  ref reader, ref state)
+                                || TrySetPropertyIndex(4,  property4,  ref reader, ref state)
+                                || TrySetPropertyIndex(5,  property5,  ref reader, ref state)
+                                || TrySetPropertyIndex(6,  property6,  ref reader, ref state)
+                                || TrySetPropertyIndex(7,  property7,  ref reader, ref state)
+                                || TrySetPropertyIndex(8,  property8,  ref reader, ref state)
+                                || TrySetPropertyIndex(9,  property9,  ref reader, ref state)
+                                || TrySetPropertyIndex(10, property10, ref reader, ref state)
+                                || TrySetPropertyIndex(11, property11, ref reader, ref state)
+                                || TrySetPropertyIndex(12, property12, ref reader, ref state)
+                                || TrySetPropertyIndex(13, property13, ref reader, ref state)
+                                || TrySetPropertyIndex(14, property14, ref reader, ref state)
+                                || TrySetPropertyIndex(15, property15, ref reader, ref state)
+                                || TrySetPropertyIndex(16, property16, ref reader, ref state);
 
                             if (!reader.Read())
-                                return reader.Suspend((sm, values));
+                                return reader.Suspend((sm, state));
 
                             sm.OnPropertyNameRead();
 
@@ -672,12 +672,12 @@ public static partial class JsonReader
                                                                                       ref Utf8JsonReader reader,
                                                                                       ref (bool, TValue) value,
                                                                                       ref ObjectReadStateMachine sm,
-                                                                                      ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> values)
+                                                                                      ref ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
                                     case { Incomplete: true }:
-                                        return reader.Suspend((sm, values));
+                                        return reader.Suspend((sm, state));
                                     case { Error: { } err }:
                                         return new JsonReadError(err);
                                     case { Value: var val }:
@@ -686,26 +686,26 @@ public static partial class JsonReader
                                 }
                             }
 
-                            if (values.CurrentPropertyIndex is { } nextPropertyIndex)
+                            if (state.CurrentPropertyIndex is { } nextPropertyIndex)
                             {
                                 var result = nextPropertyIndex switch
                                 {
-                                    1  => ReadPropertyValue(property1,  ref reader, ref values.V1,  ref sm, ref values),
-                                    2  => ReadPropertyValue(property2,  ref reader, ref values.V2,  ref sm, ref values),
-                                    3  => ReadPropertyValue(property3,  ref reader, ref values.V3,  ref sm, ref values),
-                                    4  => ReadPropertyValue(property4,  ref reader, ref values.V4,  ref sm, ref values),
-                                    5  => ReadPropertyValue(property5,  ref reader, ref values.V5,  ref sm, ref values),
-                                    6  => ReadPropertyValue(property6,  ref reader, ref values.V6,  ref sm, ref values),
-                                    7  => ReadPropertyValue(property7,  ref reader, ref values.V7,  ref sm, ref values),
-                                    8  => ReadPropertyValue(property8,  ref reader, ref values.V8,  ref sm, ref values),
-                                    9  => ReadPropertyValue(property9,  ref reader, ref values.V9,  ref sm, ref values),
-                                    10 => ReadPropertyValue(property10, ref reader, ref values.V10, ref sm, ref values),
-                                    11 => ReadPropertyValue(property11, ref reader, ref values.V11, ref sm, ref values),
-                                    12 => ReadPropertyValue(property12, ref reader, ref values.V12, ref sm, ref values),
-                                    13 => ReadPropertyValue(property13, ref reader, ref values.V13, ref sm, ref values),
-                                    14 => ReadPropertyValue(property14, ref reader, ref values.V14, ref sm, ref values),
-                                    15 => ReadPropertyValue(property15, ref reader, ref values.V15, ref sm, ref values),
-                                    16 => ReadPropertyValue(property16, ref reader, ref values.V16, ref sm, ref values),
+                                    1  => ReadPropertyValue(property1,  ref reader, ref state.V1,  ref sm, ref state),
+                                    2  => ReadPropertyValue(property2,  ref reader, ref state.V2,  ref sm, ref state),
+                                    3  => ReadPropertyValue(property3,  ref reader, ref state.V3,  ref sm, ref state),
+                                    4  => ReadPropertyValue(property4,  ref reader, ref state.V4,  ref sm, ref state),
+                                    5  => ReadPropertyValue(property5,  ref reader, ref state.V5,  ref sm, ref state),
+                                    6  => ReadPropertyValue(property6,  ref reader, ref state.V6,  ref sm, ref state),
+                                    7  => ReadPropertyValue(property7,  ref reader, ref state.V7,  ref sm, ref state),
+                                    8  => ReadPropertyValue(property8,  ref reader, ref state.V8,  ref sm, ref state),
+                                    9  => ReadPropertyValue(property9,  ref reader, ref state.V9,  ref sm, ref state),
+                                    10 => ReadPropertyValue(property10, ref reader, ref state.V10, ref sm, ref state),
+                                    11 => ReadPropertyValue(property11, ref reader, ref state.V11, ref sm, ref state),
+                                    12 => ReadPropertyValue(property12, ref reader, ref state.V12, ref sm, ref state),
+                                    13 => ReadPropertyValue(property13, ref reader, ref state.V13, ref sm, ref state),
+                                    14 => ReadPropertyValue(property14, ref reader, ref state.V14, ref sm, ref state),
+                                    15 => ReadPropertyValue(property15, ref reader, ref state.V15, ref sm, ref state),
+                                    16 => ReadPropertyValue(property16, ref reader, ref state.V16, ref sm, ref state),
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
@@ -717,11 +717,11 @@ public static partial class JsonReader
                                 if (reader.IsFinalBlock)
                                     reader.Skip();
                                 else if (!reader.TrySkip())
-                                    return reader.Suspend((sm, values));
+                                    return reader.Suspend((sm, state));
                             }
 
                             sm.OnPropertyValueRead();
-                            values.CurrentPropertyIndex = null;
+                            state.CurrentPropertyIndex = null;
 
                             break;
                     }
