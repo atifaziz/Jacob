@@ -648,22 +648,23 @@ public static partial class JsonReader
                             {
                                 var result = nextPropertyIndex switch
                                 {
-                                    1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  ref sm, in state),
-                                    2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  ref sm, in state),
-                                    3  => ReadPropertyValue(ref reader, property3,  ref state.Value3,  ref sm, in state),
-                                    4  => ReadPropertyValue(ref reader, property4,  ref state.Value4,  ref sm, in state),
-                                    5  => ReadPropertyValue(ref reader, property5,  ref state.Value5,  ref sm, in state),
-                                    6  => ReadPropertyValue(ref reader, property6,  ref state.Value6,  ref sm, in state),
-                                    7  => ReadPropertyValue(ref reader, property7,  ref state.Value7,  ref sm, in state),
-                                    8  => ReadPropertyValue(ref reader, property8,  ref state.Value8,  ref sm, in state),
-                                    9  => ReadPropertyValue(ref reader, property9,  ref state.Value9,  ref sm, in state),
-                                    10 => ReadPropertyValue(ref reader, property10, ref state.Value10, ref sm, in state),
-                                    11 => ReadPropertyValue(ref reader, property11, ref state.Value11, ref sm, in state),
-                                    12 => ReadPropertyValue(ref reader, property12, ref state.Value12, ref sm, in state),
-                                    13 => ReadPropertyValue(ref reader, property13, ref state.Value13, ref sm, in state),
-                                    14 => ReadPropertyValue(ref reader, property14, ref state.Value14, ref sm, in state),
-                                    15 => ReadPropertyValue(ref reader, property15, ref state.Value15, ref sm, in state),
-                                    16 => ReadPropertyValue(ref reader, property16, ref state.Value16, ref sm, in state),
+                                    1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  ref sm, state),
+                                    2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  ref sm, state),
+                                    3  => ReadPropertyValue(ref reader, property3,  ref state.Value3,  ref sm, state),
+                                    4  => ReadPropertyValue(ref reader, property4,  ref state.Value4,  ref sm, state),
+                                    5  => ReadPropertyValue(ref reader, property5,  ref state.Value5,  ref sm, state),
+                                    6  => ReadPropertyValue(ref reader, property6,  ref state.Value6,  ref sm, state),
+                                    7  => ReadPropertyValue(ref reader, property7,  ref state.Value7,  ref sm, state),
+                                    8  => ReadPropertyValue(ref reader, property8,  ref state.Value8,  ref sm, state),
+                                    9  => ReadPropertyValue(ref reader, property9,  ref state.Value9,  ref sm, state),
+                                    10 => ReadPropertyValue(ref reader, property10, ref state.Value10, ref sm, state),
+                                    11 => ReadPropertyValue(ref reader, property11, ref state.Value11, ref sm, state),
+                                    12 => ReadPropertyValue(ref reader, property12, ref state.Value12, ref sm, state),
+                                    13 => ReadPropertyValue(ref reader, property13, ref state.Value13, ref sm, state),
+                                    14 => ReadPropertyValue(ref reader, property14, ref state.Value14, ref sm, state),
+                                    15 => ReadPropertyValue(ref reader, property15, ref state.Value15, ref sm, state),
+                                    16 => ReadPropertyValue(ref reader, property16, ref state.Value16, ref sm, state),
+                                    var i => throw new SwitchExpressionException(i)
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
