@@ -33,6 +33,7 @@ public record struct ObjectReadStateMachine
             switch (CurrentState)
             {
                 case State.Initial:
+                {
                     if (reader.TokenType is JsonTokenType.None && !reader.Read())
                         return ReadResult.Incomplete;
 
@@ -44,8 +45,10 @@ public record struct ObjectReadStateMachine
 
                     CurrentState = State.PropertyNameOrEnd;
                     break;
+                }
 
                 case State.PropertyNameOrEnd:
+                {
                     if (!reader.Read())
                         return ReadResult.Incomplete;
 
@@ -57,6 +60,7 @@ public record struct ObjectReadStateMachine
 
                     CurrentState = State.PendingPropertyNameRead;
                     return ReadResult.PropertyName;
+                }
 
                 case State.PendingPropertyNameRead:
                     return ReadResult.PropertyName;

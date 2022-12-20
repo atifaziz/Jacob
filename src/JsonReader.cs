@@ -592,45 +592,8 @@ public static partial class JsonReader
                         case ObjectReadStateMachine.ReadResult.Incomplete:
                             return reader.Suspend((sm, state));
 
-                        case ObjectReadStateMachine.ReadResult.Done:
-                            static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
-                            {
-                                if (v is (false, _) && property.HasDefaultValue)
-                                    v = (true, property.DefaultValue);
-                            }
-
-                            DefaultUnassigned(property1,  ref state.V1);
-                            DefaultUnassigned(property2,  ref state.V2);
-                            DefaultUnassigned(property3,  ref state.V3);
-                            DefaultUnassigned(property4,  ref state.V4);
-                            DefaultUnassigned(property5,  ref state.V5);
-                            DefaultUnassigned(property6,  ref state.V6);
-                            DefaultUnassigned(property7,  ref state.V7);
-                            DefaultUnassigned(property8,  ref state.V8);
-                            DefaultUnassigned(property9,  ref state.V9);
-                            DefaultUnassigned(property10, ref state.V10);
-                            DefaultUnassigned(property11, ref state.V11);
-                            DefaultUnassigned(property12, ref state.V12);
-                            DefaultUnassigned(property13, ref state.V13);
-                            DefaultUnassigned(property14, ref state.V14);
-                            DefaultUnassigned(property15, ref state.V15);
-                            DefaultUnassigned(property16, ref state.V16);
-
-                            return (state.V1, state.V2, state.V3,
-                                    state.V4, state.V5, state.V6,
-                                    state.V7, state.V8, state.V9,
-                                    state.V10, state.V11, state.V12,
-                                    state.V13, state.V14, state.V15,
-                                    state.V16) is ((true, var v1), (true, var v2), (true, var v3),
-                                                    (true, var v4), (true, var v5), (true, var v6),
-                                                    (true, var v7), (true, var v8), (true, var v9),
-                                                    (true, var v10), (true, var v11), (true, var v12),
-                                                    (true, var v13), (true, var v14), (true, var v15),
-                                                    (true, var v16))
-                                 ? Value(projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16))
-                                 : Error("Invalid JSON object.");
-
                         case ObjectReadStateMachine.ReadResult.PropertyName:
+                        {
                             static bool TrySetPropertyIndex<T>(int index,
                                                                IJsonProperty<T, JsonReadResult<T>> property,
                                                                ref Utf8JsonReader reader,
@@ -666,8 +629,10 @@ public static partial class JsonReader
                             sm.OnPropertyNameRead();
 
                             break;
+                        }
 
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
+                        {
                             static JsonReadResult<TResult>? ReadPropertyValue<T>(ref Utf8JsonReader reader,
                                                                                  IJsonProperty<T, JsonReadResult<T>> property,
                                                                                  ref (bool, T) value,
@@ -724,6 +689,47 @@ public static partial class JsonReader
                             state.CurrentPropertyIndex = null;
 
                             break;
+                        }
+
+                        case ObjectReadStateMachine.ReadResult.Done:
+                        {
+                            static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
+                            {
+                                if (v is (false, _) && property.HasDefaultValue)
+                                    v = (true, property.DefaultValue);
+                            }
+
+                            DefaultUnassigned(property1, ref state.V1);
+                            DefaultUnassigned(property2, ref state.V2);
+                            DefaultUnassigned(property3, ref state.V3);
+                            DefaultUnassigned(property4, ref state.V4);
+                            DefaultUnassigned(property5, ref state.V5);
+                            DefaultUnassigned(property6, ref state.V6);
+                            DefaultUnassigned(property7, ref state.V7);
+                            DefaultUnassigned(property8, ref state.V8);
+                            DefaultUnassigned(property9, ref state.V9);
+                            DefaultUnassigned(property10, ref state.V10);
+                            DefaultUnassigned(property11, ref state.V11);
+                            DefaultUnassigned(property12, ref state.V12);
+                            DefaultUnassigned(property13, ref state.V13);
+                            DefaultUnassigned(property14, ref state.V14);
+                            DefaultUnassigned(property15, ref state.V15);
+                            DefaultUnassigned(property16, ref state.V16);
+
+                            return (state.V1, state.V2, state.V3,
+                                    state.V4, state.V5, state.V6,
+                                    state.V7, state.V8, state.V9,
+                                    state.V10, state.V11, state.V12,
+                                    state.V13, state.V14, state.V15,
+                                    state.V16) is ((true, var v1), (true, var v2), (true, var v3),
+                                                    (true, var v4), (true, var v5), (true, var v6),
+                                                    (true, var v7), (true, var v8), (true, var v9),
+                                                    (true, var v10), (true, var v11), (true, var v12),
+                                                    (true, var v13), (true, var v14), (true, var v15),
+                                                    (true, var v16))
+                                 ? Value(projector(v1, v2, v3, v4, v5, v6, v7, v8, v9, v10, v11, v12, v13, v14, v15, v16))
+                                 : Error("Invalid JSON object.");
+                        }
                     }
                 }
             }
