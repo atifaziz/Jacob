@@ -126,7 +126,6 @@ public static partial class JsonReader
     {
         if (reader is null) throw new ArgumentNullException(nameof(reader));
         if (stream is null) throw new ArgumentNullException(nameof(stream));
-        if (initialBufferSize < 0) throw new ArgumentOutOfRangeException(nameof(initialBufferSize), initialBufferSize, null);
 
         return GetAsyncEnumeratorCore(reader, stream, initialBufferSize, cancellationToken);
     }
@@ -223,7 +222,6 @@ public static partial class JsonReader
     {
         if (reader is null) throw new ArgumentNullException(nameof(reader));
         if (stream is null) throw new ArgumentNullException(nameof(stream));
-        if (initialBufferSize < 0) throw new ArgumentOutOfRangeException(nameof(initialBufferSize), initialBufferSize, null);
 
         return GetObjectAsyncEnumeratorCore(reader, stream, initialBufferSize, cancellationToken);
     }

@@ -20,7 +20,13 @@ sealed class StreamChunkReader : IDisposable
     public StreamChunkReader(Stream stream, int initialBufferSize, bool doesNotOwnStream = false)
     {
         this.stream = stream;
-        this.buffer = new byte[initialBufferSize is 0 ? 1024 : initialBufferSize];
+        this.buffer =
+            new byte[initialBufferSize switch
+            {
+                < 0 => throw new ArgumentOutOfRangeException(nameof(initialBufferSize), initialBufferSize, null),
+                0 => 1024,
+                var size => size
+            }];
         this.memory = this.chunk = null;
         this.doesNotOwnStream = doesNotOwnStream;
     }
