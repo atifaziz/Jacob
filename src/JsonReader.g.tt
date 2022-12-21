@@ -93,35 +93,60 @@ partial class JsonReader
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.TokenType is JsonTokenType.None && !rdr.Read())
-                throw PartialJsonNotSupportedException();
+            var (sm, currentItem, <#= string.Join(", ", from n in ns select "item" + n) #>) =
+                rdr.IsResuming ? ((ArrayReadStateMachine, int?, <#= string.Join(", ", from n in ns select "T" + n) #>))rdr.Pop() : (default, 1, <#= string.Join(", ", from _ in ns select "default") #>);
 
-            if (rdr.TokenType is not JsonTokenType.StartArray)
-                return Error("Invalid JSON value where a JSON array was expected.");
-<#
-        foreach (var n in ns)
-        { #>
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T<#= n #> item<#= n #>;
-            switch(item<#= n #>Reader.TryRead(ref rdr))
+            while (true)
             {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error<#= n #> }: return Error(error<#= n #>);
-                case { Value: var item }: item<#= n #> = item; break;
-            }
+                switch (sm.Read(ref rdr))
+                {
+                    case ArrayReadStateMachine.ReadResult.Error:
+                        return Error("Invalid JSON value where a JSON array was expected.");
+
+                    case ArrayReadStateMachine.ReadResult.Incomplete:
+                        return rdr.Suspend((sm, currentItem, <#= string.Join(", ", from n in ns select "item" + n) #>));
+
+                    case ArrayReadStateMachine.ReadResult.Done:
+                        if (currentItem is not null)
+                            return Error("Invalid JSON value; JSON array has too few values.");
+
+                        return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
+
+                    case ArrayReadStateMachine.ReadResult.Item:
+                    {
+                        switch (currentItem)
+                        {
 <#
-        } #>
+                        foreach (var n in ns)
+                        { #>
+                            case <#= n #>:
+                            {
+                                switch (item<#= n #>Reader.TryRead(ref rdr))
+                                {
+                                    case var r when r.IsIncomplete():
+                                        return rdr.Suspend((sm, currentItem, <#= string.Join(", ", from np in ns select "item" + np) #>));
+                                    case { Error: { } error }:
+                                        return Error(error);
+                                    case { Value: var item }:
+                                        item<#= n #> = item;
+                                        <#= n != ns.Last() ? "++currentItem" : "currentItem = null" #>;
+                                        sm.OnItemRead();
+                                        break;
+                                }
+                                break;
+                            }
+<#
+                        } #>
+                            default:
+                            {
+                                return Error("Invalid JSON value; JSON array has too many values.");
+                            }
+                        };
 
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            if (rdr.TokenType is not JsonTokenType.EndArray)
-                return Error("Invalid JSON value; JSON array has too many values.");
-
-            return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
+                        break;
+                    }
+                }
+            }
         });
 <#  }
 } #>
