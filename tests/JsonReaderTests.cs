@@ -663,7 +663,7 @@ public abstract class JsonReaderTestsBase
                           ps => ps.ToDictionary(e => e.Key, e => e.Value));
 
     [Fact]
-    public void Object_General_With_Nested_Property_And_Valid_Input()
+    public void Object_General_Nested_With_Valid_Input()
     {
         const string json = /*lang=json*/ """{ "foo": { "bar": "foobarbaz" } }""";
 
@@ -671,7 +671,7 @@ public abstract class JsonReaderTestsBase
     }
 
     [Fact]
-    public void Object_General_With_Nested_Property_And_Invalid_Input()
+    public void Object_General_Nested_With_Invalid_Input()
     {
         const string json = /*lang=json*/ """{ "foo": { "bar": { "baz": "foo" } } }""";
 

@@ -508,7 +508,8 @@ public static partial class JsonReader
                             case { Error: { } err }:
                                 return new JsonReadError(err);
                             case { Value: var val }:
-                                acc.Add(KeyValuePair.Create(currentPropertyName!, val));
+                                Debug.Assert(currentPropertyName is not null);
+                                acc.Add(KeyValuePair.Create(currentPropertyName, val));
                                 break;
                         }
 
