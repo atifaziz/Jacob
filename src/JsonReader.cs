@@ -254,7 +254,8 @@ public static partial class JsonReader
                     break;
                 cancellationToken.ThrowIfCancellationRequested();
                 Debug.Assert(name is not null);
-                yield return KeyValuePair.Create(name, item!);
+                Debug.Assert(item is not null);
+                yield return KeyValuePair.Create(name, item);
             }
         }
         while (readResult is not ObjectReadStateMachine.ReadResult.Done);
