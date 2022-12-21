@@ -93,8 +93,8 @@ partial class JsonReader
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            var (sm, currentItem, <#= string.Join(", ", from n in ns select "item" + n) #>) =
-                rdr.IsResuming ? ((ArrayReadStateMachine, int?, <#= string.Join(", ", from n in ns select "T" + n) #>))rdr.Pop() : (default, 1, <#= string.Join(", ", from _ in ns select "default") #>);
+            var (sm, <#= string.Join(", ", from n in ns select "item" + n) #>) =
+                rdr.IsResuming ? ((ArrayReadStateMachine, <#= string.Join(", ", from n in ns select "T" + n) #>))rdr.Pop() : (default, <#= string.Join(", ", from _ in ns select "default") #>);
 
             while (true)
             {
@@ -104,44 +104,47 @@ partial class JsonReader
                         return Error("Invalid JSON value where a JSON array was expected.");
 
                     case ArrayReadStateMachine.ReadResult.Incomplete:
-                        return rdr.Suspend((sm, currentItem, <#= string.Join(", ", from n in ns select "item" + n) #>));
+                        return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
 
                     case ArrayReadStateMachine.ReadResult.Done:
-                        if (currentItem is not null)
+                        if (sm.CurrentLength is not <#= ns.Last() #>)
                             return Error("Invalid JSON value; JSON array has too few values.");
 
                         return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        switch (currentItem)
+                        JsonReadError? TryReadItem<T>(IJsonReader<T> itemReader, ref Utf8JsonReader rdr, out T item)
+                        {
+                            switch (itemReader.TryRead(ref rdr))
+                            {
+                                 case var r when r.IsIncomplete():
+                                     item = default;
+                                     return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
+                                 case { Error: { } error }:
+                                     item = default;
+                                     return Error(error);
+                                 case { Value: var value } rr:
+                                     item = value;
+                                     sm.OnItemRead();
+                                     return null;
+                            }
+                        }
+
+                        JsonReadError? error;
+                        switch (sm.CurrentLength + 1)
                         {
 <#
                         foreach (var n in ns)
                         { #>
-                            case <#= n #>:
-                            {
-                                switch (item<#= n #>Reader.TryRead(ref rdr))
-                                {
-                                    case var r when r.IsIncomplete():
-                                        return rdr.Suspend((sm, currentItem, <#= string.Join(", ", from np in ns select "item" + np) #>));
-                                    case { Error: { } error }:
-                                        return Error(error);
-                                    case { Value: var item }:
-                                        item<#= n #> = item;
-                                        <#= n != ns.Last() ? "++currentItem" : "currentItem = null" #>;
-                                        sm.OnItemRead();
-                                        break;
-                                }
-                                break;
-                            }
+                            case <#= n #>: error = TryReadItem(item<#= n #>Reader, ref rdr, out item<#= n #>); break;
 <#
                         } #>
-                            default:
-                            {
-                                return Error("Invalid JSON value; JSON array has too many values.");
-                            }
+                            default: return Error("Invalid JSON value; JSON array has too many values.");
                         };
+
+                        if (error is { } someError)
+                            return someError;
 
                         break;
                     }
