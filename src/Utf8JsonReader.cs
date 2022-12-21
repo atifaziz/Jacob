@@ -44,7 +44,14 @@ public ref struct Utf8JsonReader
         this.reader = reader;
     }
 
-    public bool IsResuming => this.stack?.Count > 0;
+    public T ResumeOrDefault<T>(Func<T> @default)
+    {
+        if (@default is null) throw new ArgumentNullException(nameof(@default));
+
+        return this.stack?.Count > 0
+            ? (T)Pop()
+            : @default();
+    }
 
     public void Push(object frame) => (this.stack ??= new()).Push(frame);
     public object Pop() => (this.stack ?? throw new InvalidOperationException()).Pop();

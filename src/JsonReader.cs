@@ -502,11 +502,7 @@ public static partial class JsonReader
     public static IJsonReader<T> Buffer<T>(this IJsonReader<T> reader) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.IsResuming)
-            {
-                var frame = rdr.Pop();
-                Debug.Assert(frame == BufferFrame);
-            }
+            _ = rdr.ResumeOrDefault(static () => (object?)null);
 
             switch (rdr.TokenType)
             {
@@ -578,9 +574,9 @@ public static partial class JsonReader
         CreatePure((ref Utf8JsonReader rdr) =>
         {
             var (sm, currentPropertyName, acc) =
-                rdr.IsResuming
-                    ? ((ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>))rdr.Pop()
-                    : (default, default, new());
+                rdr.ResumeOrDefault(static () => (default(ObjectReadStateMachine),
+                                                  default(string?),
+                                                  new List<KeyValuePair<string, T>>()));
 
             while (true)
             {
@@ -680,9 +676,8 @@ public static partial class JsonReader
         Create((ref Utf8JsonReader reader) =>
         {
             var (sm, state) =
-                reader.IsResuming && ((ObjectReadStateMachine, ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>))reader.Pop() is var ps
-                    ? ps
-                    : default;
+                reader.ResumeOrDefault(static () => (default(ObjectReadStateMachine),
+                                                     default(ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>)));
 
             return Read(ref reader, sm, ref state);
 
@@ -848,10 +843,7 @@ public static partial class JsonReader
                                                          Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var (sm, list) =
-                rdr.IsResuming && ((ArrayReadStateMachine, List<T>))rdr.Pop() is var ps
-                    ? ps
-                    : default;
+            var (sm, list) = rdr.ResumeOrDefault(static () => (default(ArrayReadStateMachine), default(List<T>?)));
 
             return Read(ref rdr, sm, list);
 
