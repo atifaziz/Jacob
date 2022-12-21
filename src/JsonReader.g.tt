@@ -114,37 +114,23 @@ partial class JsonReader
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        JsonReadError? TryReadItem<T>(IJsonReader<T> itemReader, ref Utf8JsonReader rdr, out T item)
-                        {
-                            switch (itemReader.TryRead(ref rdr))
-                            {
-                                 case var r when r.IsIncomplete():
-                                     item = default;
-                                     return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
-                                 case { Error: { } error }:
-                                     item = default;
-                                     return Error(error);
-                                 case { Value: var value } rr:
-                                     item = value;
-                                     sm.OnItemRead();
-                                     return null;
-                            }
-                        }
-
                         JsonReadError? error;
                         switch (sm.CurrentLength + 1)
                         {
 <#
                         foreach (var n in ns)
                         { #>
-                            case <#= n #>: error = TryReadItem(item<#= n #>Reader, ref rdr, out item<#= n #>); break;
+                            case <#= n #>: error = item<#= n #>Reader.TryRead(ref sm, ref rdr, out item<#= n #>); break;
 <#
                         } #>
                             default: return Error("Invalid JSON value; JSON array has too many values.");
                         };
 
-                        if (error is { } someError)
-                            return someError;
+                        switch (error)
+                        {
+                            case { IsIncomplete: true }: return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
+                            case { } other: return other;
+                        }
 
                         break;
                     }

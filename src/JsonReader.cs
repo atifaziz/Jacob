@@ -44,6 +44,8 @@ public record struct JsonReadError(string Message)
 {
     public static readonly JsonReadError Incomplete = new(IncompleteJsonReadError.Value);
 
+    public bool IsIncomplete => this == Incomplete;
+
     public override string ToString() => Message;
 }
 
