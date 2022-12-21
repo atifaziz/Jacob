@@ -281,15 +281,12 @@ partial class JsonReader
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        JsonReadError? error;
-                        switch (sm.CurrentLength + 1)
+                        switch ((sm.CurrentLength + 1) switch
                         {
-                            case 1: error = item1Reader.TryRead(ref sm, ref rdr, out item1); break;
-                            case 2: error = item2Reader.TryRead(ref sm, ref rdr, out item2); break;
-                            default: return Error("Invalid JSON value; JSON array has too many values.");
-                        };
-
-                        switch (error)
+                            1 => item1Reader.TryRead(ref sm, ref rdr, out item1),
+                            2 => item2Reader.TryRead(ref sm, ref rdr, out item2),
+                            _ => Error("Invalid JSON value; JSON array has too many values.")
+                        })
                         {
                             case { IsIncomplete: true }: return rdr.Suspend((sm, item1, item2));
                             case { } other: return other;
@@ -329,16 +326,13 @@ partial class JsonReader
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        JsonReadError? error;
-                        switch (sm.CurrentLength + 1)
+                        switch ((sm.CurrentLength + 1) switch
                         {
-                            case 1: error = item1Reader.TryRead(ref sm, ref rdr, out item1); break;
-                            case 2: error = item2Reader.TryRead(ref sm, ref rdr, out item2); break;
-                            case 3: error = item3Reader.TryRead(ref sm, ref rdr, out item3); break;
-                            default: return Error("Invalid JSON value; JSON array has too many values.");
-                        };
-
-                        switch (error)
+                            1 => item1Reader.TryRead(ref sm, ref rdr, out item1),
+                            2 => item2Reader.TryRead(ref sm, ref rdr, out item2),
+                            3 => item3Reader.TryRead(ref sm, ref rdr, out item3),
+                            _ => Error("Invalid JSON value; JSON array has too many values.")
+                        })
                         {
                             case { IsIncomplete: true }: return rdr.Suspend((sm, item1, item2, item3));
                             case { } other: return other;

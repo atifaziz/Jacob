@@ -114,19 +114,16 @@ partial class JsonReader
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        JsonReadError? error;
-                        switch (sm.CurrentLength + 1)
+                        switch ((sm.CurrentLength + 1) switch
                         {
 <#
                         foreach (var n in ns)
                         { #>
-                            case <#= n #>: error = item<#= n #>Reader.TryRead(ref sm, ref rdr, out item<#= n #>); break;
+                            <#= n #> => item<#= n #>Reader.TryRead(ref sm, ref rdr, out item<#= n #>),
 <#
                         } #>
-                            default: return Error("Invalid JSON value; JSON array has too many values.");
-                        };
-
-                        switch (error)
+                            _ => Error("Invalid JSON value; JSON array has too many values.")
+                        })
                         {
                             case { IsIncomplete: true }: return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
                             case { } other: return other;
