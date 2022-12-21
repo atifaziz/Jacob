@@ -238,7 +238,6 @@ of the JSON source text to resume reading.
 
 Presently, the following readers do not support partial reading:
 
-- `JsonReader.Object`
 - `JsonReader.Either`
 - `JsonReader.Tuple`
 
