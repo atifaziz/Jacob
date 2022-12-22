@@ -69,24 +69,18 @@ public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult
     }
 }
 
-public interface IJsonReader<out T, out TReadResult>
-    where TReadResult : IJsonReadResult<T>
+public interface IJsonReader<T>
 {
-    TReadResult TryRead(ref Utf8JsonReader reader);
+    JsonReadResult<T> TryRead(ref Utf8JsonReader reader);
 }
 
-public interface IJsonReader<T> : IJsonReader<T, JsonReadResult<T>> { }
-
-public interface IJsonProperty<out T, out TReadResult>
-    where TReadResult : IJsonReadResult<T>
+public interface IJsonProperty<T>
 {
     bool IsMatch(in Utf8JsonReader reader);
-    IJsonReader<T, TReadResult> Reader { get; }
+    IJsonReader<T> Reader { get; }
     bool HasDefaultValue { get; }
     T DefaultValue { get; }
 }
-
-public interface IJsonProperty<T> : IJsonProperty<T, JsonReadResult<T>> { }
 
 #pragma warning disable CA1720 // Identifier contains type name (by design)
 
@@ -564,7 +558,7 @@ public static partial class JsonReader
                 ? throw new ArgumentException(null, nameof(reader))
                 : reader.ValueTextEquals(this.name);
 
-        public IJsonReader<T, JsonReadResult<T>> Reader { get; }
+        public IJsonReader<T> Reader { get; }
         public bool HasDefaultValue { get; }
         public T DefaultValue { get; }
     }
@@ -572,14 +566,14 @@ public static partial class JsonReader
     public static IJsonProperty<T> Property<T>(string name, IJsonReader<T> reader, (bool, T) @default = default) =>
         new JsonProperty<T>(name, reader, @default);
 
-    sealed class NonProperty : IJsonProperty<Unit, JsonReadResult<Unit>>
+    sealed class NonProperty : IJsonProperty<Unit>
     {
         public static readonly NonProperty Instance = new();
 
         NonProperty() { }
 
         public bool IsMatch(in Utf8JsonReader reader) => false;
-        public IJsonReader<Unit, JsonReadResult<Unit>> Reader => throw new NotSupportedException();
+        public IJsonReader<Unit> Reader => throw new NotSupportedException();
         public bool HasDefaultValue => true;
         public Unit DefaultValue => default;
     }
@@ -640,7 +634,7 @@ public static partial class JsonReader
     /// Properties without a default value that are missing from the read JSON object will cause
     /// the reader to return an error result.
     /// </remarks>
-    public static IJsonReader<T> Object<T>(IJsonProperty<T, JsonReadResult<T>> property) =>
+    public static IJsonReader<T> Object<T>(IJsonProperty<T> property) =>
         Object(property, NonProperty.Instance, NonProperty.Instance,
                NonProperty.Instance, NonProperty.Instance, NonProperty.Instance,
                NonProperty.Instance, NonProperty.Instance, NonProperty.Instance,
@@ -677,14 +671,14 @@ public static partial class JsonReader
     /// </remarks>
     public static IJsonReader<TResult>
         Object<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult>(
-            IJsonProperty<T1, JsonReadResult<T1>> property1, IJsonProperty<T2, JsonReadResult<T2>> property2,
-            IJsonProperty<T3, JsonReadResult<T3>> property3, IJsonProperty<T4, JsonReadResult<T4>> property4,
-            IJsonProperty<T5, JsonReadResult<T5>> property5, IJsonProperty<T6, JsonReadResult<T6>> property6,
-            IJsonProperty<T7, JsonReadResult<T7>> property7, IJsonProperty<T8, JsonReadResult<T8>> property8,
-            IJsonProperty<T9, JsonReadResult<T9>> property9, IJsonProperty<T10, JsonReadResult<T10>> property10,
-            IJsonProperty<T11, JsonReadResult<T11>> property11, IJsonProperty<T12, JsonReadResult<T12>> property12,
-            IJsonProperty<T13, JsonReadResult<T13>> property13, IJsonProperty<T14, JsonReadResult<T14>> property14,
-            IJsonProperty<T15, JsonReadResult<T15>> property15, IJsonProperty<T16, JsonReadResult<T16>> property16,
+            IJsonProperty<T1> property1, IJsonProperty<T2> property2,
+            IJsonProperty<T3> property3, IJsonProperty<T4> property4,
+            IJsonProperty<T5> property5, IJsonProperty<T6> property6,
+            IJsonProperty<T7> property7, IJsonProperty<T8> property8,
+            IJsonProperty<T9> property9, IJsonProperty<T10> property10,
+            IJsonProperty<T11> property11, IJsonProperty<T12> property12,
+            IJsonProperty<T13> property13, IJsonProperty<T14> property14,
+            IJsonProperty<T15> property15, IJsonProperty<T16> property16,
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
         Create((ref Utf8JsonReader reader) =>
         {
@@ -710,7 +704,7 @@ public static partial class JsonReader
                         case ObjectReadStateMachine.ReadResult.PropertyName:
                         {
                             static bool TrySetPropertyIndex<T>(int index,
-                                                               IJsonProperty<T, JsonReadResult<T>> property,
+                                                               IJsonProperty<T> property,
                                                                ref Utf8JsonReader reader,
                                                                ref int? currentIndex)
                             {
@@ -747,7 +741,7 @@ public static partial class JsonReader
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
                         {
                             static JsonReadResult<TResult>? ReadPropertyValue<T>(ref Utf8JsonReader reader,
-                                                                                 IJsonProperty<T, JsonReadResult<T>> property,
+                                                                                 IJsonProperty<T> property,
                                                                                  ref (bool, T) value,
                                                                                  in ObjectReadStateMachine sm,
                                                                                  in ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
@@ -805,7 +799,7 @@ public static partial class JsonReader
                         }
                         case ObjectReadStateMachine.ReadResult.Done:
                         {
-                            static void DefaultUnassigned<T>(IJsonProperty<T, JsonReadResult<T>> property, ref (bool, T) v)
+                            static void DefaultUnassigned<T>(IJsonProperty<T> property, ref (bool, T) v)
                             {
                                 if (v is (false, _) && property.HasDefaultValue)
                                     v = (true, property.DefaultValue);
