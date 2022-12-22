@@ -28,11 +28,6 @@ public static class JsonReadResult
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonReadResult<T> Value<T>(T value) => new(value, null);
-
-    public static bool IsIncomplete<T>(this IJsonReadResult<T> result) =>
-        result is null
-            ? throw new ArgumentNullException(nameof(result))
-            : ReferenceEquals(result.Error, IncompleteJsonReadError.Value);
 }
 
 public static class IncompleteJsonReadError
@@ -302,7 +297,7 @@ public static partial class JsonReader
                     {
                         switch (reader.TryRead(ref rdr))
                         {
-                            case var r when r.IsIncomplete():
+                            case { Incomplete: true }:
                                 item = default;
                                 readResult = ObjectReadStateMachine.ReadResult.Incomplete;
                                 goto exit;
