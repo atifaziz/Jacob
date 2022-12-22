@@ -60,7 +60,7 @@ public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult
     public static implicit operator JsonReadResult<T>(JsonReadError error) => new(default!, error.Message);
 #pragma warning restore CA2225 // Operator overloads have named alternates
 
-    internal  JsonReadError? TryGetValue(out T? item)
+    internal JsonReadError? TryGetValue(out T? item)
     {
         switch (this)
         {
