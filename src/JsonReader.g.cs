@@ -260,41 +260,41 @@ partial class JsonReader
             IJsonReader<T2> item2Reader) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.TokenType is JsonTokenType.None && !rdr.Read())
-                throw PartialJsonNotSupportedException();
+            var (sm, item1, item2) =
+                rdr.IsResuming ? ((ArrayReadStateMachine, T1, T2))rdr.Pop() : default;
 
-            if (rdr.TokenType is not JsonTokenType.StartArray)
-                return Error("Invalid JSON value where a JSON array was expected.");
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T1 item1;
-            switch(item1Reader.TryRead(ref rdr))
+            while (true)
             {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error1 }: return Error(error1);
-                case { Value: var item }: item1 = item; break;
+                switch (sm.Read(ref rdr))
+                {
+                    case ArrayReadStateMachine.ReadResult.Error:
+                        return Error("Invalid JSON value where a JSON array was expected.");
+
+                    case ArrayReadStateMachine.ReadResult.Incomplete:
+                        return rdr.Suspend((sm, item1, item2));
+
+                    case ArrayReadStateMachine.ReadResult.Done:
+                        return sm.CurrentLength is not 2
+                            ? Error("Invalid JSON value; JSON array has too few values.")
+                            : Value((item1, item2));
+
+                    case ArrayReadStateMachine.ReadResult.Item:
+                    {
+                        switch ((sm.CurrentLength + 1) switch
+                        {
+                            1 => sm.TryReadItem(item1Reader, ref rdr).TryGetValue(out item1),
+                            2 => sm.TryReadItem(item2Reader, ref rdr).TryGetValue(out item2),
+                            _ => Error("Invalid JSON value; JSON array has too many values.")
+                        })
+                        {
+                            case { IsIncomplete: true }: return rdr.Suspend((sm, item1, item2));
+                            case { } other: return other;
+                        }
+
+                        break;
+                    }
+                }
             }
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T2 item2;
-            switch(item2Reader.TryRead(ref rdr))
-            {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error2 }: return Error(error2);
-                case { Value: var item }: item2 = item; break;
-            }
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            if (rdr.TokenType is not JsonTokenType.EndArray)
-                return Error("Invalid JSON value; JSON array has too many values.");
-
-            return Value((item1, item2));
         });
 
     public static IJsonReader<(T1, T2, T3)>
@@ -304,51 +304,41 @@ partial class JsonReader
             IJsonReader<T3> item3Reader) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            if (rdr.TokenType is JsonTokenType.None && !rdr.Read())
-                throw PartialJsonNotSupportedException();
+            var (sm, item1, item2, item3) =
+                rdr.IsResuming ? ((ArrayReadStateMachine, T1, T2, T3))rdr.Pop() : default;
 
-            if (rdr.TokenType is not JsonTokenType.StartArray)
-                return Error("Invalid JSON value where a JSON array was expected.");
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T1 item1;
-            switch(item1Reader.TryRead(ref rdr))
+            while (true)
             {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error1 }: return Error(error1);
-                case { Value: var item }: item1 = item; break;
+                switch (sm.Read(ref rdr))
+                {
+                    case ArrayReadStateMachine.ReadResult.Error:
+                        return Error("Invalid JSON value where a JSON array was expected.");
+
+                    case ArrayReadStateMachine.ReadResult.Incomplete:
+                        return rdr.Suspend((sm, item1, item2, item3));
+
+                    case ArrayReadStateMachine.ReadResult.Done:
+                        return sm.CurrentLength is not 3
+                            ? Error("Invalid JSON value; JSON array has too few values.")
+                            : Value((item1, item2, item3));
+
+                    case ArrayReadStateMachine.ReadResult.Item:
+                    {
+                        switch ((sm.CurrentLength + 1) switch
+                        {
+                            1 => sm.TryReadItem(item1Reader, ref rdr).TryGetValue(out item1),
+                            2 => sm.TryReadItem(item2Reader, ref rdr).TryGetValue(out item2),
+                            3 => sm.TryReadItem(item3Reader, ref rdr).TryGetValue(out item3),
+                            _ => Error("Invalid JSON value; JSON array has too many values.")
+                        })
+                        {
+                            case { IsIncomplete: true }: return rdr.Suspend((sm, item1, item2, item3));
+                            case { } other: return other;
+                        }
+
+                        break;
+                    }
+                }
             }
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T2 item2;
-            switch(item2Reader.TryRead(ref rdr))
-            {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error2 }: return Error(error2);
-                case { Value: var item }: item2 = item; break;
-            }
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            T3 item3;
-            switch(item3Reader.TryRead(ref rdr))
-            {
-                case { Incomplete: true }: throw PartialJsonNotSupportedException();
-                case { Error: { } error3 }: return Error(error3);
-                case { Value: var item }: item3 = item; break;
-            }
-
-            if (!rdr.Read())
-                throw PartialJsonNotSupportedException();
-
-            if (rdr.TokenType is not JsonTokenType.EndArray)
-                return Error("Invalid JSON value; JSON array has too many values.");
-
-            return Value((item1, item2, item3));
         });
 }

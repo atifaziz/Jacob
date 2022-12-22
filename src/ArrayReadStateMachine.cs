@@ -66,4 +66,14 @@ public record struct ArrayReadStateMachine
             }
         }
     }
+
+    internal JsonReadResult<T> TryReadItem<T>(IJsonReader<T> reader, ref Utf8JsonReader rdr)
+    {
+        var result = reader.TryRead(ref rdr);
+
+        if (result is { Error: null } and { Incomplete: false })
+            OnItemRead();
+
+        return result;
+    }
 }
