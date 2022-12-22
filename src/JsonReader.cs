@@ -44,6 +44,8 @@ public record struct JsonReadError(string Message)
 {
     public static readonly JsonReadError Incomplete = new(IncompleteJsonReadError.Value);
 
+    public bool IsIncomplete => this == Incomplete;
+
     public override string ToString() => Message;
 }
 
@@ -57,6 +59,19 @@ public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult
 #pragma warning disable CA2225 // Operator overloads have named alternates
     public static implicit operator JsonReadResult<T>(JsonReadError error) => new(default!, error.Message);
 #pragma warning restore CA2225 // Operator overloads have named alternates
+
+    internal  JsonReadError? TryGetValue(out T? item)
+    {
+        switch (this)
+        {
+            case { Error: { } error }:
+                item = default;
+                return new(error);
+            case { Value: var value }:
+                item = value;
+                return null;
+        }
+    }
 }
 
 public interface IJsonReader<out T, out TReadResult>
@@ -174,17 +189,22 @@ public static partial class JsonReader
                     }
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        switch (reader.TryRead(ref rdr))
+                        switch (ar.TryReadItem(reader, ref rdr))
                         {
-                            case var r when r.IsIncomplete():
+                            case { Incomplete: true }:
+                            {
                                 break;
+                            }
                             case { Error: { } error }:
+                            {
                                 throw new JsonException(error);
-                            case { Value: { } value }:
-                                ar.OnItemRead();
+                            }
+                            case { Value: var value }:
+                            {
                                 item = value;
                                 readResult = ArrayReadStateMachine.ReadResult.Item;
                                 goto exit;
+                            }
                         }
                         goto case ArrayReadStateMachine.ReadResult.Incomplete;
                     }
@@ -867,16 +887,15 @@ public static partial class JsonReader
 
                         case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            switch (itemReader.TryRead(ref rdr))
+                            switch (sm.TryReadItem(itemReader, ref rdr))
                             {
-                                case var r when r.IsIncomplete():
+                                case { Incomplete: true }:
                                     return rdr.Suspend((sm, list));
                                 case { Error: { } error }:
                                     return Error(error);
                                 case { Value: var item }:
                                     list ??= new List<T>();
                                     list.Add(item);
-                                    sm.OnItemRead();
                                     break;
                             }
                             break;
