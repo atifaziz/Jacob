@@ -595,8 +595,8 @@ public static partial class JsonReader
         {
             var (sm, currentPropertyName, acc) =
                 rdr.TryResume(out (ObjectReadStateMachine, string?, List<KeyValuePair<string, T>>) state)
-                ? state
-                : (default, default, new());
+                    ? state
+                    : (default, default, new());
 
             while (true)
             {
@@ -697,8 +697,8 @@ public static partial class JsonReader
         {
             var (sm, state) =
                 reader.TryResume(out (ObjectReadStateMachine, ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>) s)
-                ? s
-                : default;
+                    ? s
+                    : default;
 
             return Read(ref reader, sm, ref state);
 
