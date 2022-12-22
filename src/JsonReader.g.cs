@@ -283,8 +283,8 @@ partial class JsonReader
                     {
                         switch ((sm.CurrentLength + 1) switch
                         {
-                            1 => item1Reader.TryRead(ref sm, ref rdr, out item1),
-                            2 => item2Reader.TryRead(ref sm, ref rdr, out item2),
+                            1 => sm.TryReadItem(item1Reader, ref rdr).TryGetValue(out item1),
+                            2 => sm.TryReadItem(item2Reader, ref rdr).TryGetValue(out item2),
                             _ => Error("Invalid JSON value; JSON array has too many values.")
                         })
                         {
@@ -328,9 +328,9 @@ partial class JsonReader
                     {
                         switch ((sm.CurrentLength + 1) switch
                         {
-                            1 => item1Reader.TryRead(ref sm, ref rdr, out item1),
-                            2 => item2Reader.TryRead(ref sm, ref rdr, out item2),
-                            3 => item3Reader.TryRead(ref sm, ref rdr, out item3),
+                            1 => sm.TryReadItem(item1Reader, ref rdr).TryGetValue(out item1),
+                            2 => sm.TryReadItem(item2Reader, ref rdr).TryGetValue(out item2),
+                            3 => sm.TryReadItem(item3Reader, ref rdr).TryGetValue(out item3),
                             _ => Error("Invalid JSON value; JSON array has too many values.")
                         })
                         {

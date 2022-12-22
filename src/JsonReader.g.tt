@@ -119,7 +119,7 @@ partial class JsonReader
 <#
                         foreach (var n in ns)
                         { #>
-                            <#= n #> => item<#= n #>Reader.TryRead(ref sm, ref rdr, out item<#= n #>),
+                            <#= n #> => sm.TryReadItem(item<#= n #>Reader, ref rdr).TryGetValue(out item<#= n #>),
 <#
                         } #>
                             _ => Error("Invalid JSON value; JSON array has too many values.")

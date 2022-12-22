@@ -59,6 +59,19 @@ public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult
 #pragma warning disable CA2225 // Operator overloads have named alternates
     public static implicit operator JsonReadResult<T>(JsonReadError error) => new(default!, error.Message);
 #pragma warning restore CA2225 // Operator overloads have named alternates
+
+    internal  JsonReadError? TryGetValue(out T? item)
+    {
+        switch (this)
+        {
+            case { Error: { } error }:
+                item = default;
+                return new(error);
+            case { Value: var value }:
+                item = value;
+                return null;
+        }
+    }
 }
 
 public interface IJsonReader<out T, out TReadResult>
@@ -177,18 +190,19 @@ public static partial class JsonReader
                     }
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        switch (reader.TryRead(ref ar, ref rdr, out item))
+                        switch (ar.TryReadItem(reader, ref rdr))
                         {
-                            case { IsIncomplete: true }:
+                            case { Incomplete: true }:
                             {
                                 break;
                             }
-                            case { Message: var error }:
+                            case { Error: { } error }:
                             {
                                 throw new JsonException(error);
                             }
-                            case null:
+                            case { Value: var value }:
                             {
+                                item = value;
                                 readResult = ArrayReadStateMachine.ReadResult.Item;
                                 goto exit;
                             }
@@ -777,13 +791,13 @@ public static partial class JsonReader
 
                         case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            switch (itemReader.TryRead(ref sm, ref rdr, out var item))
+                            switch (sm.TryReadItem(itemReader, ref rdr))
                             {
-                                case { IsIncomplete: true }:
+                                case { Incomplete: true }:
                                     return rdr.Suspend((sm, list));
-                                case { } error:
-                                    return error;
-                                case null:
+                                case { Error: { } error }:
+                                    return Error(error);
+                                case { Value: var item }:
                                     list ??= new List<T>();
                                     Debug.Assert(item is not null);
                                     list.Add(item);

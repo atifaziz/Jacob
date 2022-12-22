@@ -66,24 +66,14 @@ public record struct ArrayReadStateMachine
             }
         }
     }
-}
 
-static class ArrayReadStateMachineReaderExtensions
-{
-    public static JsonReadError? TryRead<T>(this IJsonReader<T> reader,
-                                            ref ArrayReadStateMachine stateMachine,
-                                            ref Utf8JsonReader rdr,
-                                            out T? item)
+    internal JsonReadResult<T> TryReadItem<T>(IJsonReader<T> reader, ref Utf8JsonReader rdr)
     {
-        switch (reader.TryRead(ref rdr))
-        {
-            case { Error: { } error }:
-                item = default;
-                return new(error);
-            case { Value: var value }:
-                item = value;
-                stateMachine.OnItemRead();
-                return null;
-        }
+        var result = reader.TryRead(ref rdr);
+
+        if (result is { Error: null } and { Incomplete: false })
+            OnItemRead();
+
+        return result;
     }
 }
