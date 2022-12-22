@@ -55,7 +55,7 @@ public ref struct Utf8JsonReader
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public T? ResumeOrDefault<T>() =>
+    public T ResumeOrDefault<T>() where T : struct =>
         this.stack?.Count > 0 ? (T)Pop() : default;
 
     public bool Read() => this.reader.Read();
