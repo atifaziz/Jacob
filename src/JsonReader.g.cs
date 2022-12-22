@@ -260,8 +260,8 @@ partial class JsonReader
             IJsonReader<T2> item2Reader) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            var (sm, item1, item2) =
-                rdr.TryResume(out (ArrayReadStateMachine, T1, T2) s) ? s : default;
+            _ = rdr.TryResume(out (ArrayReadStateMachine, T1, T2) s);
+            var (sm, item1, item2) = s;
 
             while (true)
             {
@@ -304,8 +304,8 @@ partial class JsonReader
             IJsonReader<T3> item3Reader) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            var (sm, item1, item2, item3) =
-                rdr.TryResume(out (ArrayReadStateMachine, T1, T2, T3) s) ? s : default;
+            _ = rdr.TryResume(out (ArrayReadStateMachine, T1, T2, T3) s);
+            var (sm, item1, item2, item3) = s;
 
             while (true)
             {

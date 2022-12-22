@@ -93,8 +93,8 @@ partial class JsonReader
             ", from n in ns select "IJsonReader<T" + n + "> item" + n + "Reader") #>) =>
         CreatePure((ref Utf8JsonReader rdr) =>
         {
-            var (sm, <#= string.Join(", ", from n in ns select "item" + n) #>) =
-                rdr.TryResume(out (ArrayReadStateMachine, <#= string.Join(", ", from n in ns select "T" + n) #>) s) ? s : default;
+            _ = rdr.TryResume(out (ArrayReadStateMachine, <#= string.Join(", ", from n in ns select "T" + n) #>) s);
+            var (sm, <#= string.Join(", ", from n in ns select "item" + n) #>) = s;
 
             while (true)
             {

@@ -695,10 +695,8 @@ public static partial class JsonReader
             Func<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, TResult> projector) =>
         Create((ref Utf8JsonReader reader) =>
         {
-            var (sm, state) =
-                reader.TryResume(out (ObjectReadStateMachine, ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>) s)
-                    ? s
-                    : default;
+            _ = reader.TryResume(out (ObjectReadStateMachine, ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16>) s);
+            var (sm, state) = s;
 
             return Read(ref reader, sm, ref state);
 
@@ -864,9 +862,8 @@ public static partial class JsonReader
                                                          Func<List<T>, TResult> resultSelector) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var (sm, list) = rdr.TryResume(out (ArrayReadStateMachine, List<T>?) s)
-                ? s
-                : default;
+            _ = rdr.TryResume(out (ArrayReadStateMachine, List<T>?) s);
+            var (sm, list) = s;
 
             return Read(ref rdr, sm, list);
 
