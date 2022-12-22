@@ -946,16 +946,15 @@ public static partial class JsonReader
             this.pure = pure;
         }
 
-        public JsonReadResult<T> TryRead(ref Utf8JsonReader reader)
-        {
-            if (!this.pure && reader.TokenType is JsonTokenType.None && !reader.Read())
-                return JsonReadError.Incomplete;
-
-            var (value, error) = this.handler(ref reader);
-            if (error is not null)
-                return new JsonReadError(error);
-            return JsonReadResult.Value(value);
-        }
+        public JsonReadResult<T> TryRead(ref Utf8JsonReader reader) =>
+            !this.pure && reader.TokenType is JsonTokenType.None
+                       && !reader.Read()
+            ? JsonReadError.Incomplete
+            : this.handler(ref reader) switch
+            {
+                (_, { } error) => new JsonReadError(error),
+                var (value, _) => JsonReadResult.Value(value)
+            };
     }
 }
 
