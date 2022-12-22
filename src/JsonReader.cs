@@ -177,17 +177,21 @@ public static partial class JsonReader
                     }
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
-                        switch (reader.TryRead(ref rdr))
+                        switch (reader.TryRead(ref ar, ref rdr, out item))
                         {
-                            case var r when r.IsIncomplete():
+                            case { IsIncomplete: true }:
+                            {
                                 break;
-                            case { Error: { } error }:
+                            }
+                            case { Message: var error }:
+                            {
                                 throw new JsonException(error);
-                            case { Value: { } value }:
-                                ar.OnItemRead();
-                                item = value;
+                            }
+                            case null:
+                            {
                                 readResult = ArrayReadStateMachine.ReadResult.Item;
                                 goto exit;
+                            }
                         }
                         goto case ArrayReadStateMachine.ReadResult.Incomplete;
                     }
@@ -773,16 +777,16 @@ public static partial class JsonReader
 
                         case ArrayReadStateMachine.ReadResult.Item:
                         {
-                            switch (itemReader.TryRead(ref rdr))
+                            switch (itemReader.TryRead(ref sm, ref rdr, out var item))
                             {
-                                case var r when r.IsIncomplete():
+                                case { IsIncomplete: true }:
                                     return rdr.Suspend((sm, list));
-                                case { Error: { } error }:
-                                    return Error(error);
-                                case { Value: var item }:
+                                case { } error:
+                                    return error;
+                                case null:
                                     list ??= new List<T>();
+                                    Debug.Assert(item is not null);
                                     list.Add(item);
-                                    sm.OnItemRead();
                                     break;
                             }
                             break;
