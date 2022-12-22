@@ -223,7 +223,7 @@ public static partial class JsonReader
                 }
             }
 
-            exit:
+        exit:
             bytesConsumed = (int)rdr.BytesConsumed;
             state = rdr.CurrentState;
             return readResult is ArrayReadStateMachine.ReadResult.Item;
@@ -325,7 +325,7 @@ public static partial class JsonReader
                 }
             }
 
-            exit:
+        exit:
             bytesConsumed = (int)rdr.BytesConsumed;
             state = rdr.CurrentState;
             return readResult is ObjectReadStateMachine.ReadResult.PropertyValue;
