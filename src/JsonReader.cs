@@ -799,7 +799,6 @@ public static partial class JsonReader
                                     return Error(error);
                                 case { Value: var item }:
                                     list ??= new List<T>();
-                                    Debug.Assert(item is not null);
                                     list.Add(item);
                                     break;
                             }
