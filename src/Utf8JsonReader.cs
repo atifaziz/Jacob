@@ -8,7 +8,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 
 #pragma warning disable CA1815 // Override equals and operator equals on value types
@@ -45,18 +45,6 @@ public ref struct Utf8JsonReader
         this.reader = reader;
     }
 
-    public bool TryResume<T>([NotNullWhen(true)] out T? state)
-    {
-        if (this.stack?.Count > 0)
-        {
-            state = (T)Pop();
-            return true;
-        }
-
-        state = default;
-        return false;
-    }
-
     void Push(object frame) => (this.stack ??= new()).Push(frame);
     object Pop() => (this.stack ?? throw new InvalidOperationException()).Pop();
 
@@ -65,6 +53,10 @@ public ref struct Utf8JsonReader
         Push(frame);
         return JsonReadError.Incomplete;
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public T? ResumeOrDefault<T>() =>
+        this.stack?.Count > 0 ? (T)Pop() : default;
 
     public bool Read() => this.reader.Read();
 
