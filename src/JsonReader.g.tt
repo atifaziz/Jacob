@@ -107,10 +107,9 @@ partial class JsonReader
                         return rdr.Suspend((sm, <#= string.Join(", ", from n in ns select "item" + n) #>));
 
                     case ArrayReadStateMachine.ReadResult.Done:
-                        if (sm.CurrentLength is not <#= ns.Last() #>)
-                            return Error("Invalid JSON value; JSON array has too few values.");
-
-                        return Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
+                        return sm.CurrentLength is not <#= ns.Last() #>
+                            ? Error("Invalid JSON value; JSON array has too few values.")
+                            : Value((<#= string.Join(", ", from n in ns select "item" + n) #>));
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {

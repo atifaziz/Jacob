@@ -274,10 +274,9 @@ partial class JsonReader
                         return rdr.Suspend((sm, item1, item2));
 
                     case ArrayReadStateMachine.ReadResult.Done:
-                        if (sm.CurrentLength is not 2)
-                            return Error("Invalid JSON value; JSON array has too few values.");
-
-                        return Value((item1, item2));
+                        return sm.CurrentLength is not 2
+                            ? Error("Invalid JSON value; JSON array has too few values.")
+                            : Value((item1, item2));
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
@@ -319,10 +318,9 @@ partial class JsonReader
                         return rdr.Suspend((sm, item1, item2, item3));
 
                     case ArrayReadStateMachine.ReadResult.Done:
-                        if (sm.CurrentLength is not 3)
-                            return Error("Invalid JSON value; JSON array has too few values.");
-
-                        return Value((item1, item2, item3));
+                        return sm.CurrentLength is not 3
+                            ? Error("Invalid JSON value; JSON array has too few values.")
+                            : Value((item1, item2, item3));
 
                     case ArrayReadStateMachine.ReadResult.Item:
                     {
