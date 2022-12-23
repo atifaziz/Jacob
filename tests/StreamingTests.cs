@@ -96,32 +96,25 @@ public abstract class StreamingTestsBase : JsonReaderTestsBase
     (JsonReadResult<T> Result, JsonTokenType TokenType, long TokenStartIndex)
         TryReadCore<T>(IJsonReader<T> jsonReader, string json)
     {
-        try
-        {
-            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
-            using var r = new StreamChunkReader(ms, this.bufferSize);
-            var state = new JsonReaderState();
+        using var ms = new MemoryStream(Encoding.UTF8.GetBytes(json));
+        using var r = new StreamChunkReader(ms, this.bufferSize);
+        var state = new JsonReaderState();
 
-            while (true)
-            {
-                var readTask = r.ReadAsync(CancellationToken.None);
-                Debug.Assert(readTask.IsCompleted);
-
-                var span1 = r.RemainingChunkSpan;
-                var tokenStartBaseIndex = r.TotalConsumedLength;
-                var reader = new Utf8JsonReader(span1, r.Eof, state);
-                var readResult = jsonReader.TryRead(ref reader);
-                var bytesConsumed = (int)reader.BytesConsumed;
-                r.ConsumeChunkBy(bytesConsumed);
-                WriteLine($"Buffer[{span1.Length}] = <{Printable(span1)}>, Consumed[{bytesConsumed}] = <{Printable(span1[..bytesConsumed])}>");
-                state = reader.CurrentState;
-                if (readResult is { Incomplete: false } completedReadResult)
-                    return (completedReadResult, reader.TokenType, tokenStartBaseIndex + reader.TokenStartIndex);
-            }
-        }
-        catch (NotSupportedException)
+        while (true)
         {
-            return TryReadCore(jsonReader.Buffer(), json);
+            var readTask = r.ReadAsync(CancellationToken.None);
+            Debug.Assert(readTask.IsCompleted);
+
+            var span1 = r.RemainingChunkSpan;
+            var tokenStartBaseIndex = r.TotalConsumedLength;
+            var reader = new Utf8JsonReader(span1, r.Eof, state);
+            var readResult = jsonReader.TryRead(ref reader);
+            var bytesConsumed = (int)reader.BytesConsumed;
+            r.ConsumeChunkBy(bytesConsumed);
+            WriteLine($"Buffer[{span1.Length}] = <{Printable(span1)}>, Consumed[{bytesConsumed}] = <{Printable(span1[..bytesConsumed])}>");
+            state = reader.CurrentState;
+            if (readResult is { Incomplete: false } completedReadResult)
+                return (completedReadResult, reader.TokenType, tokenStartBaseIndex + reader.TokenStartIndex);
         }
 
         static string Printable(ReadOnlySpan<byte> span)

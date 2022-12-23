@@ -34,10 +34,13 @@ public ref struct Utf8JsonReader
     public static ref System.Text.Json.Utf8JsonReader GetInnerReader(ref Utf8JsonReader reader) => ref reader.reader;
 
     public Utf8JsonReader(ReadOnlySpan<byte> jsonData, JsonReaderOptions options = default) :
-        this(new(jsonData, options), stack: null) { }
+        this(new System.Text.Json.Utf8JsonReader(jsonData, options), stack: null) { }
 
     public Utf8JsonReader(ReadOnlySpan<byte> jsonData, bool isFinalBlock, JsonReaderState state) :
-        this(new(jsonData, isFinalBlock, state.InnerState), state.Stack) { }
+        this(new System.Text.Json.Utf8JsonReader(jsonData, isFinalBlock, state.InnerState), state.Stack) { }
+
+    public Utf8JsonReader(Utf8JsonReader reader, Stack<object>? stack) :
+        this(reader.reader, stack) { }
 
     Utf8JsonReader(System.Text.Json.Utf8JsonReader reader, Stack<object>? stack)
     {

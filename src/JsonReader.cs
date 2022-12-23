@@ -488,22 +488,61 @@ public static partial class JsonReader
                                            string? errorMessage) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var irdr = rdr;
-            switch (reader1.TryRead(ref irdr))
+            var (leftStack, rightStack, leftError, rightError) = rdr.ResumeOrDefault<(Stack<object>?, Stack<object>?, bool, bool)>();
+
+            var resultRdr = rdr;
+            var leftRead = false;
+
+            if (!leftError)
             {
-                case { Incomplete: true }:
-                    throw PartialJsonNotSupportedException();
-                case { Error: not null }:
-                    return reader2.TryRead(ref rdr) switch
-                    {
-                        { Incomplete: true } => throw PartialJsonNotSupportedException(),
-                        { Error: not null } => Error(errorMessage ?? "Invalid JSON value."),
-                        var some => some
-                    };
-                case var some:
-                    rdr = irdr;
-                    return some;
+                resultRdr = new Utf8JsonReader(rdr, leftStack);
+
+                switch (reader1.TryRead(ref resultRdr))
+                {
+                    case { Incomplete: true }:
+                        leftStack = resultRdr.CurrentState.Stack;
+                        break;
+                    case { Error: not null }:
+                        leftError = true;
+                        break;
+                    case var some:
+                        rdr = new Utf8JsonReader(resultRdr, rdr.CurrentState.Stack);
+                        return some;
+                }
+
+                leftRead = true;
             }
+
+            if (!rightError)
+            {
+                var rightRdr = new Utf8JsonReader(rdr, rightStack);
+
+                switch (reader2.TryRead(ref rightRdr))
+                {
+                    case { Incomplete: true }:
+                        resultRdr = rightRdr;
+                        rightStack = resultRdr.CurrentState.Stack;
+                        break;
+                    case { Error: not null }:
+                        if (!leftRead || leftError)
+                            resultRdr = rightRdr;
+                        rightError = true;
+                        break;
+                    case var some:
+                        rdr = new Utf8JsonReader(rightRdr, rdr.CurrentState.Stack);
+                        return some;
+                }
+            }
+
+            // Incomplete case: assume that if both readers are incomplete,
+            // the inner reader must be at the same position
+            // (because all readers consume every token that is fully read and none disregard a read token).
+            rdr = new Utf8JsonReader(resultRdr, rdr.CurrentState.Stack);
+
+            if (leftError && rightError)
+                return Error(errorMessage ?? "Invalid JSON value.");
+
+            return rdr.Suspend((leftStack, rightStack, leftError, rightError));
         });
 
     static readonly object BoxedBufferFrame = new Unit();
