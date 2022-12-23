@@ -236,11 +236,7 @@ then the `Incomplete` property of the returned `JsonReadResult<T>` will be
 `true`. This is a signal to the caller that it must load the buffer with more
 of the JSON source text to resume reading.
 
-Presently, the following readers do not support partial reading:
-
-- `JsonReader.Either`
-
-Nevertheless, they can be composed with `JsonReader.Buffer` to load enough
+All readers can be composed with `JsonReader.Buffer` to load enough
 data into the buffer that neither can fail due to partial JSON.
 `JsonReader.Buffer` ensures that at least one complete JSON value (be that a
 scalar like a string or a structure like an array or an object) is buffered.
