@@ -511,8 +511,6 @@ public static partial class JsonReader
                 }
             }
 
-            var rightRead = false;
-
             if (!rightError)
             {
                 var rdrStack = rdr.SwapStack(rightStack);
@@ -531,10 +529,9 @@ public static partial class JsonReader
                 }
 
                 _ = rdr.SwapStack(rdrStack);
-                rightRead = true;
             }
 
-            if (!rightRead || (rightError && !leftError))
+            if (rightError && !leftError)
             {
                 _ = leftRdr.SwapStack(rdr.CurrentState.Stack);
                 rdr = leftRdr;
