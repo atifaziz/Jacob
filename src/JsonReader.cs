@@ -949,9 +949,6 @@ public static partial class JsonReader
         return recReader;
     }
 
-    static NotSupportedException PartialJsonNotSupportedException() =>
-        new($"Partial JSON reading is not supported. Combine with {nameof(Buffer)}.");
-
     static IJsonReader<T> Create<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler);
 
