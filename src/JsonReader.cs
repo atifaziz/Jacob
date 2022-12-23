@@ -534,18 +534,11 @@ public static partial class JsonReader
                 rightRead = true;
             }
 
-            switch (leftError, rightRead, rightError)
+            if (!rightRead || (rightError && !leftError))
             {
-                case (_   , true, false):
-                case (true, true, true ):
-                    break;
-                default:
-                {
-                    _ = leftRdr.SwapStack(rdr.CurrentState.Stack);
-                    rdr = leftRdr;
-                    break;
-                }
-            };
+                _ = leftRdr.SwapStack(rdr.CurrentState.Stack);
+                rdr = leftRdr;
+            }
 
             if (leftError && rightError)
                 return Error(errorMessage ?? "Invalid JSON value.");
