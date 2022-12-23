@@ -537,7 +537,7 @@ public static partial class JsonReader
             switch (leftError, rightRead, rightError)
             {
                 case (_   , true, false):
-                case (true, true, _    ):
+                case (true, true, true ):
                     break;
                 case (_   , _   , _    ):
                 {
