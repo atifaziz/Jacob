@@ -539,7 +539,7 @@ public static partial class JsonReader
                 case (_   , true, false):
                 case (true, true, true ):
                     break;
-                case (_   , _   , _    ):
+                default:
                 {
                     _ = leftRdr.SwapStack(rdr.CurrentState.Stack);
                     rdr = leftRdr;
