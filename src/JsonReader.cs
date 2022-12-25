@@ -742,14 +742,10 @@ public static partial class JsonReader
                         {
                             static JsonReadError? ReadPropertyValue<T>(ref Utf8JsonReader reader,
                                                                        IJsonProperty<T> property,
-                                                                       ref (bool, T) value,
-                                                                       in ObjectReadStateMachine sm,
-                                                                       in ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                                                                       ref (bool, T) value)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
-                                    case { Incomplete: true }:
-                                        return reader.Suspend((sm, state));
                                     case { Error: { } err }:
                                         return new JsonReadError(err);
                                     case { Value: var val }:
@@ -758,39 +754,45 @@ public static partial class JsonReader
                                 }
                             }
 
+                            var incomplete = false;
+
                             if (state.CurrentPropertyIndex is { } propertyIndex)
                             {
-                                var error = propertyIndex switch
+                                switch (propertyIndex switch
                                 {
-                                    1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  sm, state),
-                                    2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  sm, state),
-                                    3  => ReadPropertyValue(ref reader, property3,  ref state.Value3,  sm, state),
-                                    4  => ReadPropertyValue(ref reader, property4,  ref state.Value4,  sm, state),
-                                    5  => ReadPropertyValue(ref reader, property5,  ref state.Value5,  sm, state),
-                                    6  => ReadPropertyValue(ref reader, property6,  ref state.Value6,  sm, state),
-                                    7  => ReadPropertyValue(ref reader, property7,  ref state.Value7,  sm, state),
-                                    8  => ReadPropertyValue(ref reader, property8,  ref state.Value8,  sm, state),
-                                    9  => ReadPropertyValue(ref reader, property9,  ref state.Value9,  sm, state),
-                                    10 => ReadPropertyValue(ref reader, property10, ref state.Value10, sm, state),
-                                    11 => ReadPropertyValue(ref reader, property11, ref state.Value11, sm, state),
-                                    12 => ReadPropertyValue(ref reader, property12, ref state.Value12, sm, state),
-                                    13 => ReadPropertyValue(ref reader, property13, ref state.Value13, sm, state),
-                                    14 => ReadPropertyValue(ref reader, property14, ref state.Value14, sm, state),
-                                    15 => ReadPropertyValue(ref reader, property15, ref state.Value15, sm, state),
-                                    16 => ReadPropertyValue(ref reader, property16, ref state.Value16, sm, state),
+                                    1  => ReadPropertyValue(ref reader, property1,  ref state.Value1),
+                                    2  => ReadPropertyValue(ref reader, property2,  ref state.Value2),
+                                    3  => ReadPropertyValue(ref reader, property3,  ref state.Value3),
+                                    4  => ReadPropertyValue(ref reader, property4,  ref state.Value4),
+                                    5  => ReadPropertyValue(ref reader, property5,  ref state.Value5),
+                                    6  => ReadPropertyValue(ref reader, property6,  ref state.Value6),
+                                    7  => ReadPropertyValue(ref reader, property7,  ref state.Value7),
+                                    8  => ReadPropertyValue(ref reader, property8,  ref state.Value8),
+                                    9  => ReadPropertyValue(ref reader, property9,  ref state.Value9),
+                                    10 => ReadPropertyValue(ref reader, property10, ref state.Value10),
+                                    11 => ReadPropertyValue(ref reader, property11, ref state.Value11),
+                                    12 => ReadPropertyValue(ref reader, property12, ref state.Value12),
+                                    13 => ReadPropertyValue(ref reader, property13, ref state.Value13),
+                                    14 => ReadPropertyValue(ref reader, property14, ref state.Value14),
+                                    15 => ReadPropertyValue(ref reader, property15, ref state.Value15),
+                                    16 => ReadPropertyValue(ref reader, property16, ref state.Value16),
                                     var i => throw new SwitchExpressionException(i)
-                                };
-
-                                if (error is { } someError)
-                                    return someError;
+                                })
+                                {
+                                    case { IsIncomplete: true }: incomplete = true; break;
+                                    case { } someError: return someError;
+                                }
                             }
                             else
                             {
                                 if (reader.IsFinalBlock)
                                     reader.Skip();
                                 else if (!reader.TrySkip())
-                                    return reader.Suspend((sm, state));
+                                    incomplete = true;
                             }
+
+                            if (incomplete)
+                                goto case ObjectReadStateMachine.ReadResult.Incomplete;
 
                             sm.OnPropertyValueRead();
                             state.CurrentPropertyIndex = null;
