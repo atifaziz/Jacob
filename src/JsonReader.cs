@@ -740,11 +740,11 @@ public static partial class JsonReader
                         }
                         case ObjectReadStateMachine.ReadResult.PropertyValue:
                         {
-                            static JsonReadResult<TResult>? ReadPropertyValue<T>(ref Utf8JsonReader reader,
-                                                                                 IJsonProperty<T> property,
-                                                                                 ref (bool, T) value,
-                                                                                 in ObjectReadStateMachine sm,
-                                                                                 in ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
+                            static JsonReadError? ReadPropertyValue<T>(ref Utf8JsonReader reader,
+                                                                       IJsonProperty<T> property,
+                                                                       ref (bool, T) value,
+                                                                       in ObjectReadStateMachine sm,
+                                                                       in ObjectReadState<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16> state)
                             {
                                 switch (property.Reader.TryRead(ref reader))
                                 {
@@ -760,7 +760,7 @@ public static partial class JsonReader
 
                             if (state.CurrentPropertyIndex is { } propertyIndex)
                             {
-                                var result = propertyIndex switch
+                                var error = propertyIndex switch
                                 {
                                     1  => ReadPropertyValue(ref reader, property1,  ref state.Value1,  sm, state),
                                     2  => ReadPropertyValue(ref reader, property2,  ref state.Value2,  sm, state),
@@ -781,8 +781,8 @@ public static partial class JsonReader
                                     var i => throw new SwitchExpressionException(i)
                                 };
 
-                                if (result is { } someResult)
-                                    return someResult;
+                                if (error is { } someError)
+                                    return someError;
                             }
                             else
                             {
