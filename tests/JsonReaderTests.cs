@@ -744,6 +744,23 @@ public abstract class JsonReaderTestsBase
         TestValidInput(reader, json, expected);
     }
 
+    public static readonly TheoryData<object, string> Either_Of_Array_With_Valid_Input_Data =
+        new()
+        {
+            { new[] { "foo", "bar", "baz" }, /*lang=json*/ """["foo", "bar", "baz"]""" },
+            { new[] { 1, 2, 3, 4, 5 }, /*lang=json*/ """[1, 2, 3, 4, 5]""" },
+        };
+
+    [Theory]
+    [MemberData(nameof(Either_Of_Array_With_Valid_Input_Data))]
+    public void Either_Of_Array_With_Valid_Input(object expected, string json)
+    {
+        var reader =
+            JsonReader.Either(JsonReader.Array(JsonReader.String().AsObject()),
+                              JsonReader.Array(JsonReader.Int32().AsObject())).AsObject();
+        TestValidInput(reader, json, expected);
+    }
+
 #pragma warning disable CA1008 // Enums should have zero value (by-design)
     public enum LoRaBandwidth
 #pragma warning restore CA1008 // Enums should have zero value
