@@ -58,12 +58,8 @@ public ref struct Utf8JsonReader
     public T ResumeOrDefault<T>() where T : struct =>
         this.stack?.Count > 0 ? (T)Pop() : default;
 
-    public Stack<object>? SwapStack(Stack<object>? stack)
-    {
-        var result = this.stack;
+    public void ReplaceStack(Stack<object>? stack) =>
         this.stack = stack;
-        return result;
-    }
 
     public bool Read() => this.reader.Read();
 

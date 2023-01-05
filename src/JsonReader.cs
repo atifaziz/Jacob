@@ -498,7 +498,7 @@ public static partial class JsonReader
 
             if (leftState is EitherSideState.Incomplete)
             {
-                _ = leftRdr.SwapStack(leftStack);
+                leftRdr.ReplaceStack(leftStack);
 
                 switch (reader1.TryRead(ref leftRdr))
                 {
@@ -509,7 +509,7 @@ public static partial class JsonReader
                         leftState = EitherSideState.Error;
                         break;
                     case var some:
-                        _ = leftRdr.SwapStack(initialStack);
+                        leftRdr.ReplaceStack(initialStack);
                         rdr = leftRdr;
                         return some;
                 }
@@ -517,7 +517,7 @@ public static partial class JsonReader
 
             if (rightState is EitherSideState.Incomplete)
             {
-                _ = rdr.SwapStack(rightStack);
+                rdr.ReplaceStack(rightStack);
 
                 switch (reader2.TryRead(ref rdr))
                 {
@@ -528,7 +528,7 @@ public static partial class JsonReader
                         rightState = EitherSideState.Error;
                         break;
                     case var some:
-                        _ = rdr.SwapStack(initialStack);
+                        rdr.ReplaceStack(initialStack);
                         return some;
                 }
             }
@@ -536,7 +536,7 @@ public static partial class JsonReader
             if (rightState is EitherSideState.Error && leftState is EitherSideState.Incomplete)
                 rdr = leftRdr;
 
-            _ = rdr.SwapStack(initialStack);
+            rdr.ReplaceStack(initialStack);
 
             if (leftState is EitherSideState.Error && rightState is EitherSideState.Error)
                 return Error(errorMessage ?? "Invalid JSON value.");
