@@ -494,6 +494,7 @@ public static partial class JsonReader
 
             var leftRdr = rdr;
             var initialStack = rdr.CurrentState.Stack;
+            Debug.Assert(initialStack is null or { Count: 0 });
 
             if (leftState is EitherSideState.Incomplete)
             {
