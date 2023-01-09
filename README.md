@@ -237,7 +237,7 @@ then the `Incomplete` property of the returned `JsonReadResult<T>` will be
 of the JSON source text to resume reading.
 
 All readers can be composed with `JsonReader.Buffer` to load enough
-data into the buffer that neither can fail due to partial JSON.
+data into the buffer so that none can fail due to partial JSON.
 `JsonReader.Buffer` ensures that at least one complete JSON value (be that a
 scalar like a string or a structure like an array or an object) is buffered.
 
