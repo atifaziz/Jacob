@@ -490,23 +490,25 @@ public static partial class JsonReader
                                            string? errorMessage) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var (leftStack, rightStack, leftState, rightState) = rdr.ResumeOrDefault<(Stack<object>?, Stack<object>?, EitherSideState, EitherSideState)>();
+            var (left, right) =
+                rdr.ResumeOrDefault<((Stack<object>? Stack, EitherSideState State),
+                                     (Stack<object>? Stack, EitherSideState State))>();
 
             var leftRdr = rdr;
             var initialStack = rdr.CurrentState.Stack;
             Debug.Assert(initialStack is null or { Count: 0 });
 
-            if (leftState is EitherSideState.Incomplete)
+            if (left.State is EitherSideState.Incomplete)
             {
-                leftRdr.SetStack(leftStack);
+                leftRdr.SetStack(left.Stack);
 
                 switch (reader1.TryRead(ref leftRdr))
                 {
                     case { Incomplete: true }:
-                        leftStack = leftRdr.CurrentState.Stack;
+                        left.Stack = leftRdr.CurrentState.Stack;
                         break;
                     case { Error: not null }:
-                        leftState = EitherSideState.Error;
+                        left.State = EitherSideState.Error;
                         break;
                     case var some:
                         leftRdr.SetStack(initialStack);
@@ -515,17 +517,17 @@ public static partial class JsonReader
                 }
             }
 
-            if (rightState is EitherSideState.Incomplete)
+            if (right.State is EitherSideState.Incomplete)
             {
-                rdr.SetStack(rightStack);
+                rdr.SetStack(right.Stack);
 
                 switch (reader2.TryRead(ref rdr))
                 {
                     case { Incomplete: true }:
-                        rightStack = rdr.CurrentState.Stack;
+                        right.Stack = rdr.CurrentState.Stack;
                         break;
                     case { Error: not null }:
-                        rightState = EitherSideState.Error;
+                        right.State = EitherSideState.Error;
                         break;
                     case var some:
                         rdr.SetStack(initialStack);
@@ -533,15 +535,15 @@ public static partial class JsonReader
                 }
             }
 
-            if (rightState is EitherSideState.Error && leftState is EitherSideState.Incomplete)
+            if (right.State is EitherSideState.Error && left.State is EitherSideState.Incomplete)
                 rdr = leftRdr;
 
             rdr.SetStack(initialStack);
 
-            if (leftState is EitherSideState.Error && rightState is EitherSideState.Error)
+            if (left.State is EitherSideState.Error && right.State is EitherSideState.Error)
                 return Error(errorMessage ?? "Invalid JSON value.");
 
-            return rdr.Suspend((leftStack, rightStack, leftState, rightState));
+            return rdr.Suspend((left, right));
         });
 
     static readonly object BoxedBufferFrame = new Unit();
