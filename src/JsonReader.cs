@@ -484,26 +484,66 @@ public static partial class JsonReader
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2) =>
         Either(reader1, reader2, null);
 
+    enum EitherSideState { Incomplete, Error }
+
     public static IJsonReader<T> Either<T>(IJsonReader<T> reader1, IJsonReader<T> reader2,
                                            string? errorMessage) =>
         Create((ref Utf8JsonReader rdr) =>
         {
-            var irdr = rdr;
-            switch (reader1.TryRead(ref irdr))
+            var (left, right) =
+                rdr.ResumeOrDefault<((Stack<object>? Stack, EitherSideState State),
+                                     (Stack<object>? Stack, EitherSideState State))>();
+
+            var leftRdr = rdr;
+            var initialStack = rdr.CurrentState.Stack;
+            Debug.Assert(initialStack is null or { Count: 0 });
+
+            if (left.State is EitherSideState.Incomplete)
             {
-                case { Incomplete: true }:
-                    throw PartialJsonNotSupportedException();
-                case { Error: not null }:
-                    return reader2.TryRead(ref rdr) switch
-                    {
-                        { Incomplete: true } => throw PartialJsonNotSupportedException(),
-                        { Error: not null } => Error(errorMessage ?? "Invalid JSON value."),
-                        var some => some
-                    };
-                case var some:
-                    rdr = irdr;
-                    return some;
+                leftRdr.SetStack(left.Stack);
+
+                switch (reader1.TryRead(ref leftRdr))
+                {
+                    case { Incomplete: true }:
+                        left.Stack = leftRdr.CurrentState.Stack;
+                        break;
+                    case { Error: not null }:
+                        left.State = EitherSideState.Error;
+                        break;
+                    case var some:
+                        leftRdr.SetStack(initialStack);
+                        rdr = leftRdr;
+                        return some;
+                }
             }
+
+            if (right.State is EitherSideState.Incomplete)
+            {
+                rdr.SetStack(right.Stack);
+
+                switch (reader2.TryRead(ref rdr))
+                {
+                    case { Incomplete: true }:
+                        right.Stack = rdr.CurrentState.Stack;
+                        break;
+                    case { Error: not null }:
+                        right.State = EitherSideState.Error;
+                        break;
+                    case var some:
+                        rdr.SetStack(initialStack);
+                        return some;
+                }
+            }
+
+            if (right.State is EitherSideState.Error && left.State is EitherSideState.Incomplete)
+                rdr = leftRdr;
+
+            rdr.SetStack(initialStack);
+
+            if (left.State is EitherSideState.Error && right.State is EitherSideState.Error)
+                return Error(errorMessage ?? "Invalid JSON value.");
+
+            return rdr.Suspend((left, right));
         });
 
     static readonly object BoxedBufferFrame = new Unit();
@@ -913,9 +953,6 @@ public static partial class JsonReader
         reader = readerFunction(recReader);
         return recReader;
     }
-
-    static NotSupportedException PartialJsonNotSupportedException() =>
-        new($"Partial JSON reading is not supported. Combine with {nameof(Buffer)}.");
 
     static IJsonReader<T> Create<T>(Handler<T> handler) =>
         new DelegatingJsonReader<T>(handler);
