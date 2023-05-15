@@ -40,7 +40,9 @@ public readonly record struct JsonKey
 #pragma warning restore CS8524 // The switch expression does not handle some values of its input type (it is not exhaustive) involving an unnamed enum value.
 }
 
-public readonly struct CurrentJsonPath : IEquatable<CurrentJsonPath>
+#pragma warning disable IDE0250 // Make struct 'readonly' (modifies in=place)
+public struct CurrentJsonPath : IEquatable<CurrentJsonPath>
+#pragma warning restore IDE0250 // Make struct 'readonly'
 {
     readonly List<JsonKey> keys;
 
