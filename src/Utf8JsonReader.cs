@@ -46,7 +46,10 @@ public ref struct Utf8JsonReader
     }
 
     void Push(object frame) => (this.stack ??= new()).Push(frame);
+
+#pragma warning disable IDE0251 // Make member 'readonly' (false negative?)
     object Pop() => (this.stack ?? throw new InvalidOperationException()).Pop();
+#pragma warning restore IDE0251 // Make member 'readonly'
 
     public JsonReadError Suspend(object frame)
     {
@@ -110,19 +113,19 @@ public ref struct Utf8JsonReader
     public bool TryGetUInt16(out ushort value) => this.reader.TryGetUInt16(out value);
     public bool TryGetUInt32(out uint value) => this.reader.TryGetUInt32(out value);
     public bool TryGetUInt64(out ulong value) => this.reader.TryGetUInt64(out value);
-    public bool ValueTextEquals(ReadOnlySpan<byte> utf8Text) => this.reader.ValueTextEquals(utf8Text);
-    public bool ValueTextEquals(ReadOnlySpan<char> text) => this.reader.ValueTextEquals(text);
-    public bool ValueTextEquals(string? text) => this.reader.ValueTextEquals(text);
-    public long BytesConsumed => this.reader.BytesConsumed;
-    public int CurrentDepth => this.reader.CurrentDepth;
-    public JsonReaderState CurrentState => new(this.reader.CurrentState, this.stack);
-    public bool HasValueSequence => this.reader.HasValueSequence;
-    public bool IsFinalBlock => this.reader.IsFinalBlock;
-    public SequencePosition Position => this.reader.Position;
-    public long TokenStartIndex => this.reader.TokenStartIndex;
-    public JsonTokenType TokenType => this.reader.TokenType;
-    public ReadOnlySequence<byte> ValueSequence => this.reader.ValueSequence;
-    public ReadOnlySpan<byte> ValueSpan => this.reader.ValueSpan;
+    public readonly bool ValueTextEquals(ReadOnlySpan<byte> utf8Text) => this.reader.ValueTextEquals(utf8Text);
+    public readonly bool ValueTextEquals(ReadOnlySpan<char> text) => this.reader.ValueTextEquals(text);
+    public readonly bool ValueTextEquals(string? text) => this.reader.ValueTextEquals(text);
+    public readonly long BytesConsumed => this.reader.BytesConsumed;
+    public readonly int CurrentDepth => this.reader.CurrentDepth;
+    public readonly JsonReaderState CurrentState => new(this.reader.CurrentState, this.stack);
+    public readonly bool HasValueSequence => this.reader.HasValueSequence;
+    public readonly bool IsFinalBlock => this.reader.IsFinalBlock;
+    public readonly SequencePosition Position => this.reader.Position;
+    public readonly long TokenStartIndex => this.reader.TokenStartIndex;
+    public readonly JsonTokenType TokenType => this.reader.TokenType;
+    public readonly ReadOnlySequence<byte> ValueSequence => this.reader.ValueSequence;
+    public readonly ReadOnlySpan<byte> ValueSpan => this.reader.ValueSpan;
 
-    string DebuggerDisplay => $"TokenType = {TokenType}, CurrentDepth = {CurrentDepth}, BytesConsumed = {BytesConsumed}";
+    readonly string DebuggerDisplay => $"TokenType = {TokenType}, CurrentDepth = {CurrentDepth}, BytesConsumed = {BytesConsumed}";
 }

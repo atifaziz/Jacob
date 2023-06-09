@@ -35,7 +35,7 @@ public static class IncompleteJsonReadError
     public static readonly string Value = "(incomplete)";
 }
 
-public record struct JsonReadError(string Message)
+public readonly record struct JsonReadError(string Message)
 {
     public static readonly JsonReadError Incomplete = new(IncompleteJsonReadError.Value);
 
@@ -44,7 +44,7 @@ public record struct JsonReadError(string Message)
     public override string ToString() => Message;
 }
 
-public record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult<T>
+public readonly record struct JsonReadResult<T>(T Value, string? Error) : IJsonReadResult<T>
 {
     public bool Incomplete => ReferenceEquals(Error, IncompleteJsonReadError.Value);
 
