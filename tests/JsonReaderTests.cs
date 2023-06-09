@@ -1095,14 +1095,7 @@ public abstract class JsonReaderTestsBase
     {
         var actual = JsonReader.Element().Read(json);
         var reader = new System.Text.Json.Utf8JsonReader(Encoding.UTF8.GetBytes(json));
-#if NET6_0_OR_GREATER
         var expected = JsonElement.ParseValue(ref reader);
-#elif NETCOREAPP3_1_OR_GREATER
-        using var doc = JsonDocument.ParseValue(ref reader);
-        var expected = doc.RootElement.Clone();
-#else
-#error Unsupported platform.
-#endif
         Assert.Equal(expected.ToString(), actual.ToString());
     }
 

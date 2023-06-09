@@ -328,20 +328,9 @@ public static partial class JsonReader
             Create(static (ref Utf8JsonReader rdr) =>
             {
                 ref var inner = ref Utf8JsonReader.GetInnerReader(ref rdr);
-
-#if NET6_0_OR_GREATER
                 return JsonElement.TryParseValue(ref inner, out var element)
                      ? JsonReadResult.Value(element.Value)
                      : JsonReadError.Incomplete;
-#elif NETCOREAPP3_1_OR_GREATER
-                if (!JsonDocument.TryParseValue(ref inner, out var doc))
-                    return JsonReadError.Incomplete;
-
-                using var _ = doc;
-                return JsonReadResult.Value(doc.RootElement.Clone());
-#else
-#error Unsupported platform.
-#endif
             });
 
 
@@ -411,29 +400,10 @@ public static partial class JsonReader
             : Error("Invalid JSON value where a JSON null was expected."));
 
     static bool IsEnumDefined<T>(T value) where T : struct, Enum =>
-#if NET5_0_OR_GREATER
         Enum.IsDefined(value);
-#else
-        Enum.IsDefined(typeof(T), value);
-#endif
 
-    static bool TryParseEnum<T>(string input, bool ignoreCase, out T result) where T : struct, Enum
-    {
-#if NET5_0_OR_GREATER
-        return Enum.TryParse(input, ignoreCase, out result);
-#else
-        if (Enum.TryParse(typeof(T), input, ignoreCase, out var obj))
-        {
-            result = (T)obj!;
-            return true;
-        }
-        else
-        {
-            result = default;
-            return false;
-        }
-#endif
-    }
+    static bool TryParseEnum<T>(string input, bool ignoreCase, out T result) where T : struct, Enum =>
+        Enum.TryParse(input, ignoreCase, out result);
 
     public static IJsonReader<T> AsEnum<T>(this IJsonReader<string> reader)
         where T : struct, Enum =>
