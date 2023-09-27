@@ -48,10 +48,10 @@ public struct CurrentJsonPath : IEquatable<CurrentJsonPath>
 
     internal CurrentJsonPath(List<JsonKey> keys) => this.keys = keys;
 
-    public int Count => this.keys.Count;
-    public JsonKey this[int index] => this.keys[index];
+    public readonly int Count => this.keys.Count;
+    public readonly JsonKey this[int index] => this.keys[index];
 
-    public override string ToString()
+    public override readonly string ToString()
     {
         var sb = new StringBuilder();
         foreach (var key in this.keys)
@@ -70,9 +70,9 @@ public struct CurrentJsonPath : IEquatable<CurrentJsonPath>
         return sb.ToString();
     }
 
-    public bool Equals(CurrentJsonPath other) => this.keys.SequenceEqual(other.keys);
-    public override bool Equals(object? obj) => obj is CurrentJsonPath other && Equals(other);
-    public override int GetHashCode() => this.keys.Aggregate(0, HashCode.Combine);
+    public readonly bool Equals(CurrentJsonPath other) => this.keys.SequenceEqual(other.keys);
+    public override readonly bool Equals(object? obj) => obj is CurrentJsonPath other && Equals(other);
+    public override readonly int GetHashCode() => this.keys.Aggregate(0, HashCode.Combine);
 
     public static bool operator ==(CurrentJsonPath left, CurrentJsonPath right) => left.Equals(right);
     public static bool operator !=(CurrentJsonPath left, CurrentJsonPath right) => !left.Equals(right);
