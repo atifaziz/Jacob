@@ -540,12 +540,11 @@ public static partial class JsonReader
                         return rdr.Suspend(BoxedBufferFrame);
                     }
 
-                    bool read;
-                    do
+                    var read = true;
+                    while (read && depth < rdr.CurrentDepth)
                     {
                         read = rdr.Read();
                     }
-                    while (read && depth < rdr.CurrentDepth);
                     rdr = bookmark;
                     return read ? reader.TryRead(ref rdr) : rdr.Suspend(BoxedBufferFrame);
                 }

@@ -32,6 +32,7 @@ public sealed class StreamingTests
     public static TheoryData<IJsonReader<object>, string, int, int[]> Buffer_TheoryData() => new()
     {
         { JsonReader.Null(NullObject), /*lang=json*/ "null", 2, new[] { 0, 4 } },
+        { JsonReader.Object(JsonReader.Null(NullObject), kvp => kvp).AsObject(), /*lang=json*/ "{}", 2, new[] { 2 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "false", 2, new[] { 0, 0, 5 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 2, new[] { 0, 4 } },
         { JsonReader.Boolean().AsObject(), /*lang=json*/ "true", 5, new[] { 4 } },
@@ -72,6 +73,15 @@ public sealed class StreamingTests
 
         var result = bufferedReader.TryRead(json);
         Assert.False(result.Incomplete);
+    }
+
+    [Fact]
+    public void Buffer_Reads_Empty_Object()
+    {
+        var reader = JsonReader.Object(JsonReader.Null(new object()), kvp => kvp);
+        var result = reader.Buffer().Read("{}");
+
+        Assert.Empty(result);
     }
 }
 
